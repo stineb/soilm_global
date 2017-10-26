@@ -9,13 +9,8 @@ source( paste( syshome, "/.Rprofile", sep="" ) )
 source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
 source( "./func_flue_est.R" )
 
-## IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
-# load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
-
-# func_test <- function( x, add ){ 
-#   y <- x+0.1+add
-#   return(y) 
-# }
+# IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
+load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
 
 
 ##------------------------------------------------
@@ -244,7 +239,7 @@ for (sitename in do.sites){
     nice <- nice %>%  mutate( flue0    = calc_flue0( meanalpha ) )%>% 
                       mutate( beta = calc_beta( flue0 ) ) %>% 
                       mutate( flue_est = func_flue_est( soilm_mean, beta ) ) %>% 
-                      mutate( dry=ifelse(alpha<1, TRUE, FALSE))
+                      mutate( dry=ifelse(alpha<0.95, TRUE, FALSE))
 
     ##------------------------------------------------
     ## save to file
@@ -257,6 +252,7 @@ for (sitename in do.sites){
   ## record for aggregated data
   ##------------------------------------------------
   usecols <- c(
+                "mysitename",
                 "year_dec",
                 "year",
                 "doy",
@@ -281,9 +277,7 @@ for (sitename in do.sites){
                 "dry"
                 )
 
-  # nice_agg <- dplyr::select( nice, one_of( usecols ) ) %>% cbind( mysitename, . ) %>% rbind( . )
-
-  nice_agg <- rbind( nice_agg, dplyr::select( nice, one_of( usecols ) ) )
+  nice_agg <- rbind( nice_agg, select( nice, one_of( usecols ) ) )
 
   # ##------------------------------------------------
   # ## Reshape dataframe to stack data from differen soil moisture datasets along rows
@@ -343,7 +337,6 @@ for (sitename in do.sites){
 
         ## group by 8d bins from MTE data
         nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
-                          # mutate( inmtebin = cut( as.numeric(date), breaks = c( mte$date_start[1], mte$date_end ), include.lowest = TRUE ) ) 
                           mutate( inmtebin = cut( as.numeric(date), breaks = c( mte$date_start ), right = FALSE ) ) 
 
         ## summarise by bin taking means
@@ -352,7 +345,7 @@ for (sitename in do.sites){
         nice_to_mte <- cbind( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and mte)
-        nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ) ) %>% left_join( mte, by=c("doy_start", "year_start") )
+        nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
         
         ## get additional variables
         nice_to_mte <- nice_to_mte %>%  mutate( bias_mte = gpp_mte / gpp_obs )          %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
@@ -398,7 +391,11 @@ for (sitename in do.sites){
         avl_modisgpp <- TRUE
 
         ## make modis a bit nicer
-        modis <- modis %>% rename( gpp_modis = data ) %>% mutate( gpp_modis = gpp_modis / 8.0, doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 ) )
+        modis <- modis %>%  rename( gpp_modis = data ) %>% 
+                            mutate( gpp_modis = gpp_modis / 8.0, doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, 
+                                    date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 ),
+                                    mysitename = sitename
+                                    )
 
         ## group nice by 8d bins from MODIS data
         nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
@@ -410,7 +407,7 @@ for (sitename in do.sites){
         nice_to_modis <- cbind( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and modis)
-        nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ) ) %>% left_join( modis, by=c("doy_start", "year_start") )
+        nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
         
         ## get additional variables
         nice_to_modis <- nice_to_modis %>% mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
@@ -445,8 +442,8 @@ if ( length( dplyr::filter( siteinfo, code!=0 )$mysitename ) == length( do.sites
   save( nice_agg,  file=paste("data/nice_all_agg_",  nam_target, char_fapar, ".Rdata", sep="") )
   # save( nice_all_resh, file=paste("data/nice_all_resh_", nam_target, char_fapar, ".Rdata", sep="") )
 
-  if (avl_data_mte)   save( nice_to_mte_agg,   file=paste("data/nice_all_mte_agg_",   nam_target, char_fapar, ".Rdata", sep="") )
-  if (avl_data_modis) save( nice_to_modis_agg, file=paste("data/nice_all_modis_agg_", nam_target, char_fapar, ".Rdata", sep="") )
+  if (avl_data_mte)   save( mte_agg,   file=paste("data/nice_all_mte_agg_",   nam_target, char_fapar, ".Rdata", sep="") )
+  if (avl_data_modis) save( modis_agg, file=paste("data/nice_all_modis_agg_", nam_target, char_fapar, ".Rdata", sep="") )
 
 } else {
 

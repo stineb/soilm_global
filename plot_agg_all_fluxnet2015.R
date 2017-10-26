@@ -8,26 +8,56 @@ library(LSD)
 
 siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
 
+##------------------------------------------------
+## Select only sites that were in NN FLUXNET 2015 analysis
+##------------------------------------------------
+successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
+nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
+mte_agg  <- mte_agg  %>% filter( mysitename %in% do.sites )
+modis_agg<- modis_agg%>% filter( mysitename %in% do.sites )
+
 ## Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
 load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
+load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
+load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
+
+load( paste( "data/nice_nn_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
+load( paste( "data/nice_nn_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
+load( paste( "data/nice_nn_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
 
 ##------------------------------------------------
 ## Bin data w.r.t. alpha
 ##------------------------------------------------
-binwidth <- 0.1
+binwidth <- 0.2
 alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
 nice_agg <- nice_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
-nice_to_mte_agg <- nice_to_mte_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
+mte_agg  <- mte_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
+modis_agg<- modis_agg%>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 
+## get additional variables
+nice_agg <- nice_agg %>% mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
+mte_agg  <- mte_agg  %>% mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
+modis_agg<- modis_agg%>% mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
 
 par(las=1)
+
+boxplot( log(bias_pmodel) ~ dry, data=nice_agg, outline=FALSE, col="grey70" );  abline( h=0, lty=3 )
+boxplot( log(bias_mte)    ~ dry, data=mte_agg, outline=FALSE, col="grey70" );   abline( h=0, lty=3 )
+boxplot( log(bias_modis)  ~ dry, data=modis_agg, outline=FALSE, col="grey70" ); abline( h=0, lty=3 )
+
 ## bias in P-model versus alpha
-boxplot( bias_pmodel ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70" )
-abline( h=1, lty=2 )
+boxplot( log(bias_pmodel) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70" )
+abline( h=0, lty=3 )
 
 ## bias in MTE versus alpha
-boxplot( bias_mte ~ inalphabin, data=nice_to_mte_agg, outline=FALSE, col="grey70" )
-abline( h=1, lty=2 )
+boxplot( log(bias_mte) ~ inalphabin, data=mte_agg, outline=FALSE, col="grey70" )
+abline( h=0, lty=3 )
+
+## bias in MODIS versus alpha
+boxplot( log(bias_modis) ~ inalphabin, data=modis_agg, outline=FALSE, col="grey70" )
+abline( h=0, lty=3 )
 
 # xlim <- c(0,1.2)
 # ylim <- c(0,2.5)
