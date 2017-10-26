@@ -1,6 +1,6 @@
-load( "/alphadata01/bstocker/sofun/utils_sofun/analysis_sofun/fluxnet2015/data/nice_agg_lue_obs_evi.Rdata" )  # loads 'nice_agg'
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/nice_agg_lue_obs_evi.Rdata" )  # loads 'nice_agg'
 
-load( "/alphadata01/bstocker/sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
 
 ## add date and MOY to dataframe nice_agg
 nice_agg <- nice_agg %>% mutate( date = as.POSIXct( as.Date( paste( as.character( year ), "-01-01", sep="" ) ) + doy - 1 ))
