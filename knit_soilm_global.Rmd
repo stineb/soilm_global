@@ -30,7 +30,7 @@ Apply the empirical correction function for GPP. The following steps are require
 
 1. Define relationship between fLUE_0 and annual mean AET/PET
 ```{r flue_0, eval=FALSE}
-source("xxx.R")
+source("define_flue0.R")
 ```
 
 2. Define correction function (function of soil moisture) for each site
@@ -52,7 +52,57 @@ source("xxx.R")
 
 ## Plot bias versus dryness
 
-## in R, plot IAV (distribution across gridcells) of P-model before and after soil moisture correction, MODIS GPP, MTE GPP, TRENDY models
+## in R, get IAV (distribution across gridcells) of P-model before and after soil moisture correction, MODIS GPP, MTE GPP, TRENDY models
+
+### Process TRENDY outputs
+
+1. Subset years 1982-2015
+Using CDO:
+```{sh}
+cdo selyear,1982/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLASS-CTEM_S2_gpp.nc CLASS-CTEM_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_sub.nc
+cdo selyear,1982/2015 ISAM_S2_gpp.nc ISAM_S2_gpp_sub.nc
+cdo selyear,1982/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_sub.nc
+cdo selyear,1982/2015 LPJ-GUESS_S2_gpp_fEst_sub.nc LPJ-GUESS_S2_gpp_fEst.nc
+cdo selyear,1982/2015 VEGAS_S2_gpp_sub.nc VEGAS_S2_gpp.nc
+cdo selyear,1982/2015 VISIT_S2_gpp.nc VISIT_S2_gpp_sub.nc
+```
+
+Using R for problematic files:
+```{r}
+source("selyears_dlem.R")
+source("selyears_jules.R")
+source("selyears_lpx.R")
+source("selyears_orchidee.R")
+source("selyears_sdgvm.R")
+```
+
+Using Ferret for JULES. In Ferret:
+```
+go selyears_jules.jnl
+```
+
+In Bash:
+```{sh}
+cdo chname,GPP_SUB,gpp CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc tmp.nc
+mv tmp.nc CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc
+
+cdo chname,gpp.monthly,gpp /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc tmp.nc
+mv tmp.nc /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc
+```
+
+2. Converting to annual totals:
+```{r}
+source("get_ann_trendy.R")
+```
+
+3. Detrend, and calculate variance and relative variance 
+```{r}
+source("get_iavtrendy.R")
+```
+
+
 ## in R/cdo: plot average relative IAV increase due to soil moisture effect as a function of spatial scale (as in Jung)
 ## in R Ahlstroem plot
 

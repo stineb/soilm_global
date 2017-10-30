@@ -1,0 +1,5 @@
+use "/Users/benjaminstocker/data/trendy/v5/JULES/S2/CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp.nc"
+
+let gpp_sub=gpp[l=123:156]
+
+save/clobber/file="/Users/benjaminstocker/data/trendy/v5/JULES/S2/CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc" gpp_sub
