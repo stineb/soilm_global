@@ -5,7 +5,7 @@ library(fields)
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 
-source("/alphadata01/bstocker/utilities/mean.bymonth.R")
+source( paste0( myhome, "/utilities/mean.bymonth.R" ) )
 
 ## get annual mean alpha (AET/PET)
 if (!exists("aalpha")){
@@ -194,6 +194,20 @@ cdf.write( gpp_lim, "gpp_lim",
 gpp_resh <- array( gpp, dim=c(length(lon), length(lat), 12, dim(gpp)[3]/12) )
 flue_resh <- array( flue, dim=c(length(lon), length(lat), 12, dim(flue)[3]/12) )
 gpp_lim_resh <- array( gpp_lim, dim=c(length(lon), length(lat), 12, dim(gpp_lim)[3]/12) )
+
+## write reshaped GPP to file
+cdf.write( gpp_resh, "gpp", 
+           lon, lat,
+           filnam = "data/gpp_RESH.nc",
+           nvars = 1,
+           time = 1982:2011,
+           make.tdim = TRUE,
+           z_dim = 1:12,
+           make.zdim = TRUE,
+           units_time = units_time,
+           long_name_var1 = "Gross primary productivity",
+           units_var1 = "gC m-2 month-1"
+)
 
 cdf.write( gpp_lim_resh, "gpp_lim", 
            lon, lat,

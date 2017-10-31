@@ -1,0 +1,115 @@
+---
+title: "SOILM_GLOBAL"
+author: "Beni Stocker"
+date: "10/26/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+## Aggregate site data
+
+Aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period):
+```{r aggregate_all, eval=FALSE}
+source("aggregate_all_fluxnet2015.R")
+```
+
+Do the same as above but now only for a subset of sites where the NN-FLUXNET2015 method performed well. This data includes the NN-predicted values. 
+```{r aggregate_nn, eval=FALSE}
+source("aggregate_nn_fluxnet2015.R")
+```
+
+## Correct GPP
+Apply the empirical correction function for GPP. The following steps are required:
+
+1. Define relationship between fLUE_0 and annual mean AET/PET
+```{r flue_0, eval=FALSE}
+source("define_flue0.R")
+```
+
+2. Define correction function (function of soil moisture) for each site
+```{r correctionfunction, eval=FALSE}
+source("xxx.R")
+```
+
+3. Apply function to estimate fLUE
+```{r, eval=FALSE}
+source("xxx.R")
+```
+
+4. Calculate corrected GPP
+```{r, eval=FALSE}
+source("xxx.R")
+```
+
+## Align data by drought events (dbt whether necessary -> check ratio vs. fLUE plot)
+
+## Plot bias versus dryness
+
+## in R, get IAV (distribution across gridcells) of P-model before and after soil moisture correction, MODIS GPP, MTE GPP, TRENDY models
+
+### Process TRENDY outputs
+
+1. Subset years 1982-2015
+Using CDO:
+```{sh}
+cdo selyear,1982/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLASS-CTEM_S2_gpp.nc CLASS-CTEM_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_sub.nc
+cdo selyear,1982/2015 ISAM_S2_gpp.nc ISAM_S2_gpp_sub.nc
+cdo selyear,1982/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_sub.nc
+cdo selyear,1982/2015 LPJ-GUESS_S2_gpp_fEst_sub.nc LPJ-GUESS_S2_gpp_fEst.nc
+cdo selyear,1982/2015 VEGAS_S2_gpp_sub.nc VEGAS_S2_gpp.nc
+cdo selyear,1982/2015 VISIT_S2_gpp.nc VISIT_S2_gpp_sub.nc
+```
+
+Using R for problematic files:
+```{r}
+source("selyears_dlem.R")
+source("selyears_jules.R")
+source("selyears_lpx.R")
+source("selyears_orchidee.R")
+source("selyears_sdgvm.R")
+```
+
+Using Ferret for JULES. In Ferret:
+```
+go selyears_jules.jnl
+```
+
+In Bash:
+```{sh}
+cdo chname,GPP_SUB,gpp CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc tmp.nc
+mv tmp.nc CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc
+
+cdo chname,gpp.monthly,gpp /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc tmp.nc
+mv tmp.nc /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc
+```
+
+2. Converting to annual totals:
+```{r}
+source("get_ann_trendy.R")
+```
+
+3. Detrend, and calculate variance and relative variance 
+```{r}
+source("get_iavtrendy.R")
+```
+
+
+## in R/cdo: plot average relative IAV increase due to soil moisture effect as a function of spatial scale (as in Jung)
+## in R Ahlstroem plot
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
