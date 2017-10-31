@@ -39,7 +39,7 @@ if (!exists("soilm")){
 }
 
 ## get area matrix
-if (!file.exists("data/area.nc")){
+if (!file.exists("data/area_halfdeg.nc")){
 
   arr_area <- soilm[,,1]
   arr_area[] <- NA
@@ -56,13 +56,13 @@ if (!file.exists("data/area.nc")){
              lon, lat,
              long_name_var1 = "gridcell surface area",
              units_var1 = "m2",
-             filnam = "data/area.nc" 
+             filnam = "data/area_halfdeg.nc" 
              )
 
 } else {
 
   print("getting area ...")
-  nc <- nc_open( "data/area.nc" )
+  nc <- nc_open( "data/area_halfdeg.nc" )
   arr_area <- ncvar_get( nc, varid="area" )
   nc_close( nc )  
 
