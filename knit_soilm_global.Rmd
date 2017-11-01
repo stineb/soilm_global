@@ -16,14 +16,21 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 ## Aggregate site data
 
 Aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period):
-```{r aggregate_all, eval=FALSE}
+```{r aggregate_all, eval=FALSE, echo=FALSE}
 source("aggregate_all_fluxnet2015.R")
 ```
 
+Plot aggregated data from all sites. The first three boxplots already give an indication that model biases are related to drought conditions: Under dry conditions (daily AET/PET<0.95), the models exhibit a higher bias (ratio of modelled over observed GPP). The P-model is unbiased under moist conditions. For both MTE and MODIS GPP the low bias under moist conditions is partially compensated by a high bias (or apparently small bias) under dry conditions. Furthermore, the P-model bias exhibits a relationship to AET/PET: the drier the higher bias. The same is true for MTE and MODIS GPP, although the pattern is not as clear.
+```{r aggregate_all}
+source("plot_agg_all_fluxnet2015.R")
+```
+
 Do the same as above but now only for a subset of sites where the NN-FLUXNET2015 method performed well. This data includes the NN-predicted values. 
-```{r aggregate_nn, eval=FALSE}
+```{r aggregate_nn, eval=FALSE, echo=FALSE}
 source("aggregate_nn_fluxnet2015.R")
 ```
+
+
 
 ## Correct GPP
 Apply the empirical correction function for GPP. The following steps are required:

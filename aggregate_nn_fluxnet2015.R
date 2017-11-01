@@ -12,13 +12,11 @@ source( "./func_flue_est.R" )
 # IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
 load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
 
-
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
 successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
-
 
 ## Manual settings ----------------
 # do.sites   = "AU-Dry"
@@ -96,7 +94,7 @@ if (use_weights){
   char_wgt <- ""
 }
 
-print( "Aggregating and complementing data for all sites ..." )
+print( "Aggregating and complementing data for NN FLUXNET2015 sites ..." )
 
 ##------------------------------------------------
 ## Initialise aggregated data
@@ -119,63 +117,54 @@ for (sitename in do.sites){
   infil <- paste( myhome, "data/nn_fluxnet/fvar/nn_fluxnet2015_", sitename, "_", nam_target, char_wgt, char_fapar, ".Rdata", sep="" ) 
   if (verbose) print( paste( "opening file", infil ) )
 
-  if (file.exists(nicefiln)&&!overwrite_nice){
+  load( infil ) ## gets list 'nn_fluxnet'
+  nice             <- as.data.frame( nn_fluxnet[[ sitename ]]$nice )            
+  varnams_swc      <- nn_fluxnet[[ sitename ]]$varnams_swc    
+  varnams_swc_obs  <- nn_fluxnet[[ sitename ]]$varnams_swc_obs
 
-    load( nicefiln )
+  ##------------------------------------------------
+  ## get LUE and remove outliers
+  ##------------------------------------------------
+  nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
+  nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
 
+  for (ivar in varnams_swc_obs){
+    nice[[ ivar ]]  <- nice[[ ivar ]]  / max( nice[[ ivar ]] , na.rm=TRUE )
+  }
+
+  ##------------------------------------------------
+  ## additional variables
+  ##------------------------------------------------
+  nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs, 
+                            ratio_obs_mod = gpp_obs / gpp_pmodel, 
+                            alpha = aet_pmodel / pet_pmodel ) %>% 
+                    mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), 
+                            ratio_obs_mod = ifelse( is.infinite(ratio_obs_mod), NA, ratio_obs_mod ),
+                            alpha = ifelse( is.infinite(alpha), NA, alpha )
+                            )
+
+  ## add row to aggregated data
+  nice <- nice %>% mutate( mysitename=sitename )
+
+  ## fLUE estimate based on current soil moisture and average AET/PET
+  meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
+  nice <- nice %>%  mutate( flue0    = calc_flue0( meanalpha ) )%>% 
+                    mutate( beta     = calc_beta( flue0 ) ) %>% 
+                    mutate( flue_est = func_flue_est( soilm_mean, beta ) ) %>% 
+                    mutate( dry      = ifelse(alpha<0.95, TRUE, FALSE) )
+
+  if (nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar"){
+    nice <- nice %>% mutate( gpp_nn_act = var_nn_act * evi * ppfd, gpp_nn_pot = var_nn_pot * evi * ppfd, gpp_nn_vpd = var_nn_vpd * evi * ppfd )
   } else {
+    nice <- nice %>% mutate( gpp_nn_act = var_nn_act, gpp_nn_pot = var_nn_pot, gpp_nn_vpd = var_nn_vpd )
+  }
 
-    load( infil ) ## gets list 'nn_fluxnet'
-    nice             <- as.data.frame( nn_fluxnet[[ sitename ]]$nice )            
-    varnams_swc      <- nn_fluxnet[[ sitename ]]$varnams_swc    
-    varnams_swc_obs  <- nn_fluxnet[[ sitename ]]$varnams_swc_obs
-
-    ##------------------------------------------------
-    ## get LUE and remove outliers
-    ##------------------------------------------------
-    nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
-    nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
-
-    for (ivar in varnams_swc_obs){
-      nice[[ ivar ]]  <- nice[[ ivar ]]  / max( nice[[ ivar ]] , na.rm=TRUE )
-    }
-
-    ##------------------------------------------------
-    ## additional variables
-    ##------------------------------------------------
-    nice$bias_pmodel  <-  nice$gpp_pmodel / nice$gpp_obs
-    nice$bias_pmodel[ which(is.infinite(nice$bias_pmodel)) ] <- NA
-
-    nice$ratio_obs_mod  <-  nice$gpp_obs / nice$gpp_pmodel
-    nice$ratio_obs_mod[ which(is.infinite(nice$ratio_obs_mod)) ] <- NA
-
-    nice$alpha  <-  nice$aet_pmodel / nice$pet_pmodel
-    nice$alpha[ which(is.infinite(nice$alpha)) ] <- NA
-
-    ## add row to aggregated data
-    nice <- nice %>% mutate( mysitename=sitename )
-
-    ## fLUE estimate based on current soil moisture and average AET/PET
-    meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
-    nice <- nice %>%  mutate( flue0    = calc_flue0( meanalpha ) )%>% 
-                      mutate( beta     = calc_beta( flue0 ) ) %>% 
-                      mutate( flue_est = func_flue_est( soilm_mean, beta ) ) %>% 
-                      mutate( dry      = ifelse(alpha<0.95, TRUE, FALSE) )
-
-    if (nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar"){
-      nice <- nice %>% mutate( gpp_nn_act = var_nn_act * evi * ppfd, gpp_nn_pot = var_nn_pot * evi * ppfd, gpp_nn_vpd = var_nn_vpd * evi * ppfd )
-    } else {
-      nice <- nice %>% mutate( gpp_nn_act = var_nn_act, gpp_nn_pot = var_nn_pot, gpp_nn_vpd = var_nn_vpd )
-    }
-
-    ## fill with NA if respective soil moisture data was not used
-    for (isoilm in varnams_swc_full){
-      if ( !is.element( paste( "var_nn_act_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_act_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "var_nn_pot_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_pot_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "var_nn_vpd_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_vpd_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "moist_",      isoilm, sep="" ), names(nice) ) ) nice[[ paste( "moist_",      isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-    }
-
+  ## fill with NA if respective soil moisture data was not used
+  for (isoilm in varnams_swc_full){
+    if ( !is.element( paste( "var_nn_act_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_act_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
+    if ( !is.element( paste( "var_nn_pot_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_pot_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
+    if ( !is.element( paste( "var_nn_vpd_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_vpd_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
+    if ( !is.element( paste( "moist_",      isoilm, sep="" ), names(nice) ) ) nice[[ paste( "moist_",      isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
   }
 
   ##------------------------------------------------
@@ -376,15 +365,16 @@ for (sitename in do.sites){
 
 print("... done.")
 
-if ( length( dplyr::filter( siteinfo, code!=0 )$mysitename ) == length( do.sites ) ){
+if ( length( dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename ) == length( do.sites ) ){
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
-  save( nice_agg,  file=paste("data/nice_nn_agg_",  nam_target, char_fapar, ".Rdata", sep="") )
-  # save( nice_nn_resh, file=paste("data/nice_nn_resh_", nam_target, char_fapar, ".Rdata", sep="") )
-
+  save( nice_agg, file=paste( "data/nice_nn_agg_", nam_target, char_fapar, ".Rdata", sep="") )
   if (avl_data_mte)   save( mte_agg,   file=paste("data/nice_nn_mte_agg_",   nam_target, char_fapar, ".Rdata", sep="") )
   if (avl_data_modis) save( modis_agg, file=paste("data/nice_nn_modis_agg_", nam_target, char_fapar, ".Rdata", sep="") )
+
+  # save( nice_resh, file="data/nice_resh_lue_obs_evi.Rdata" )
+  # save( overview, file="data/overview_data_fluxnet2015_L3.Rdata" )
 
 } else {
 

@@ -56,10 +56,9 @@ if (use_weights){
 siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
 
 ## Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
-load( paste( "data/nice_agg_", char_wgt, nam_target, ".Rdata", sep="" ) )       # loads 'nice_agg'
-load( paste( "data/nice_resh_", char_wgt, nam_target, ".Rdata", sep="" ) )      # loads 'nice_resh'
-load( paste( "data/nice_modis_agg_", char_wgt, nam_target, ".Rdata", sep="" ) ) # loads 'nice_to_modis_agg'
-load( paste( "data/nice_mte_agg_", char_wgt, nam_target, ".Rdata", sep="" ) )   # loads 'nice_to_mte_agg'
+load( paste( "data/nice_nn_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
+load( paste( "data/nice_nn_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
+load( paste( "data/nice_nn_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
 
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 

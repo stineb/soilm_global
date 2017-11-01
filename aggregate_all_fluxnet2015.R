@@ -222,14 +222,14 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## additional variables
     ##------------------------------------------------
-    nice$bias_pmodel  <-  nice$gpp_pmodel / nice$gpp_obs
-    nice$bias_pmodel[ which(is.infinite(nice$bias_pmodel)) ] <- NA
+    nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs, 
+                              ratio_obs_mod = gpp_obs / gpp_pmodel, 
+                              alpha = aet_pmodel / pet_pmodel ) %>% 
+                      mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), 
+                              ratio_obs_mod = ifelse( is.infinite(ratio_obs_mod), NA, ratio_obs_mod ),
+                              alpha = ifelse( is.infinite(alpha), NA, alpha )
+                              )
 
-    nice$ratio_obs_mod  <-  nice$gpp_obs / nice$gpp_pmodel
-    nice$ratio_obs_mod[ which(is.infinite(nice$ratio_obs_mod)) ] <- NA
-
-    nice$alpha  <-  nice$aet_pmodel / nice$pet_pmodel
-    nice$alpha[ which(is.infinite(nice$alpha)) ] <- NA
 
     ## add row to aggregated data
     nice <- nice %>% mutate( mysitename=sitename )

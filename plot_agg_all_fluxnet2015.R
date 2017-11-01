@@ -17,14 +17,10 @@ nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
 mte_agg  <- mte_agg  %>% filter( mysitename %in% do.sites )
 modis_agg<- modis_agg%>% filter( mysitename %in% do.sites )
 
-## Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
+# Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
 load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
 load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
 load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
-
-load( paste( "data/nice_nn_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
-load( paste( "data/nice_nn_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
-load( paste( "data/nice_nn_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
 
 ##------------------------------------------------
 ## Bin data w.r.t. alpha
@@ -43,20 +39,20 @@ modis_agg<- modis_agg%>% mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
 
 par(las=1)
 
-boxplot( log(bias_pmodel) ~ dry, data=nice_agg, outline=FALSE, col="grey70" );  abline( h=0, lty=3 )
-boxplot( log(bias_mte)    ~ dry, data=mte_agg, outline=FALSE, col="grey70" );   abline( h=0, lty=3 )
-boxplot( log(bias_modis)  ~ dry, data=modis_agg, outline=FALSE, col="grey70" ); abline( h=0, lty=3 )
+boxplot( log(bias_pmodel) ~ dry, data=nice_agg,  outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab="AET/PET < 0.95", main="P-model" );     abline( h=0, lty=3 )
+boxplot( log(bias_mte)    ~ dry, data=mte_agg,   outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab="AET/PET < 0.95", main="FLUXCOM MTE" ); abline( h=0, lty=3 )
+boxplot( log(bias_modis)  ~ dry, data=modis_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab="AET/PET < 0.95", main="MODIS" );       abline( h=0, lty=3 )
 
 ## bias in P-model versus alpha
-boxplot( log(bias_pmodel) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70" )
+boxplot( log(bias_pmodel) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70", main="P-model" )
 abline( h=0, lty=3 )
 
 ## bias in MTE versus alpha
-boxplot( log(bias_mte) ~ inalphabin, data=mte_agg, outline=FALSE, col="grey70" )
+boxplot( log(bias_mte) ~ inalphabin, data=mte_agg, outline=FALSE, col="grey70", main="FLUXCOM MTE" )
 abline( h=0, lty=3 )
 
 ## bias in MODIS versus alpha
-boxplot( log(bias_modis) ~ inalphabin, data=modis_agg, outline=FALSE, col="grey70" )
+boxplot( log(bias_modis) ~ inalphabin, data=modis_agg, outline=FALSE, col="grey70", main="MODIS" )
 abline( h=0, lty=3 )
 
 # xlim <- c(0,1.2)

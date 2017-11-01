@@ -14,7 +14,7 @@ calc_beta <- function( flue0 ){
   return( y )
 }
 
-func_flue_est <- function( soilm, beta ){
+calc_flue_est <- function( soilm, beta ){
 
   x1 <- 0.75
 

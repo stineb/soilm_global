@@ -1,5 +1,6 @@
 source("~/.Rprofile")
 library(dplyr)
+library(ncdf4)
 library(pracma)
 
 filnams <- read.csv("/Users/benjaminstocker/data/trendy/v5/trendy_s2_filnams_gpp.csv")
