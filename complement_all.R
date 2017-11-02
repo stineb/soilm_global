@@ -52,7 +52,6 @@ complment_all <- function( linearfit, nlsfit ){
 
 	}
 
-
 	## complement modis files
 	files <- list.files("data", pattern = "modis_*") 
 	files <- files[-grep("df_dday", files, fixed=T)]

@@ -14,7 +14,7 @@ load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
-successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+successcodes <- read.csv( "successcodes.csv", as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
