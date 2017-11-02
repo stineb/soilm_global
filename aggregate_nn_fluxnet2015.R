@@ -23,9 +23,9 @@ nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
 package    = "nnet"
-overwrite_nice = FALSE
-overwrite_modis = FALSE
-overwrite_mte = FALSE
+overwrite_nice = TRUE
+overwrite_modis = TRUE
+overwrite_mte = TRUE
 verbose    = FALSE
 ##---------------------------------
 
@@ -285,13 +285,14 @@ for (sitename in do.sites){
         nice_to_mte <- cbind( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and mte)
-        nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
+        nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), inmtebin, -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
         
         ## get additional variables
         nice_to_mte <- nice_to_mte %>%  mutate( bias_mte = gpp_mte / gpp_obs )          %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
                                         mutate( ratio_obs_mod_mte = gpp_obs / gpp_mte ) %>% mutate( ratio_obs_mod_mte=ifelse( is.infinite( bias_mte ), NA, ratio_obs_mod_mte ) ) %>%  
                                         mutate( bias_rf = gpp_rf / gpp_obs )            %>% mutate( bias_rf=ifelse( is.infinite( bias_rf ), NA, bias_rf ) )  %>%  
-                                        mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( bias_rf ), NA, ratio_obs_mod_rf ) )
+                                        mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( bias_rf ), NA, ratio_obs_mod_rf ) ) %>% 
+                                        mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
         save( nice_to_mte, file=filn )
@@ -299,7 +300,7 @@ for (sitename in do.sites){
       }
 
       ## add row to aggregated data
-      mte_agg <- rbind( mte_agg, nice_to_mte )
+      mte_agg <- rbind( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
 
     } else {
 
@@ -347,11 +348,12 @@ for (sitename in do.sites){
         nice_to_modis <- cbind( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and modis)
-        nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
+        nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), inmodisbin, -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
         
         ## get additional variables
-        nice_to_modis <- nice_to_modis %>% mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
-                                           mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) )
+        nice_to_modis <- nice_to_modis %>%  mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
+                                            mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) ) %>% 
+                                            mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
         save( nice_to_modis, file=filn )
@@ -366,7 +368,7 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- rbind( modis_agg, nice_to_modis )
+      modis_agg <- rbind( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
     }
 
   }

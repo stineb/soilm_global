@@ -351,7 +351,7 @@ for (sitename in do.sites){
       }
 
       ## add row to aggregated data
-      mte_agg <- rbind( mte_agg, nice_to_mte )
+      mte_agg <- rbind( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
 
     } else {
 
@@ -418,7 +418,7 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- rbind( modis_agg, nice_to_modis )
+      modis_agg <- rbind( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
     }
 
   }
