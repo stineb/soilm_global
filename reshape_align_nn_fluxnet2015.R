@@ -95,7 +95,9 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                 "ratio_obs_mod", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
-                "dry"
+                "dry",
+                "flue_est",
+                "flue_est_nls"
                 )
 
   ##------------------------------------------------

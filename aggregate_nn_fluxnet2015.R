@@ -23,9 +23,9 @@ nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
 package    = "nnet"
-overwrite_nice = TRUE
-overwrite_modis = TRUE
-overwrite_mte = TRUE
+overwrite_nice = FALSE
+overwrite_modis = FALSE
+overwrite_mte = FALSE
 verbose    = FALSE
 ##---------------------------------
 

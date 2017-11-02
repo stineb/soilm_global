@@ -63,7 +63,7 @@ linearfit <- get_linearfit( ddf, monthly=TRUE )
 plot_linearfit( linearfit )
 ```
 Given fLUE$_0$ as a linear function of mean AET/PET, the soil moisture stress function can be calculated with 
-```{r, eval=FALSE}
+```{r}
 calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
   flue0 <- apar + bpar * alpha
   beta  <- (flue0 - 1.0) / (cpar - dpar)^2
@@ -71,7 +71,7 @@ calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
   return( flue_est )
 }
 linearfit <- get_linearfit( ddf, monthly=FALSE )
-flue <- calc_flue_est_alpha( ddf$soilm_mean, alpha=ddf$meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 ) )
+flue <- calc_flue_est_alpha( ddf$soilm_mean, alpha=ddf$meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 )
 ```
 
 ### Non-linear least squares
@@ -138,37 +138,20 @@ for ( sitename in unique(ddf$mysitename) ){
 }
 ```
 
-and complement the dataframes.
+Finally, all dataframes are complemented with estimated fLUE (columns `flue_est` and `flue_est_nls`).
 ```{r complement_flue}
-## complementing 'data/nice_nn_agg_lue_obs_evi.Rdata'
-load( "data/nice_nn_agg_lue_obs_evi.Rdata" )  # loads 'nice_agg'
-nice_agg <- compl_df_flue_est( nice_agg, linearfit, nlsfit )
-save( nice_agg, file="data/nice_nn_agg_lue_obs_evi_L2.Rdata" )
+source("complement_all.R")
+# complment_all( linearfit, nlsfit )
+```
 
-## complementing 'data/nice_nn_agg_lue_obs_evi.Rdata'
-load( "data/nice_nn_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-save( modis_agg, file="data/nice_nn_modis_agg_lue_obs_evi_L2.Rdata" )
+## Reshape data to align by drought events
+```{r}
+# source("execute_reshape_align_nn_fluxnet2015.R")
+```
 
-## complementing 'data/nice_nn_modis_agg_lue_obs_evi.Rdata'
-load( "data/nice_nn_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-save( modis_agg, file="data/nice_nn_modis_agg_lue_obs_evi_L2.Rdata" )
-
-## complementing 'data/nice_nn_agg_lue_obs_evi.Rdata'
-load( "data/nice_all_agg_lue_obs_evi.Rdata" )  # loads 'nice_agg'
-nice_agg <- compl_df_flue_est( nice_agg, linearfit, nlsfit )
-save( nice_agg, file="data/nice_all_agg_lue_obs_evi_L2.Rdata" )
-
-## complementing 'data/nice_all_agg_lue_obs_evi.Rdata'
-load( "data/nice_all_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-save( modis_agg, file="data/nice_all_modis_agg_lue_obs_evi_L2.Rdata" )
-
-## complementing 'data/nice_all_modis_agg_lue_obs_evi.Rdata'
-load( "data/nice_all_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-save( modis_agg, file="data/nice_all_modis_agg_lue_obs_evi_L2.Rdata" )
+## Plot data to analyse bias, related to drought effect on LUE
+```{r}
+# source("plot_agg_nn_fluxnet2015.R")
 ```
 
 <!-- -->
