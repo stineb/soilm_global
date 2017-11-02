@@ -6,8 +6,8 @@ source( paste( syshome, "/.Rprofile", sep="" ) )
 library(dplyr)
 library(LSD)
 
-source( paste( myhome, "sofun/utils_sofun/analysis_sofun/analyse_modobs.R", sep="" ) )
-source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
+source( "analyse_modobs.R" )
+source( "remove_outliers.R" )
 
 ## Manual settings ----------------
 nam_target = "lue_obs_evi"
