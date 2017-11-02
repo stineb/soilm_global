@@ -1,7 +1,8 @@
 get_linearfit <- function( df, monthly=FALSE ){
   
   require(dplyr)
-  
+  require(tidyr)
+
   if (monthly){
     ## add date and MOY to dataframe nice_agg
     df <- df %>% mutate( date = as.POSIXct( as.Date( paste( as.character( year ), "-01-01", sep="" ) ) + doy - 1 ))

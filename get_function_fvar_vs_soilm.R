@@ -102,11 +102,6 @@ ddf_flue0 <- ddf_flue0 %>% left_join( rename( df_alpha, meanalpha=alpha ), by="m
 ## flue0 = beta * (x0 - x1)^2 + 1
 ddf_flue0 <- ddf_flue0 %>% mutate( flue0_est = calc_flue0( meanalpha ) )
  
-## Estimate fLUE based on soil moisture and alpha
-ddf <- ddf %>%  left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" ) %>%
-                left_join( select( mdf_flue0, flue0, flue0_est ), by="mysitename" ) %>%
-                mutate( flue_est = calc_flue_est_alpha( soilm_mean, meanalpha, 0.11, 0.89, 0.125, 0.75 ) )
-
 ##------------------------------------
 ## Estimate fLUE using non-linear least squares on quadratic function
 ##------------------------------------
@@ -127,21 +122,6 @@ stressfit <- try(
 print("fitted coefficients are:")
 print(coef(stressfit))
 
-ddf <- ddf %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha, coef(stressfit)[[ "apar" ]], coef(stressfit)[[ "bpar" ]], coef(stressfit)[[ "cpar" ]], coef(stressfit)[[ "dpar" ]] ) )
-
-##------------------------------------
-## plot estimated and "actual" fLUE
-##------------------------------------
-  with( ddf, plot( fvar, flue_est, pch=16, col=rgb(0,0,0,0.1)) )
-  lines( c(-100,100), c(-100,100), lty=3, col="red" )
-
-  with( ddf, plot( fvar, flue_est_nls, pch=16, col=rgb(0,0,0,0.1)) )
-  lines( c(-100,100), c(-100,100), lty=3, col="red" )  
-
-  with( filter( ddf, mysitename=="US-Ton"), plot( year_dec, fvar, type="l" ) )
-  with( filter( ddf, mysitename=="US-Ton"), lines( year_dec, flue_est, col="red" ) )
-  with( filter( ddf, mysitename=="US-Ton"), lines( year_dec, flue_est_nls, col="green" ) )
-
 ##------------------------------------
 ## plot flue0 vs. alpha
 ##------------------------------------
@@ -159,8 +139,6 @@ ddf <- ddf %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha
   eqfit <- paste0( "y = ", format( coef(stressfit)[[ "apar" ]], digits=2 ), ifelse(sign(coef(stressfit)[[ "bpar" ]])==1, " + ", " - "), format( abs(coef(stressfit)[[ "bpar" ]]), digits=2 ), " x " )
   text( 0.3, 1.0, eqfit, adj=0.0, col="red" )
   
-  
-
   ## some sites have fLUE0 = NA - these are mostly the ones with high AET/PET
   boxplot( alpha ~ is.na(flue0), data=mdf_flue0 )
   
@@ -180,6 +158,30 @@ ddf <- ddf %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha
 
   ## some sites have fLUE0 = NA - these are mostly the ones with high AET/PET
   boxplot( alpha ~ is.na(flue0), data=ddf_flue0 )
+
+##------------------------------------
+## add estimated fLUE values to data frame
+##------------------------------------
+## Estimate fLUE based on linear fit between fLUE0 and mean-alpha (fixed "tie points")
+ddf <- ddf %>%  left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" ) %>%
+                left_join( select( mdf_flue0, flue0, flue0_est ), by="mysitename" ) %>%
+                mutate( flue_est = calc_flue_est_alpha( soilm_mean, meanalpha, cf[1], cf[2], 0.125, 0.75 ) )
+
+## Estimate fLUE based on fully fitted relationship using non-linear least squares fit function
+ddf <- ddf %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha, coef(stressfit)[[ "apar" ]], coef(stressfit)[[ "bpar" ]], coef(stressfit)[[ "cpar" ]], coef(stressfit)[[ "dpar" ]] ) )
+
+##------------------------------------
+## plot estimated and "actual" fLUE
+##------------------------------------
+  with( ddf, plot( fvar, flue_est, pch=16, col=rgb(0,0,0,0.1)) )
+  lines( c(-100,100), c(-100,100), lty=3, col="red" )
+
+  with( ddf, plot( fvar, flue_est_nls, pch=16, col=rgb(0,0,0,0.1)) )
+  lines( c(-100,100), c(-100,100), lty=3, col="red" )  
+
+  with( filter( ddf, mysitename=="US-Ton"), plot( year_dec, fvar, type="l" ) )
+  with( filter( ddf, mysitename=="US-Ton"), lines( year_dec, flue_est, col="red" ) )
+  with( filter( ddf, mysitename=="US-Ton"), lines( year_dec, flue_est_nls, col="green" ) )
 
 ##------------------------------------
 ## for each site, plot fit
@@ -228,6 +230,12 @@ ddf <- ddf %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha
     mycurve( function(x) calc_flue_est( x, dplyr::filter( ddf_flue0, mysitename==sitename )$flue0 ),     from=0.0, to=1.0, col='red', add=TRUE, lwd=2 )
     mycurve( function(x) calc_flue_est( x, dplyr::filter( ddf_flue0, mysitename==sitename )$flue0_est ), from=0.0, to=1.0, col='orange', add=TRUE, lwd=2, lty=2 )
   }
+
+##------------------------------------
+## save complemented daily and monthly data
+##------------------------------------
+save( ddf, file = "data/ddf_nn_agg_lue_obs_evi.Rdata" )
+save( mdf, file = "data/mdf_nn_agg_lue_obs_evi.Rdata" )
 
 # ##------------------------------------
 # ## plot scatterplot of flue vs soilm_mean 

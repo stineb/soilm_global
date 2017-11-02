@@ -11,16 +11,17 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 ##------------------------------------------------
 ## Select only sites that were in NN FLUXNET 2015 analysis
 ##------------------------------------------------
+# Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
+load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
+load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
+load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
+
 successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
 mte_agg  <- mte_agg  %>% filter( mysitename %in% do.sites )
 modis_agg<- modis_agg%>% filter( mysitename %in% do.sites )
 
-# Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
-load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
-load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
-load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
 
 ##------------------------------------------------
 ## Bin data w.r.t. alpha

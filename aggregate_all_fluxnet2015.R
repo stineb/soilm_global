@@ -7,11 +7,9 @@ syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 
 source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
-source( "./func_flue_est.R" )
 
 # IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
 load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
-
 
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
@@ -22,19 +20,17 @@ nam_target  = "lue_obs_evi"
 use_weights = FALSE
 use_fapar   = FALSE
 
-
 ## Manual settings ----------------
 # do.sites   = "AU-Dry"
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
 package    = "nnet"
-overwrite_nice = TRUE
-overwrite_modis = TRUE
-overwrite_mte = TRUE
+overwrite_nice = FALSE
+overwrite_modis = FALSE
+overwrite_mte = FALSE
 verbose    = FALSE
 ##---------------------------------
-
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
@@ -99,7 +95,7 @@ if (use_weights){
   char_wgt <- ""
 }
 
-print( "Aggregating and complementing data for all sites ..." )
+print( paste( "Aggregating and complementing data for ", length(do.sites)," sites ..." ) )
 
 ##------------------------------------------------
 ## Initialise aggregated data
@@ -236,10 +232,7 @@ for (sitename in do.sites){
 
     ## fLUE estimate based on current soil moisture and average AET/PET
     meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
-    nice <- nice %>%  mutate( flue0    = calc_flue0( meanalpha ) )%>% 
-                      mutate( beta = calc_beta( flue0 ) ) %>% 
-                      mutate( flue_est = func_flue_est( soilm_mean, beta ) ) %>% 
-                      mutate( dry=ifelse(alpha<0.95, TRUE, FALSE))
+    nice <- nice %>%  mutate( dry=ifelse(alpha<0.95, TRUE, FALSE))
 
     ##------------------------------------------------
     ## save to file
@@ -273,7 +266,6 @@ for (sitename in do.sites){
                 "ratio_obs_mod", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
-                "flue_est",
                 "dry"
                 )
 
@@ -433,17 +425,29 @@ for (sitename in do.sites){
 
 }
 
-print("... done.")
+print("Aggregation completed.")
+print( paste( "site data with P-model outputs has been saved in files  data/nice_all_<sitename>.Rdata"))
+print( paste( "site data with FLUXCOM MTE data has been saved in files data/mte_<sitename>.Rdata"))
+print( paste( "site data with MODIS GPP data has been saved in files   data/modis_<sitename>.Rdata"))
+
 
 if ( length( dplyr::filter( siteinfo, code!=0 )$mysitename ) == length( do.sites ) ){
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
-  save( nice_agg,  file=paste("data/nice_all_agg_",  nam_target, char_fapar, ".Rdata", sep="") )
+  filn <- paste0("data/nice_all_agg_",  nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe nice_agg in file", filn) )
+  save( nice_agg,  file=filn )
+
   # save( nice_all_resh, file=paste("data/nice_all_resh_", nam_target, char_fapar, ".Rdata", sep="") )
 
-  if (avl_data_mte)   save( mte_agg,   file=paste("data/nice_all_mte_agg_",   nam_target, char_fapar, ".Rdata", sep="") )
-  if (avl_data_modis) save( modis_agg, file=paste("data/nice_all_modis_agg_", nam_target, char_fapar, ".Rdata", sep="") )
+  filn <- paste0("data/nice_all_mte_agg_",   nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe mte_agg in file", filn) )
+  save( mte_agg, file=filn )
+
+  filn <- paste0("data/nice_all_modis_agg_", nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe modis_agg in file", filn) )
+  save( modis_agg, file=filn )
 
 } else {
 
