@@ -13,9 +13,9 @@ complment_all <- function( linearfit, nlsfit ){
 	save( modis_agg, file="data/nice_nn_modis_agg_lue_obs_evi_L2.Rdata" )
 
 	## complementing 'data/nice_nn_modis_agg_lue_obs_evi.Rdata'
-	load( "data/nice_nn_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-	modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-	save( modis_agg, file="data/nice_nn_modis_agg_lue_obs_evi_L2.Rdata" )
+	load( "data/nice_nn_mte_agg_lue_obs_evi.Rdata" )  # loads 'mte_agg'
+	mte_agg <- compl_df_flue_est( mte_agg, linearfit, nlsfit )
+	save( mte_agg, file="data/nice_nn_mte_agg_lue_obs_evi_L2.Rdata" )
 
 	## complementing 'data/nice_nn_agg_lue_obs_evi.Rdata'
 	load( "data/nice_all_agg_lue_obs_evi.Rdata" )  # loads 'nice_agg'
@@ -28,9 +28,17 @@ complment_all <- function( linearfit, nlsfit ){
 	save( modis_agg, file="data/nice_all_modis_agg_lue_obs_evi_L2.Rdata" )
 
 	## complementing 'data/nice_all_modis_agg_lue_obs_evi.Rdata'
-	load( "data/nice_all_modis_agg_lue_obs_evi.Rdata" )  # loads 'modis_agg'
-	modis_agg <- compl_df_flue_est( modis_agg, linearfit, nlsfit )
-	save( modis_agg, file="data/nice_all_modis_agg_lue_obs_evi_L2.Rdata" )
+	load( "data/nice_all_mte_agg_lue_obs_evi.Rdata" )  # loads 'mte_agg'
+	mte_agg <- compl_df_flue_est( mte_agg, linearfit, nlsfit )
+	save( mte_agg, file="data/nice_all_mte_agg_lue_obs_evi_L2.Rdata" )
+
+
+	## complementing 'data/nice_all_modis_agg_lue_obs_evi.Rdata'
+	load( "data/data_aligned_agg.Rdata" )  # loads 'mte_agg'
+	df_dday_agg <- compl_df_flue_est( df_dday_agg, linearfit, nlsfit )
+	df_dday_modis_agg <- compl_df_flue_est( df_dday_modis_agg, linearfit, nlsfit )
+	df_dday_mte_agg <- compl_df_flue_est( df_dday_mte_agg, linearfit, nlsfit )
+	save( df_dday_agg, df_dday_modis_agg, df_dday_mte_agg, df_dday_aggbydday_agg, file="data/data_aligned_agg_L2.Rdata" )
 
 
 	## complement nice files

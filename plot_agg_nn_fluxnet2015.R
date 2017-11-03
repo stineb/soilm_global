@@ -9,6 +9,10 @@ library(LSD)
 source( "analyse_modobs.R" )
 source( "remove_outliers.R" )
 
+source("compl_df_flue_est.R")
+load("linearfit.Rdata")
+load("nlsfit.Rdata")
+
 ## Manual settings ----------------
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
@@ -56,28 +60,55 @@ if (use_weights){
 siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
 
 ## Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
-load( paste( "data/nice_nn_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
-load( paste( "data/nice_nn_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
-load( paste( "data/nice_nn_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
+load( paste( "data/nice_nn_agg_lue_obs_evi_L2.Rdata", sep="" ) )       # loads 'nice_agg'
+load( paste( "data/nice_nn_mte_agg_lue_obs_evi_L2.Rdata", sep="" ) )   # loads 'mte_agg'
+load( paste( "data/nice_nn_modis_agg_lue_obs_evi_L2.Rdata", sep="" ) ) # loads 'modis_agg'
 
 ## Load aligned aggregated data
-load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 
+load( "data/data_aligned_agg_L2.Rdata" ) # loads 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 
 
 ## add vegetation type info to nice_agg
 nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid ), by="mysitename" )
 
 ##------------------------------------------------
+## overwrite ratio_obs_mod again
+##------------------------------------------------
+# df_dday_agg$flue_est <- NULL
+# df_dday_mte_agg$flue_est <- NULL
+# df_dday_modis_agg$flue_est <- NULL
+
+# df_dday_agg$flue_est_nls <- NULL
+# df_dday_mte_agg$flue_est_nls <- NULL
+# df_dday_modis_agg$flue_est_nls <- NULL
+
+# df_dday_agg       <- compl_df_flue_est( df_dday_agg,       linearfit, nlsfit )
+# df_dday_mte_agg   <- compl_df_flue_est( df_dday_mte_agg,   linearfit, nlsfit )
+# df_dday_modis_agg <- compl_df_flue_est( df_dday_modis_agg, linearfit, nlsfit )
+
+# df_dday_agg <- df_dday_agg %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs ) %>% mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ) ) %>% 
+#                                 mutate( ratio_obs_mod = 1/bias_pmodel )      %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod)) %>%  
+                                
+#                                 mutate( bias_pmodel_corr_lin = gpp_pmodel * flue_est / gpp_obs, bias_pmodel_corr_nls = gpp_pmodel * flue_est_nls / gpp_obs ) %>% 
+#                                 mutate( bias_pmodel_corr_lin = ifelse( is.infinite(bias_pmodel_corr_lin), NA, bias_pmodel_corr_lin ), bias_pmodel_corr_nls = ifelse( is.infinite(bias_pmodel_corr_nls), NA, bias_pmodel_corr_nls ) ) %>% 
+
+#                                 mutate( ratio_obs_mod_corr_lin = 1/bias_pmodel_corr_lin, ratio_obs_mod_corr_nls = 1/bias_pmodel_corr_nls ) %>% 
+#                                 mutate( ratio_obs_mod_corr_lin = ifelse(is.infinite(ratio_obs_mod_corr_lin), NA, ratio_obs_mod_corr_lin), ratio_obs_mod_corr_nls = ifelse(is.infinite(ratio_obs_mod_corr_nls), NA, ratio_obs_mod_corr_nls) ) 
+
+df_dday_agg$ratio_obs_mod          <- remove_outliers( df_dday_agg$ratio_obs_mod         , coef=5 )
+# df_dday_agg$ratio_obs_mod_corr_lin <- remove_outliers( df_dday_agg$ratio_obs_mod_corr_lin, coef=5 )
+# df_dday_agg$ratio_obs_mod_corr_nls <- remove_outliers( df_dday_agg$ratio_obs_mod_corr_nls, coef=5 )
+
+
+# df_dday_mte_agg   <- df_dday_mte_agg   %>% mutate( ratio_obs_mod = 1/bias_mte )    %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod))
+# df_dday_modis_agg <- df_dday_modis_agg %>% mutate( ratio_obs_mod = 1/bias_modis )  %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod))
+
+df_dday_modis_agg$ratio_obs_mod <- remove_outliers( df_dday_modis_agg$ratio_obs_mod, coef=5 )
+df_dday_mte_agg$ratio_obs_mod   <- remove_outliers( df_dday_mte_agg$ratio_obs_mod, coef=5 )
+
+
+##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE
 ##------------------------------------------------
-  ## overwrite ratio_obs_mod again
-  df_dday_agg       <- df_dday_agg       %>% mutate( ratio_obs_mod = 1/bias_pmodel ) %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod))
-  df_dday_mte_agg   <- df_dday_mte_agg   %>% mutate( ratio_obs_mod = 1/bias_mte )    %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod))
-  df_dday_modis_agg <- df_dday_modis_agg %>% mutate( ratio_obs_mod = 1/bias_modis )  %>% mutate( ratio_obs_mod = ifelse(is.infinite(ratio_obs_mod), NA, ratio_obs_mod))
-
-  df_dday_agg$ratio_obs_mod       <- remove_outliers( df_dday_agg$ratio_obs_mod, coef=5 )
-  df_dday_modis_agg$ratio_obs_mod <- remove_outliers( df_dday_modis_agg$ratio_obs_mod, coef=5 )
-  df_dday_mte_agg$ratio_obs_mod   <- remove_outliers( df_dday_mte_agg$ratio_obs_mod, coef=5 )
-
   magn <- 3
   ncols <- 4
   nrows <- 3
@@ -152,7 +183,7 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
             filter( df_dday_agg, ratio_obs_mod<5 ),  # necessary to get useful bins with heatscatter()
             heatscatter( 
                         fvar, 
-                        ratio_obs_mod, 
+                        ratio_obs_mod / flue_est_nls, 
                         xlab="fLUE",
                         ylab="GPP observed / GPP modelled",
                         xlim=xlim,
@@ -243,7 +274,7 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
             filter( df_dday_modis_agg, ratio_obs_mod<5 ),  # necessary to get useful bins with heatscatter()
             heatscatter( 
                         fvar, 
-                        ratio_obs_mod, 
+                        ratio_obs_mod / flue_est_nls, 
                         xlab="fLUE",
                         ylab="GPP observed / GPP modelled",
                         xlim=xlim,
@@ -321,7 +352,7 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
             filter( df_dday_mte_agg, ratio_obs_mod<5 ),  # necessary to get useful bins with heatscatter()
             plot( 
                   fvar, 
-                  ratio_obs_mod, 
+                  ratio_obs_mod / flue_est_nls, 
                   xlab="fLUE",
                   ylab="GPP observed / GPP modelled",
                   xlim=c(0,1.2),

@@ -72,6 +72,7 @@ calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
 }
 linearfit <- get_linearfit( ddf, monthly=FALSE )
 flue <- calc_flue_est_alpha( ddf$soilm_mean, alpha=ddf$meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 )
+save( linearfit, file="linearfit.Rdata" )
 ```
 
 ### Non-linear least squares
@@ -92,6 +93,7 @@ source("get_nlsfit.R")
 nlsfit <- get_nlsfit( ddf, monthly=FALSE )
 print("fitted coefficients are:")
 print(coef(nlsfit))
+save( nlsfit, file="nlsfit.Rdata" )
 ```
 This method yields an almost identical relationship between maximum LUE reduction and mean AET/PET as the method described above (see red line and equation in plot below):
 ```{r plotnlsfit, fig.width=4, fig.height=4}
@@ -141,17 +143,17 @@ for ( sitename in unique(ddf$mysitename) ){
 Finally, all dataframes are complemented with estimated fLUE (columns `flue_est` and `flue_est_nls`).
 ```{r complement_flue}
 source("complement_all.R")
-# complment_all( linearfit, nlsfit )
+complment_all( linearfit, nlsfit )
 ```
 
 ## Reshape data to align by drought events
 ```{r}
-# source("execute_reshape_align_nn_fluxnet2015.R")
+source("execute_reshape_align_nn_fluxnet2015.R")
 ```
 
 ## Plot data to analyse bias, related to drought effect on LUE
 ```{r}
-# source("plot_agg_nn_fluxnet2015.R")
+source("plot_agg_nn_fluxnet2015.R")
 ```
 
 <!-- -->

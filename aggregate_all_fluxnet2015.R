@@ -26,9 +26,9 @@ nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
 package    = "nnet"
-overwrite_nice = FALSE
-overwrite_modis = FALSE
-overwrite_mte = FALSE
+overwrite_nice = TRUE
+overwrite_modis = TRUE
+overwrite_mte = TRUE
 verbose    = FALSE
 ##---------------------------------
 
@@ -237,6 +237,7 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## save to file
     ##------------------------------------------------
+    if (verbose) print( paste( "saving to file", nicefiln ) )
     save( nice, file=nicefiln )
 
   }
@@ -346,6 +347,7 @@ for (sitename in do.sites){
                                         mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( bias_rf ), NA, ratio_obs_mod_rf ) )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_mte, file=filn )
 
       }
@@ -367,7 +369,7 @@ for (sitename in do.sites){
   ##------------------------------------------------
   if (avl_data_modis){
 
-    filn <- paste( myhome, "data/modis_", sitename, ".Rdata", sep="" )
+    filn <- paste0( "data/modis_", sitename, ".Rdata" )
 
     if ( file.exists(filn) && !overwrite_modis ){
 
@@ -385,8 +387,7 @@ for (sitename in do.sites){
         ## make modis a bit nicer
         modis <- modis %>%  rename( gpp_modis = data ) %>% 
                             mutate( gpp_modis = gpp_modis / 8.0, doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, 
-                                    date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 ),
-                                    mysitename = sitename
+                                    date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 )
                                     )
 
         ## group nice by 8d bins from MODIS data
@@ -403,9 +404,11 @@ for (sitename in do.sites){
         
         ## get additional variables
         nice_to_modis <- nice_to_modis %>% mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
-                                           mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) )
+                                           mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) ) %>%
+                                           mutate( mysitename = sitename )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_modis, file=filn )
 
       } else {

@@ -55,7 +55,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   }
 
   before <- 30
-  after  <- 100
+  after  <- 300
 
   ## Bins for different variables
   fvarbins  <- seq( from=-20, to=40, by=20 )
