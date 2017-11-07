@@ -7,8 +7,10 @@ compl_df_flue_est <- function( df, linearfit, nlsfit ){
   source("calc_flue_est_alpha.R")
 
   ## Merge mean annual alpha (AET/PET) values into this dataframe
-  load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
-  df <- df %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+  if (is.null(df$meanalpha)){
+    load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+    df <- df %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+  }
 
   ##------------------------------------
   ## add estimated fLUE values to data frame

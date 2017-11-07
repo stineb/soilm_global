@@ -1,7 +1,7 @@
 plot_linearfit <- function( linearfit, nlsfit=NULL ){
 
   par( las=1 )
-  with( linearfit$df_flue0, plot( meanalpha, flue0, pch=16, xlab="AET/PET", ylab=expression(paste("fLUE"[0])) ) )
+  with( linearfit$df_flue0, plot( meanalpha, flue0, pch=16, xlab="AET/PET", ylab=expression(paste("fLUE"[0])), xlim=c(0,1) ) )
   abline( linearfit$linmod, col="black" )
 
   text( 0.3, 1.2, bquote( italic(R)^2 == .(format( summary( linearfit$linmod )$r.squared, digits = 2) ) ),  adj=0.0, cex=1 )
