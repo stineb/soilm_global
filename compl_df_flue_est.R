@@ -1,10 +1,10 @@
-compl_df_flue_est <- function( df, linearfit, nlsfit ){
+compl_df_flue_est <- function( df, linearfit, x0_fix=0.9 ){
 
   ## this requires columns in 'df' called 'soilm_mean' and 'meanalpha'
 
   require(dplyr)
 
-  source("calc_flue_est_alpha.R")
+  source("stress_quad_1sided.R")
 
   ## Merge mean annual alpha (AET/PET) values into this dataframe
   if (is.null(df$meanalpha)){
@@ -16,10 +16,7 @@ compl_df_flue_est <- function( df, linearfit, nlsfit ){
   ## add estimated fLUE values to data frame
   ##------------------------------------
   ## Estimate fLUE based on linear fit between fLUE0 and mean-alpha (fixed "tie points")
-  df <- df %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, meanalpha, coef(linearfit$linmod)[1], coef(linearfit$linmod)[2], 0.125, 0.75 ) )
-
-  ## Estimate fLUE based on fully fitted relationship using non-linear least squares fit function
-  df <- df %>% mutate( flue_est_nls = calc_flue_est_alpha( soilm_mean, meanalpha, coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]], coef(nlsfit)[[ "cpar" ]], coef(nlsfit)[[ "dpar" ]] ) )
+  df <- df %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
 
   return( df )
 

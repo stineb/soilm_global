@@ -1,4 +1,4 @@
-plot_linearfit2 <- function( linearfit, df=NULL ){
+plot_linearfit2 <- function( linearfit, target="fvar", df=NULL ){
 
   require(dplyr)
 
@@ -61,7 +61,7 @@ plot_linearfit2 <- function( linearfit, df=NULL ){
       print(sitename)
       pdf( paste0( "fig/fit_", sitename, ".pdf" ) )
         par(las=1)
-        with( df_tmp, plot( soilm_mean, fvar, xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("royalblue3", 0.2) ))
+        plot( df_tmp$soilm_mean, df_tmp[[ target ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("royalblue3", 0.2) )
         abline( h=1.0, lwd=0.5 )
 
         if (!is.na(dplyr::select( data_tmp, meanalpha))){ 

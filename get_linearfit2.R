@@ -1,17 +1,9 @@
-stress_quad_flattop <- function( x, x0, off, beta ){
-  outstress <- 1.0 + off - beta * ( x - x0 ) ^ 2
-  outstress <- ifelse( outstress>1, 1, outstress )
-  return( outstress )
-}
-
-get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01, x0_fix=0.8 ){
+get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA ){
 
   require( dplyr )
   require(tidyr)
   require(minpack.lm)
 
-  source("calc_flue_est_alpha.R")
-  source("calc_flue_est_flue0.R")
   source("stress_quad_1sided.R")
 
   if (!is.element("fvar", names(df))||!is.element("soilm_mean", names(df))){
@@ -35,18 +27,15 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
       df_tmp <- df
     }
 
-    # ##------------------------------------------------
-    # ## Fit by medians in bis - FLATTOP
-    # ##------------------------------------------------
-    # fit <- try( 
-    #             nlsLM( 
-    #                   ratio_obs_mod ~ stress_quad_flattop( soilm_mean, x0, off, beta ),
-    #                   data=df_tmp,
-    #                   start=list( x0=1.0, off=0.0, beta=1.0 ),
-    #                   lower=c( 0.01, -1.0, 0.01 ),
-    #                   algorithm="port"
-    #                   ) 
-    #             )
+    ##------------------------------------------------
+    ## Aggregate data to N-daily means before fitting
+    ##------------------------------------------------
+    if (!is.na(agg)){
+      df_tmp <- df_tmp %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) )
+      breaks <- seq.POSIXt( df_tmp$date[1], df_tmp$date[nrow(df_tmp)], by=paste0( as.character(agg), " days" ) )
+      df_tmp <- df_tmp %>%  mutate( inbin = cut( as.numeric(date), breaks = breaks ) ) %>%  #, right = FALSE
+                            group_by( inbin ) %>% summarise_all( mean, na.rm=TRUE )
+    }
 
     ##------------------------------------------------
     ## Fit by medians in bis - 1SIDED
@@ -54,7 +43,6 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
     eq <- paste0( target, "~ stress_quad_1sided( soilm_mean, x0, beta )")
     fit <- try( 
                 nlsLM( 
-                      # ratio_obs_mod ~ stress_quad_1sided( soilm_mean, x0, beta ),
                       eq,
                       data=df_tmp,
                       start=list( x0=x0_fix, beta=1.0 ),
@@ -77,7 +65,7 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
 }
 
 
-get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE, x0_fix=0.8 ){
+get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA ){
   
   require(dplyr)
   require(tidyr)
@@ -105,8 +93,7 @@ get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE,
   df_flue0 <- df_flue0 %>% mutate( flue0 = NA )
   out <- c()
   for (sitename in df_flue0$mysitename){
-    # df_flue0$flue0[ which(df_flue0$mysitename==sitename) ] <- get_yintersect( dplyr::filter( df, mysitename==sitename ) )
-    out <- rbind( out, get_yintersect( dplyr::filter( df, mysitename==sitename ), target=target, bin=bin, beta_min=beta_min, x0_fix=x0_fix ) )
+    out <- rbind( out, get_yintersect( dplyr::select( dplyr::filter( df, mysitename==sitename ), year, doy, soilm_mean, ratio_obs_mod, fvar ), target=target, bin=bin, beta_min=beta_min, x0_fix=x0_fix, agg=agg ) )
   }
 
   out <- as.data.frame( cbind( df_flue0, out ) )
@@ -115,7 +102,6 @@ get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE,
   ## Fit linear model
   ##------------------------------------------------------------------------
   linmod <- lm( y0 ~ meanalpha, data=dplyr::filter( out, y0 > -1 ) )
-  # linmod <- lm( y0 ~ meanalpha, data=out )
   
   return( list( linmod=linmod, data=out ) )
 

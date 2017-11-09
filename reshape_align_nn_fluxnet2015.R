@@ -96,8 +96,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry",
-                "flue_est",
-                "flue_est_nls"
+                "flue_est"
                 )
 
   ##------------------------------------------------
@@ -135,10 +134,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     if (!file.exists(filn)||overwrite){
       if (verbose) print( paste( "aligning df ", sitename, "..." ) )
 
-      # after  <- min( max(droughts$len), 200 )
-      # before <- floor( after/2.0 )
-
-      ## XXXXXXXXXXXXXXXX
       df_dday <- data.frame()
       df <- df %>% mutate( mysitename=sitename ) %>% select( one_of(usecols) )
       for ( iinst in 1:nrow(droughts) ){
@@ -153,37 +148,10 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
         addrows <- df %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
         df_dday <- rbind( df_dday, addrows )
       }
-      ## XXXXXXXXXXXXXXXX
 
-      # data_alg_dry  <- array( NA, dim=c( before+after+1, ncol(df)+1, nrow(droughts) ) )
-      # for ( iinst in 1:nrow(droughts) ){
-      #   data_alg_dry[,(ncol(df)+1),iinst] <- (-before:after)+1 ## calling this 'dday' = drought day
-      #   for (idx in -before:min( (droughts$len[iinst]-1), after) ){
-      #     if ( (droughts$idx_start[iinst]+idx)>0 ){
-      #       for (icol in 1:ncol(df)){
-      #         data_alg_dry[ idx+before+1, icol, iinst ] <- df[ droughts$idx_start[iinst]+idx, icol ]
-      #       }
-      #     }
-      #   }
-      #   ## remove data after drought onset that is no longer classified as drought
-      #   dropidxs <- which( data_alg_dry[,which(names_alg=="is_drought_byvar"),iinst]==1 & data_alg_dry[,which(names_alg=="dday"),iinst]<0 )
-      #   data_alg_dry[ dropidxs,,iinst ] <- NA
-      # }
-
-      # ##--------------------------------------------------------
-      # ## Bin aligned data and expand from 3D array to dataframe
-      # ##--------------------------------------------------------
-      # ## expand 'data_alg_dry' to get a data frame that now has 'dday' in it
-      # df_dday <- data.frame()
-      # for (iinst in seq(dim(data_alg_dry)[3])){
-      #   add <- as.data.frame( data_alg_dry[,,iinst] )
-      #   colnames(add) <- names_alg
-      #   add$mysitename <- rep( sitename, dim( data_alg_dry[,,iinst] )[1])
-      #   add$inst <- rep( iinst, dim( data_alg_dry[,,iinst] )[1] )
-      #   df_dday <- rbind( df_dday, add )
-      # }
-      # df_dday <- df_dday[ !is.na(df_dday$year_dec), ]
-
+      ##--------------------------------------------------------
+      ## Bin aligned data and expand from 3D array to dataframe
+      ##--------------------------------------------------------
       ## add bin information based on dday to expanded df
       df_dday <- df_dday %>% mutate( infvarbin  = cut( as.numeric(dday), breaks = fvarbins ) )
       df_dday <- df_dday %>% mutate( infaparbin = cut( as.numeric(dday), breaks = faparbins ) )
@@ -260,7 +228,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     infiln  <- paste( "data/modis_nn_", sitename, ".Rdata", sep="" )
     outfiln <- paste( "data/df_dday_modis_", sitename, ".Rdata", sep="" )
 
-    if (!file.exists(outfiln)||overwrite_modis){
+    if (!file.exists(outfiln)||overwrite){
 
       if (file.exists(infiln)){
 
@@ -272,7 +240,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
         before_modis <- floor( max(droughts_modis$len) / 2 )
         after_modis  <- max(droughts_modis$len)
         
-        ## XXXXXXXXXXXXXXXX
         df_dday_modis <- data.frame()
         nice_to_modis <- nice_to_modis %>% mutate( mysitename=sitename )
         for ( iinst in 1:nrow(droughts_modis) ){
@@ -287,38 +254,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
           addrows <- nice_to_modis %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
           df_dday_modis <- rbind( df_dday_modis, addrows )
         }
-        ## XXXXXXXXXXXXXXXX
-
-        # if (nrow(droughts_modis)>0){
-        #   data_alg_dry_modis  <- array( NA, dim=c( before_modis+after_modis+1, ncol(nice_to_modis)+1, nrow(droughts_modis) ) )
-        #   for ( iinst in 1:nrow(droughts_modis) ){
-        #     data_alg_dry_modis[,(ncol(nice_to_modis)+1),iinst] <- ((-before_modis:after_modis)+1)*8 ## calling this 'dday' = drought day
-        #     for (idx in -before_modis:after_modis){
-        #       if ( (droughts_modis$idx_start[iinst]+idx)>0 ){
-        #         for (icol in 1:ncol(nice_to_modis)){
-        #           data_alg_dry_modis[ idx+before_modis+1, icol, iinst ] <- nice_to_modis[ droughts_modis$idx_start[iinst]+idx, icol ]
-        #         }
-        #       }
-        #     }
-        #     ## remove data after drought onset that is no longer classified as drought
-        #     dropidxs <- which( data_alg_dry_modis[,which(names_alg_modis=="is_drought_byvar"),iinst]==1 & data_alg_dry_modis[,which(names_alg_modis=="dday"),iinst]<0 )
-        #     data_alg_dry_modis[ dropidxs,,iinst ] <- NA            
-        #   }
-        # }
-
-        # ##--------------------------------------------------------
-        # ## Bin aligned data and expand from 3D array to dataframe
-        # ##--------------------------------------------------------
-        # ## expand 'data_alg_dry_modis' to get a data frame that now has 'dday' in it
-        # df_dday_modis <- data.frame()
-        # for (iinst in seq(dim(data_alg_dry_modis)[3])){
-        #   add <- as.data.frame( data_alg_dry_modis[,,iinst] )
-        #   colnames(add) <- names_alg_modis
-        #   add$mysitename <- rep( sitename, dim( data_alg_dry_modis[,,iinst] )[1])
-        #   add$inst <- rep( iinst, dim( data_alg_dry_modis[,,iinst] )[1] )
-        #   df_dday_modis <- rbind( df_dday_modis, add )
-        # }
-        # df_dday_modis <- df_dday_modis[ !is.na(df_dday_modis$year_dec), ]
 
         ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
         save( df_dday_modis, file=outfiln )
@@ -352,7 +287,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     infiln  <- paste( "data/mte_nn_", sitename, ".Rdata", sep="" )
     outfiln <- paste( "data/df_dday_mte_", sitename, ".Rdata", sep="" )
 
-    if (!file.exists(outfiln)||overwrite_mte){
+    if (!file.exists(outfiln)||overwrite){
 
       if (file.exists(infiln)){
 
@@ -366,7 +301,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
           before_mte <- floor( max(droughts_mte$len) / 2 )
           after_mte  <- max(droughts_mte$len)
     
-          ## XXXXXXXXXXXXXXXX
           df_dday_mte <- data.frame()
           nice_to_mte <- nice_to_mte %>% mutate( mysitename=sitename )
           for ( iinst in 1:nrow(droughts_mte) ){
@@ -381,36 +315,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
             addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
             df_dday_mte <- rbind( df_dday_mte, addrows )
           }
-          ## XXXXXXXXXXXXXXXX
-
-        
-          # for ( iinst in 1:nrow(droughts_mte) ){
-          #   data_alg_dry_mte[,(ncol(nice_to_mte)+1),iinst] <- ((-before_mte:after_mte)+1)*8 ## calling this 'dday' = drought day
-          #   for (idx in -before_mte:after_mte){
-          #     if ( (droughts_mte$idx_start[iinst]+idx)>0 ){
-          #       for (icol in 1:ncol(nice_to_mte)){
-          #         data_alg_dry_mte[ idx+before_mte+1, icol, iinst ] <- nice_to_mte[ droughts_mte$idx_start[iinst]+idx, icol ]
-          #       }
-          #     }
-          #   }
-          #   ## remove data after drought onset that is no longer classified as drought
-          #   dropidxs <- which( data_alg_dry_mte[,which(names_alg_mte=="is_drought_byvar"),iinst]==1 & data_alg_dry_mte[,which(names_alg_mte=="dday"),iinst]<0 )
-          #   data_alg_dry_mte[ dropidxs,,iinst ] <- NA
-          # }   
-
-          # ##--------------------------------------------------------
-          # ## Bin aligned data and expand from 3D array to dataframe
-          # ##--------------------------------------------------------
-          # ## expand 'data_alg_dry_mte' to get a data frame that now has 'dday' in it
-          # df_dday_mte <- data.frame()
-          # for (iinst in seq(dim(data_alg_dry_mte)[3])){
-          #   add <- as.data.frame( data_alg_dry_mte[,,iinst] )
-          #   colnames(add) <- names_alg_mte
-          #   add$mysitename <- rep( sitename, dim( data_alg_dry_mte[,,iinst] )[1])
-          #   add$inst <- rep( iinst, dim( data_alg_dry_mte[,,iinst] )[1] )
-          #   df_dday_mte <- rbind( df_dday_mte, add )
-          # }
-          # df_dday_mte <- df_dday_mte[ !is.na(df_dday_mte$year_dec), ]
 
           ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
           save( df_dday_mte, file=outfiln )
