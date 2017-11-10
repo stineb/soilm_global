@@ -3,13 +3,13 @@ library(dplyr)
 library(ncdf4)
 library(pracma)   # provides function 'detrend'
 
-fils <- c( "s0_fapar3g_global.a.gpp.nc", "s1_fapar3g_global.a.gpp.nc" )
+simnames <- c( "s0_fapar3g_global", "s1_fapar3g_global" )
 dir <- "/Users/benjaminstocker/sofun/trunk/output_nc/"
 
-for (ifil in fils){
+for (ifil in simnames){
 
 	print( paste("opening file: ", ifil ) )
-	nc <- nc_open( paste0( dir, ifil ) )
+	nc <- nc_open( paste0( dir, ifil, ".a.gpp.nc" ) )
 	gpp <- ncvar_get( nc, varid="gpp" )
 	lon <- nc$dim$lon$vals
 	lat <- nc$dim$lat$vals
@@ -37,18 +37,17 @@ for (ifil in fils){
 	ggpp <- apply( gpp_abs, c(3), FUN = sum, na.rm=TRUE )
 	ggpp <- ggpp * 1e-15
 
-
 	## write dataframe of global totals
 	print("save global total timeseries")
 	df <- data.frame( year=1982:2011, gpp=ggpp )
-	write.csv( df, file=paste0( "data/pmodel_gpp_globaltotal.csv" ), row.names=FALSE )
-	save( df, file=paste0( "data/pmodel_gpp_globaltotal.Rdata" ) )
+	write.csv( df, file=paste0( "data/pmodel_gpp_globaltotal", ifil ,".csv" ), row.names=FALSE )
+	save( df, file=paste0( "data/pmodel_gpp_globaltotal", ifil ,".Rdata" ) )
 
 	print(paste("Model, range of global GPP: P-model, simulation  ", ifil, range(ggpp)))
 
 	## store nice and unified GPP
 	print("save nice file")
-	outfilnam <- "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_nice.nc"
+	outfilnam <- paste0( "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_nice_", ifil ,".nc")
 	cdf.write( gpp_nice, "gpp", 
 	           lon, lat,
 	           filnam = outfilnam,
@@ -66,7 +65,7 @@ for (ifil in fils){
 	gpp_detr <- aperm( gpp_detr, c(2,3,1) )
 	cdf.write( gpp_detr, "gpp", 
 	           lon, lat,
-	           filnam = "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_detr.nc",
+	           filnam = paste0( "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_detr_", ifil ,".nc"),
 	           nvars = 1,
 	           time = time,
 	           make.tdim = TRUE,
@@ -80,7 +79,7 @@ for (ifil in fils){
 	gpp_var <- apply( gpp_detr, c(1,2), FUN = var )
 	cdf.write( gpp_var, "gpp", 
 	           lon, lat,
-	           filnam = "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_var.nc",
+	           filnam = paste0( "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_var_", ifil ,".nc"),
 	           nvars = 1,
 	           make.tdim = FALSE,
 	           long_name_var1 = "Gross primary productivity",
@@ -91,7 +90,7 @@ for (ifil in fils){
 	gpp_mean <- apply( gpp_nice, c(1,2), FUN = mean )
 	cdf.write( gpp_mean, "gpp", 
 	           lon, lat,
-	           filnam = "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_mean.nc",
+	           filnam = paste0( "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_mean_", ifil ,".nc"),
 	           nvars = 1,
 	           make.tdim = FALSE,
 	           long_name_var1 = "Gross primary productivity",
@@ -102,7 +101,7 @@ for (ifil in fils){
 	gpp_relvar <- gpp_var / gpp_mean
 	cdf.write( gpp_relvar, "gpp", 
 	           lon, lat,
-	           filnam = "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_relvar.nc",
+	           filnam = paste0( "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_relvar_", ifil ,".nc"),
 	           nvars = 1,
 	           make.tdim = FALSE,
 	           long_name_var1 = "Gross primary productivity",

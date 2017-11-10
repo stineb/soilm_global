@@ -448,11 +448,21 @@ source("get_iav_mte.R")
 source("get_iav_pmodel.R")
 ```
 
-## Plot soil moisture effect in P-model
+## Visualise soil moisture effect across space
+Using P-model results, visualise the soil moisture effect as:
 
-## Plot global total GPP time series and interannual variability
+- Maps of GPP loss, absolute and relative, mean across years
+- Maps of the change in GPP variance, absolute and relative
+```{r}
+source("map_soilmstress_pmodel.R")
+```
 
-## Plot local GPP interannual distribution
+## Plot distribution of annual global GPP anomalies from mean trend
+```{r}
+source("plot_global_iav.R")
+```
+
+## Plot distribution of gridcell GPP interannual relative and absolute variance
 
 ## Plot
 

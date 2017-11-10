@@ -6,8 +6,8 @@ library(pracma)   # provides function 'detrend'
 filnams <- read.csv("/Users/benjaminstocker/data/trendy/v5/trendy_s2_filnams_gpp.csv")
 filnams$nice <- rep(NA, nrow(filnams))
 
-for (idx in 1:nrow(filnams)){
-# for (idx in 2:2){
+# for (idx in 1:nrow(filnams)){
+for (idx in 7:7){
 
 	if (filnams$orig[idx]!=""){
 
