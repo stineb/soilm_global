@@ -1,13 +1,13 @@
 source("~/.Rprofile")
 library(dplyr)
 library(ncdf4)
-library(pracma)
+library(pracma)   # provides function 'detrend'
 
 filnams <- read.csv("/Users/benjaminstocker/data/trendy/v5/trendy_s2_filnams_gpp.csv")
 filnams$nice <- rep(NA, nrow(filnams))
 
-# for (idx in 1:nrow(filnams)){
-for (idx in 3:3){
+for (idx in 1:nrow(filnams)){
+# for (idx in 2:2){
 
 	if (filnams$orig[idx]!=""){
 
@@ -25,6 +25,10 @@ for (idx in 3:3){
 
 		dx <- abs(lon[2] - lon[1])
 		dy <- abs(lat[2] - lat[1])
+
+		## Reduce time series to 1982-2011 (dropping the last 4 years that are available in the original files). This is to be consistent with MTE and P-model
+		time <- time[1:30]
+		gpp <- gpp[,,1:30]
 
 		if (modl=="SDGVM"){
 			## SDGVM is seriously messed up

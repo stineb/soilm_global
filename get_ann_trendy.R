@@ -1,5 +1,6 @@
 source("~/.Rprofile")
 library(dplyr)
+library(ncdf4)
 
 ndaymonth <- c(31,28,31,30,31,30,31,31,30,31,30,31)
 nsecsmonth <- ndaymonth * 60 * 60 * 24
