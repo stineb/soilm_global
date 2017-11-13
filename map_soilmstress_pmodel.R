@@ -1,8 +1,8 @@
-library(ncdf4)
-library(fields)
-library(sp)
-library(maptools)
-library(dplyr)
+library(ncdf4, quietly = TRUE)
+library(fields, quietly = TRUE)
+library(sp, quietly = TRUE)
+library(maptools, quietly = TRUE)
+library(dplyr, quietly = TRUE)
 
 ##------------------------------------------------------------------------
 ## GPP loss
@@ -11,7 +11,6 @@ library(dplyr)
   fil_s1 <- "pmodel_gpp_mean_s1_fapar3g_global.nc"
 
   dir <- "/Users/benjaminstocker/data/pmodel_fortran_output/"
-
 
   nc <- nc_open( paste0( dir, fil_s0 ) )
   gpp_s0 <- ncvar_get( nc, varid="gpp" )

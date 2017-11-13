@@ -60,23 +60,14 @@ for (modl in modls){
 ##-----------------------------------------------
 modls_trendy <- modls[ -which( modls %in% c( "MTE", "pmodel_s0", "pmodel_s1" ) ) ]
 cols_trendy <- c("springgreen3", "royalblue3", "tomato", "goldenrod", "orchid", "turquoise", "wheat", "darkslateblue", "grey70", "darkolivegreen" ) 
-df_col_trendy <- data.frame( modl=modls_trendy, col=cols_trendy )
+cols <- c( cols_trendy, "red", "black", "black" ) 
+lwds <- c(rep( 2, length(modls_trendy) ), rep(3,3) )
+ltys <- c(rep( 1, length(modls_trendy) ), rep(1,2), 3 )
 
 par(las=1)
-plot( density( df_detr$CABLE ), xlim=c(-5,5), ylim=c(0,0.5), xlab="global total GPP anomaly (PgC/yr)", main="", col=as.character( filter( df_col_trendy, modl=="CABLE" )$col ), lwd=2 )
-for (modl in modls_trendy){
-	print( paste( "model:",modl, "col:", as.character( df_col_trendy[ which( df_col_trendy$modl==modl ), 2 ] ) ) ) 
-	lines( density( df_detr[[ modl ]] ), col=as.character( df_col_trendy[ which( df_col_trendy$modl==modl ), 2 ] ), lwd=2 )
-}
-legend( "topleft", as.character(df_col_trendy$modl), col=as.character(df_col_trendy$col), bty = "n", lwd = 2, lty = 1 )
-
-lines( density( df_detr$MTE ), col="red", lwd=3 )
-legend( "topleft", "MTE", col="red", bty = "n", lwd = 3, lty = 1, inset = c(0,0.35) )
-
-lines( density( df_detr$pmodel_s0 ), col="black", lwd=3 )
-lines( density( df_detr$pmodel_s1 ), col="black", lwd=3, lty = 2 )
-legend( "topleft", c("P-model, unstressed", "P-model, stressed"), col="black", bty = "n", lwd = 3, lty = c(1,2), inset = c(0,0.4) )
-
+plot( density( df_detr$CLM ), xlim=c(-5,5), ylim=c(0,0.5), main="Interannual variability (1982-2011)", xlab=expression(paste("global total GPP anomaly (PgC yr"^{-1}, ")")), type="n" )
+lapply( seq(length(modls)), function(x) lines( density( df_detr[[ x + 1 ]] ), col=cols[x], lwd=lwds[x], lty=ltys[x] ) )
+legend( "topright", modls, col=cols, lwd=lwds, lty=ltys, bty = "n" )
 
 
 
