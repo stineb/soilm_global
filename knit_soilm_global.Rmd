@@ -342,12 +342,14 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 <!-- ```{r getann, eval=FALSE} -->
 <!-- source("get_ann_trendy.R") -->
 <!-- source("get_ann_mte.R") -->
+<!-- source("get_ann_bess.R") -->
 <!-- ``` -->
 
 <!-- 3. Detrend, and calculate variance and relative variance. This is a bit complicated here because some TRENDY output is given as totals per gridcell, while most are (correctly) given in per square metre. -->
 <!-- ```{r getiav, eval=FALSE} -->
 <!-- source("get_iav_trendy.R") -->
 <!-- source("get_iav_mte.R") -->
+<!-- source("get_iav_bess.R") -->
 <!-- source("get_iav_pmodel.R") -->
 <!-- ``` -->
 
