@@ -1,5 +1,11 @@
 plot_map <- function( arr, lev, file=NA, positive=TRUE ){
 
+  require( ncdf4, quietly = TRUE )
+  require( fields, quietly = TRUE )
+  require( sp, quietly = TRUE )
+  require( maptools, quietly = TRUE )
+  require( dplyr, quietly = TRUE )  
+
   if ( dim(arr)[1]==720 && dim(arr)[2]==360 ){
 
     ## half degree resolution
@@ -18,7 +24,7 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE ){
   ncols <- 2
   nrows <- 1
   widths <- rep(1.6*magn,ncols)
-  widths[2] <- 0.25*widths[1]
+  widths[2] <- 0.15*widths[1]
   heights <- rep(magn,nrows)
   order <- matrix( c(1,2), nrows, ncols, byrow=FALSE)
 
