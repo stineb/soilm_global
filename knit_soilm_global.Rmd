@@ -386,6 +386,19 @@ The gridcell-level change in variance shown by maps above should be clearly visi
 source("plot_gridcell_iav.R")
 ```
 
+## Analyse scale dependence of soil moisture effect
+```{r plot_ahlstroem, echo=FALSE, warning=FALSE}
+source("plot_ahlstroem.R")
+```
+
+Do the same analysis as in Jung et al. (2017), illustrating the scale-dependence of the soil moisture effect on GPP variance.
+First, create grid definition files for remapping with CDO. These are stored in `./grids/` as text files.
+```{r plot_ahlstroem, warning=FALSE}
+source("define_grids.R")
+source("regrid_jung.R")
+```
+
+
 <!-- ## Plot -->
 
 <!-- ## in R/cdo: plot average relative IAV increase due to soil moisture effect as a function of spatial scale (as in Jung) -->

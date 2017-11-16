@@ -2,6 +2,7 @@ library(ncdf4)
 
 source("get_ahlstroem_f.R")
 source("../utilities/plot_map.R")
+source("plot_map.R")
 
 filpath_detr <- c(  "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_detr_s0_fapar3g_global.nc", 
                     "/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_detr_s1_fapar3g_global.nc"
