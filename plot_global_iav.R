@@ -5,26 +5,26 @@ library(dplyr)
 ##-----------------------------------------------
 
 ## File names for TRENDY models
-filnams <- read.csv("/Users/benjaminstocker/data/trendy/v5/trendy_s2_filnams_gpp.csv")
+filnams <- read.csv( paste0( myhome, "/data/trendy/v5/trendy_s2_filnams_gpp.csv" ) )
 
-rm("df_gpp")
+# rm("df_gpp")
 
-i <- 0
-for (modl in filnams$modl){
+# i <- 0
+# for (modl in filnams$modl){
 
-	## Read TRENDY file to complement dataframe
-  i <- i + 1
-	df_tmp <- try( read.csv( paste0( "data/", modl, "_globaltotal.csv" ) ) %>% setNames( c( "year", modl ) ) )
+# 	## Read TRENDY file to complement dataframe
+#   i <- i + 1
+# 	df_tmp <- try( read.csv( paste0( "data/", modl, "_globaltotal.csv" ) ) %>% setNames( c( "year", modl ) ) )
 	
-	if (class(df_tmp)!="try-error"){
-		if (i==1){
-			df_gpp <- df_tmp
-		} else {
-			df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
-		}		
-	}
+# 	if (class(df_tmp)!="try-error"){
+# 		if (i==1){
+# 			df_gpp <- df_tmp
+# 		} else {
+# 			df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
+# 		}		
+# 	}
 
-}
+# }
 
 ## MTE
 df_tmp <- try( read.csv( paste0( "data/mte_globaltotal.csv" ) ) %>% setNames( c( "year", "MTE" ) ) )

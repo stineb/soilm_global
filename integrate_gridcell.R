@@ -1,4 +1,4 @@
-integrate_gridcell <- function( arr, global=TRUE ){
+integrate_gridcell <- function( arr, global=TRUE, overwrite=FALSE ){
 
   ## get area array
   if ( dim(arr)[1]==720 && dim(arr)[2]==360 ){
@@ -7,7 +7,7 @@ integrate_gridcell <- function( arr, global=TRUE ){
     print("found halfdegree resolution.")
     areafil <- paste0( myhome, "data/landmasks/area_halfdeg.nc")
 
-    if (file.exists(areafil)){
+    if (file.exists(areafil)&&!overwrite){
    
       print("reading from file.")     
       nc <- nc_open( areafil )
@@ -16,7 +16,6 @@ integrate_gridcell <- function( arr, global=TRUE ){
 
     } else {
       
-      print("getting area array.")
       dx <- 0.5
       dy <- 0.5
       lon <- seq(-179.75, 179.75, by=dx )
@@ -48,12 +47,14 @@ integrate_gridcell <- function( arr, global=TRUE ){
     print("found one degree resolution.")
     areafil <- paste0( myhome, "/data/landmasks/area_1x1deg.nc")
 
-    if (file.exists(areafil)){
+    if (file.exists(areafil)&&!overwrite){
+
       nc <- nc_open( areafil )
       arr_area <- ncvar_get( nc, varid="area" )
       nc_close( nc )        
+
     } else {
-      print("getting area array")
+
       dx <- 1.0
       dy <- 1.0
       lon <- seq(-175.5, 175.5, dx )
@@ -81,27 +82,75 @@ integrate_gridcell <- function( arr, global=TRUE ){
 
   }
 
-  if (global){
+  # if (length(dim(arr))==2){
 
-    out <- arr * arr_area
+  #   ## 2D array      
+  #   arr_abs <- arr * arr_area
+  #   if (global){
+  #     out <- sum( arr_abs, na.rm=TRUE )
+  #   } else {
+  #     out <- arr_abs
+  #   }
 
+  # } else if (length(dim(arr))==3){
+
+  #   ## 3D arry
+  #   arr_abs <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
+  #   if (global){
+  #     out <- apply( arr_abs, c(3), FUN=sum, na.rm=TRUE )
+  #   } else {
+  #     out <- arr_abs
+  #   }
+
+  # } else {
+
+  #   print("cannot deal with this number of dimensions")
+  #   out <- NA
+
+  # }
+
+  if (!global){
+
+    ## actually integrate
+    if (length(dim(arr))==2){
+      
+      ## 2D array    
+      out <- arr * arr_area
+
+    } else if (length(dim(arr))==3){
+      
+      ## 3D arry
+      ## get global total unlimited GPP over time
+      out <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
+
+    } else {
+
+      print("cannot deal with this number of dimensions")
+      out <- NA
+
+    }
+    
   } else {
 
     ## actually integrate
     if (length(dim(arr))==2){
       
+      ## 2D array
       arr_abs <- arr * arr_area
       out <- sum( arr_abs, na.rm=TRUE )
 
     } else if (length(dim(arr))==3){
 
+      ## 3D arry
       ## get global total unlimited GPP over time
       arr_abs <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
       out <- apply( arr_abs, c(3), FUN=sum, na.rm=TRUE )
 
     } else {
+
       print("cannot deal with this number of dimensions")
       out <- NA
+
     }
 
   }

@@ -376,7 +376,7 @@ This shows that...
 ## Interannual variability of global GPP
 As shown in the figure below, adding the soil moisture limitation to the P-model (black dashed vs. black line) results in a wider distribution of annual GPP anomalies from the mean trend (a.k.a. interannual variability). MTE GPP has a much narrower distribution. Comparison to TRENDY models is not so clear: Some models have a very small interannual variability, some have a large one, comparable to P-model. However, it looks like the P-model has the largest IAV. I guess we cannot really constrain these global total GPP IAV values with (global scale) observations, can we?
 
-```{r plot_global_iav, echo=FALSE, warning=FALSE}
+```{r plot_global_iav, echo=FALSE, warning=FALSE, eval=FALSE}
 source("plot_global_iav.R")
 ```
 
@@ -387,16 +387,35 @@ source("plot_gridcell_iav.R")
 ```
 
 ## Analyse scale dependence of soil moisture effect
-```{r plot_ahlstroem, echo=FALSE, warning=FALSE}
+The starting point of this is that we see that the relative variance of annual GPP increases almost everywhere (in every gridcell), especially in semi-arid regions, when including the soil moisture limitation. The mean amplification is 40%. However, the interannual variability of global total GPP doesn't increase at all, when including the soil moisture effect. The suspicion is that this is the scale dependence, also found by Jung et al. (2017). This is investigated below.
+
+First analysis, I quantified the "Ahlstroem-f" (see Eq. 1 in Ahlstroem et al., 2015). This index quantifies for each gridcell how bit this gridcell's contribution is to global interannual variability. If it's positive, then the gridcell's variabitlity adds to the global anomalies, the bigger the value the bigger its contribution. If positive and negative values are equally frequent and big, they cancel each other out, leaving a smaller global interannual variability.
+
+The plot below shows that this is indeed the case for the **amplification** of the relative variance in annual GPP, quantified as:
+$$
+\frac{\text{relvar}(GPP_{s1})}{\text{relvar}(GPP_{s0})}
+$$
+Gridcells with negative values largely cancel the ones with positive values.
+```{r plot_ahlstroem, warning=FALSE}
 source("plot_ahlstroem.R")
 ```
 
-Do the same analysis as in Jung et al. (2017), illustrating the scale-dependence of the soil moisture effect on GPP variance.
+To look at the spatial scale-dependence of this amplification, I did a similar analysis as in Jung et al. (2017).
+
 First, create grid definition files for remapping with CDO. These are stored in `./grids/` as text files.
-```{r plot_ahlstroem, warning=FALSE}
+```{r do_jung, warning=FALSE, eval=FALSE}
 source("define_grids.R")
 source("regrid_jung.R")
 ```
+
+Then evaluate the amplification of relative variance of annual GPP as a function of spatial resolution.
+```{r plot_jung, warning=FALSE}
+source("plot_jung.R")
+```
+
+This figure shows the amplification factor with the mean as the mean, and shaded areas as the 1%/99%, 5%/95%, 10%/90%, and 25%/75% quantile ranges. Apparently, the most extreme cells show the strongest scale-dependence (upper 1% shows more than a 4-fold increase in relative variance of annual GPP).
+
+The decline across resolutions is not very gradual, with not much cahnge up to about 20 degrees. This reflects the spatial scale of the patterns in the Ahlstroem plot.
 
 
 <!-- ## Plot -->

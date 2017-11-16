@@ -1,13 +1,14 @@
 library(dplyr)
 library(ncdf4)
 library(RColorBrewer)
+source("~/.Rprofile")
 
 ##-----------------------------------------------
 ## Get all GPP time series
 ##-----------------------------------------------
 
 ## File names for TRENDY models
-df_filnams <- read.csv("/Users/benjaminstocker/data/trendy/v5/trendy_s2_filnams_gpp.csv", stringsAsFactors = FALSE)
+df_filnams <- read.csv( paste0( myhome, "/data/trendy/v5/trendy_s2_filnams_gpp.csv"), stringsAsFactors = FALSE)
 
 # modl           <- df_filnams$modl
 # filnams        <- df_filnams$orig
@@ -15,7 +16,7 @@ modl           <- c()
 filnams        <- c()
 filnams_var    <- gsub( ".nc", "_sub_ann_var.nc", filnams )
 filnams_relvar <- gsub( ".nc", "_sub_ann_relvar.nc", filnams )
-path           <- paste0( "/Users/benjaminstocker/data/trendy/v5/", df_filnams$modl, "/S2/" )
+path           <- paste0(  myhome, "/data/trendy/v5/", df_filnams$modl, "/S2/" )
 filnams_var    <- filnams_var[ which(filnams!="") ]
 filnams_relvar <- filnams_relvar[ which(filnams!="") ]
 path           <- path[ which(filnams!="") ]
@@ -24,20 +25,20 @@ filpath_var    <- paste0( path, filnams_var )
 filpath_relvar <- paste0( path, filnams_relvar )
 
 filpath_var <- c( filpath_var, 
-									"/Users/benjaminstocker/data/gpp_mte/MTE_var.nc", 
-									"/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_var_s0_fapar3g_global.nc", 
-									"/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_var_s1_fapar3g_global.nc"
+									 paste0( myhome, "/data/gpp_mte/MTE_var.nc"), 
+									 paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_var_s0_fapar3g_global.nc"), 
+									 paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_var_s1_fapar3g_global.nc")
 									)
 filpath_relvar <- c(  filpath_relvar, 
-											"/Users/benjaminstocker/data/gpp_mte/MTE_relvar.nc", 
-											"/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_relvar_s0_fapar3g_global.nc", 
-											"/Users/benjaminstocker/data/pmodel_fortran_output/pmodel_gpp_relvar_s1_fapar3g_global.nc"
+											 paste0( myhome, "/data/gpp_mte/MTE_relvar.nc"), 
+											 paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_relvar_s0_fapar3g_global.nc"), 
+											 paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_relvar_s1_fapar3g_global.nc")
 											)
 modl <- c( modl, "MTE", "Pmodel_S0", "Pmodel_S1")
 
 
 ## Load alpha (AET/PET) from P-model output to mask out values (some very high GPP interannual variance is not related to soil moisture)
-nc <- nc_open( "~/data/pmodel_fortran_output/s0_fapar3g_global.a.alpha.nc" )
+nc <- nc_open(  paste0( myhome, "/data/pmodel_fortran_output/s0_fapar3g_global.a.alpha.nc") )
 alpha <- ncvar_get( nc, varid="alpha" )
 nc_close(nc)
 

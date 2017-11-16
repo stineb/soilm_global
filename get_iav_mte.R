@@ -3,7 +3,9 @@ library(dplyr)
 library(ncdf4)
 library(pracma)   # provides function 'detrend'
 
-fil <- "/Users/benjaminstocker/data/gpp_mte/gpp_mte_ann.nc"
+source("integrate_gridcell.R")
+
+fil <- paste0( myhome, "/data/gpp_mte/gpp_mte_ann.nc")
 
 print( paste("opening file: ", fil ) )
 nc <- nc_open( fil )
@@ -16,24 +18,11 @@ nc_close(nc)
 dx <- abs(lon[2] - lon[1])
 dy <- abs(lat[2] - lat[1])
 
-print("getting area array")
-arr_area <- gpp[,,1]
-arr_area[] <- NA
-for (ilon in seq(dim(gpp)[1])){
-  for (ilat in seq(dim(gpp)[2])){
-    if (!is.na(gpp[ilon,ilat,])){
-      arr_area[ilon,ilat] <- area( lat[ilat], dx=dx, dy=dy )
-    }
-  }
-}
-
 gpp_nice <- gpp * 1e3
 
 print("integrating globally")
-gpp_abs <- sweep( gpp_nice, c(1,2), arr_area, "*" )
-ggpp <- apply( gpp_abs, c(3), FUN = sum, na.rm=TRUE )
+ggpp <- integrate_gridcell( gpp_nice )
 ggpp <- ggpp * 1e-15
-
 
 ## write dataframe of global totals
 print("save global total timeseries")
@@ -45,7 +34,7 @@ print(paste("Model, range of global GPP: MTE  ", range(ggpp)))
 
 ## store nice and unified GPP
 print("save nice file")
-outfilnam <- "/Users/benjaminstocker/data/gpp_mte/MTE_nice.nc"
+outfilnam <- paste0( myhome, "/data/gpp_mte/MTE_nice.nc")
 cdf.write( gpp_nice, "gpp", 
            lon, lat,
            filnam = outfilnam,
@@ -63,7 +52,7 @@ gpp_detr <- apply( gpp_nice, c(1,2), FUN = detrend )
 gpp_detr <- aperm( gpp_detr, c(2,3,1) )
 cdf.write( gpp_detr, "gpp", 
            lon, lat,
-           filnam = "/Users/benjaminstocker/data/gpp_mte/MTE_detr.nc",
+           filnam = paste0( myhome, "/data/gpp_mte/MTE_detr.nc"),
            nvars = 1,
            time = time,
            make.tdim = TRUE,
@@ -77,7 +66,7 @@ print("get variance")
 gpp_var <- apply( gpp_detr, c(1,2), FUN = var )
 cdf.write( gpp_var, "gpp", 
            lon, lat,
-           filnam = "/Users/benjaminstocker/data/gpp_mte/MTE_var.nc",
+           filnam = paste0( myhome, "/data/gpp_mte/MTE_var.nc"),
            nvars = 1,
            make.tdim = FALSE,
            long_name_var1 = "Gross primary productivity",
@@ -88,7 +77,7 @@ print("get mean")
 gpp_mean <- apply( gpp_nice, c(1,2), FUN = mean )
 cdf.write( gpp_mean, "gpp", 
            lon, lat,
-           filnam = "/Users/benjaminstocker/data/gpp_mte/MTE_mean.nc",
+           filnam = paste0( myhome, "/data/gpp_mte/MTE_mean.nc"),
            nvars = 1,
            make.tdim = FALSE,
            long_name_var1 = "Gross primary productivity",
@@ -99,7 +88,7 @@ print("get relative variance")
 gpp_relvar <- gpp_var / gpp_mean
 cdf.write( gpp_relvar, "gpp", 
            lon, lat,
-           filnam = "/Users/benjaminstocker/data/gpp_mte/MTE_relvar.nc",
+           filnam = paste0( myhome, "/data/gpp_mte/MTE_relvar.nc"),
            nvars = 1,
            make.tdim = FALSE,
            long_name_var1 = "Gross primary productivity",
