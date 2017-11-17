@@ -345,13 +345,12 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 <!-- source("get_ann_bess.R") -->
 <!-- ``` -->
 
-<!-- 3. Detrend, and calculate variance and relative variance. This is a bit complicated here because some TRENDY output is given as totals per gridcell, while most are (correctly) given in per square metre. -->
-<!-- ```{r getiav, eval=FALSE} -->
-<!-- source("get_iav_trendy.R") -->
-<!-- source("get_iav_mte.R") -->
-<!-- source("get_iav_bess.R") -->
-<!-- source("get_iav_pmodel.R") -->
-<!-- ``` -->
+3. Detrend, and calculate variance and relative variance. This is a bit complicated here because some TRENDY output is given as totals per gridcell, while most are (correctly) given in per square metre.
+```{r getiav, eval=FALSE}
+source("get_iav_trendy.R")
+source("get_iav_rsmodels.R")
+source("get_iav_pmodel.R")
+```
 
 ## Visualise soil moisture effect across space
 After deriving an empirical correction function to remove the bias in the P-model during dry soil conditions, I applied this function in the P-model. Two simulations were carried out:
@@ -376,7 +375,7 @@ This shows that...
 ## Interannual variability of global GPP
 As shown in the figure below, adding the soil moisture limitation to the P-model (black dashed vs. black line) results in a wider distribution of annual GPP anomalies from the mean trend (a.k.a. interannual variability). MTE GPP has a much narrower distribution. Comparison to TRENDY models is not so clear: Some models have a very small interannual variability, some have a large one, comparable to P-model. However, it looks like the P-model has the largest IAV. I guess we cannot really constrain these global total GPP IAV values with (global scale) observations, can we?
 
-```{r plot_global_iav, echo=FALSE, warning=FALSE, eval=FALSE}
+```{r plot_global_iav, echo=FALSE, warning=FALSE}
 source("plot_global_iav.R")
 ```
 

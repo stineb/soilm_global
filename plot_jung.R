@@ -113,9 +113,7 @@ if (!file.exists(outfiln) || overwrite){
 }
 
 ## aggregate by resolution
-outfiln <- "data/ampl_agg_jung.Rdata"
-if (!file.exists(outfiln)||overwrite){
-	ampl_agg <- ampl %>%  group_by( resnr ) %>% 
+ampl_agg <- ampl %>%  group_by( resnr ) %>% 
 												summarise(  var_mean = mean( var, na.rm=TRUE ), 
 																		var_median = median( var, na.rm=TRUE ),
 																		var_q01 = quantile( var, probs=0.01 ),
@@ -138,9 +136,6 @@ if (!file.exists(outfiln)||overwrite){
 																		relvar_q25 = quantile( relvar, probs=0.25 ),
 																		relvar_q75 = quantile( relvar, probs=0.75 )
 																		)
-} else {
-	load( outfiln )
-}
 
 ## Plot scale dependence of soil moisture effect on GPP interannual variance
 par(las=1)

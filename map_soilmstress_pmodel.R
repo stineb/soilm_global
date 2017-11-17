@@ -88,7 +88,7 @@ source("~/.Rprofile")
   plot_map( gpp_s1, lev=c( 0, 40, 10 ), 
         toplefttext=expression(paste("GPP relative variance")), 
         toprighttext=expression(paste("fraction")),
-        maxval = 200
+        maxval = 200, color=cols
         )
 
   ##-----------------------------------------------------
@@ -130,7 +130,7 @@ source("~/.Rprofile")
   plot_map( gpp_s1*1e-3, lev=c( 0, 40, 10 ), 
         toplefttext=expression(paste("GPP aboslute variance")), 
         toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
-        maxval = 200
+        maxval = 200, color=cols
         )
   
   ##-----------------------------------------------------

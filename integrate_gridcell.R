@@ -82,33 +82,6 @@ integrate_gridcell <- function( arr, global=TRUE, overwrite=FALSE ){
 
   }
 
-  # if (length(dim(arr))==2){
-
-  #   ## 2D array      
-  #   arr_abs <- arr * arr_area
-  #   if (global){
-  #     out <- sum( arr_abs, na.rm=TRUE )
-  #   } else {
-  #     out <- arr_abs
-  #   }
-
-  # } else if (length(dim(arr))==3){
-
-  #   ## 3D arry
-  #   arr_abs <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
-  #   if (global){
-  #     out <- apply( arr_abs, c(3), FUN=sum, na.rm=TRUE )
-  #   } else {
-  #     out <- arr_abs
-  #   }
-
-  # } else {
-
-  #   print("cannot deal with this number of dimensions")
-  #   out <- NA
-
-  # }
-
   if (!global){
 
     ## actually integrate
