@@ -31,7 +31,8 @@ cdf.write( gpp_permon, "gpp",
            make.tdim = TRUE,
            units_time = "days since 1970-01-01",
            long_name_var1 = "Gross primary productivity",
-           units_var1 = "gC m-2 month-1"
+           units_var1 = "gC m-2 month-1",
+           glob_hist = "created using soilm_global/get_ann_bess.R based on original file BESS_GPP_Monthly_05D.mat, downloaded from ftp://realtimedata.snu.ac.kr"
 )
 
 ## Reshape array to have a separate dimension for months
@@ -50,5 +51,6 @@ cdf.write( gpp_ann, "gpp",
            make.tdim = TRUE,
            units_time = "year",
            long_name_var1 = "Gross primary productivity",
-           units_var1 = "gC m-2 year-1"
+           units_var1 = "gC m-2 year-1",
+           glob_hist = "created using soilm_global/get_ann_bess.R based on original file BESS_GPP_Monthly_05D.mat, downloaded from ftp://realtimedata.snu.ac.kr"
 )

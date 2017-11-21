@@ -133,7 +133,7 @@ for (ilon in seq(dim(aalpha)[1])){
 }
 
 ## get global total unlimited GPP over time
-gpp_abs <- sweep( gpp, 1, arr_area, "*", check.margin=FALSE )
+gpp_abs <- sweep( gpp, c(1,2), arr_area, "*", check.margin=FALSE )
 ggpp <- apply( gpp_abs, c(3), FUN=sum, na.rm=TRUE )
 
 # ## Ok, 'sweep' works
@@ -150,7 +150,7 @@ ggpp <- apply( gpp_abs, c(3), FUN=sum, na.rm=TRUE )
 
 ## get global total water-limited GPP over time
 gpp_lim <- gpp * flue
-gpp_lim_abs <- sweep( gpp_lim, 1, arr_area, "*", check.margin=FALSE )
+gpp_lim_abs <- sweep( gpp_lim, c(1,2), arr_area, "*", check.margin=FALSE )
 ggpp_lim <- apply( gpp_lim_abs, c(3), FUN=sum, na.rm=TRUE )
 
 ## get global gpp of gridcells with AET/PET < 0.8
@@ -166,10 +166,10 @@ for (ilon in seq(dim(gpp_dry)[1])){
     }
   }
 }
-gpp_dry_abs <- sweep( gpp_dry, 1, arr_area, "*", check.margin=FALSE )
+gpp_dry_abs <- sweep( gpp_dry, c(1,2), arr_area, "*", check.margin=FALSE )
 ggpp_dry <- apply( gpp_dry_abs, c(3), FUN=sum, na.rm=TRUE )
 
-gpp_lim_dry_abs <- sweep( gpp_lim_dry, 1, arr_area, "*", check.margin=FALSE )
+gpp_lim_dry_abs <- sweep( gpp_lim_dry, c(1,2), arr_area, "*", check.margin=FALSE )
 ggpp_lim_dry <- apply( gpp_lim_dry_abs, c(3), FUN=sum, na.rm=TRUE )
 
 

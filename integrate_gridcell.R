@@ -94,7 +94,7 @@ integrate_gridcell <- function( arr, global=TRUE, overwrite=FALSE ){
       
       ## 3D arry
       ## get global total unlimited GPP over time
-      out <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
+      out <- sweep( arr, c(1,2), arr_area, "*", check.margin=FALSE )
 
     } else {
 
@@ -116,9 +116,17 @@ integrate_gridcell <- function( arr, global=TRUE, overwrite=FALSE ){
 
       ## 3D arry
       ## get global total unlimited GPP over time
-      arr_abs <- sweep( arr, 1, arr_area, "*", check.margin=FALSE )
+      arr_abs <- sweep( arr, c(1,2), arr_area, "*", check.margin=FALSE )
       out <- apply( arr_abs, c(3), FUN=sum, na.rm=TRUE )
-
+  
+      # ## This is a correct application of sweep, as demonstrated below...
+      # arr_abs_test <- arr * NA
+      # for (itim in seq(dim(arr)[3])){
+      #   arr_abs_test[,,itim] <- arr[,,itim] * arr_area[,]
+      # }
+      # print(all.equal( arr_abs, arr_abs_test ))
+      
+      
     } else {
 
       print("cannot deal with this number of dimensions")
