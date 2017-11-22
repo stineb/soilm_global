@@ -79,7 +79,6 @@ for (year in yearstart:yearend){
   idx <- idx + 1
   filn <- paste0( myhome, "/data/gpp_mte/GPP.RF.CRUNCEPv6.annual.", as.character(year), ".nc" )
 
-  print( paste("opening file: ", filn ) )
   nc <- nc_open( filn )
   tmp <- ncvar_get( nc, varid="GPP" )
   tmp <- tmp * 365  # convert to totals, given in units per day

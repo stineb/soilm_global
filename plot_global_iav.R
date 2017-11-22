@@ -1,4 +1,5 @@
 library(dplyr)
+library(tibble)
 
 ##-----------------------------------------------
 ## Get all GPP time series
@@ -27,20 +28,25 @@ for (modl in filnams$modl){
 }
 
 ## MTE
-df_tmp <- try( read.csv( paste0( "data/mte_globaltotal.csv" ) ) %>% setNames( c( "year", "MTE" ) ) )
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_mte/gpp_mte_globaltotal.csv" ) ) %>% setNames( c( "year", "MTE" ) ) )
 df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
 
+## MTE FLUXCOM
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_mte/gpp_mte_fluxcom_globaltotal.csv" ) ) %>% setNames( c( "year", "MTE_FLUXCOM" ) ) )
+df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
+
+
 ## P-model, s0 simulation (without soil moisture stress)
-df_tmp <- try( read.csv( paste0( "data/pmodel_gpp_globaltotals0_fapar3g_global.csv" ) ) %>% setNames( c( "year", "pmodel_s0" ) ) )
+df_tmp <- try( read.csv( paste0( myhome, "data/pmodel_fortran_output/pmodel_gpp_globaltotals0_fapar3g_global.csv" ) ) %>% setNames( c( "year", "pmodel_s0" ) ) )
 df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
 
 ## P-model, s1 simulation (with soil moisture stress)
-df_tmp <- try( read.csv( paste0( "data/pmodel_gpp_globaltotals1_fapar3g_global.csv" ) ) %>% setNames( c( "year", "pmodel_s1" ) ) )
+df_tmp <- try( read.csv( paste0( myhome, "data/pmodel_fortran_output/pmodel_gpp_globaltotals1_fapar3g_global.csv" ) ) %>% setNames( c( "year", "pmodel_s1" ) ) )
 df_gpp <- df_gpp %>% left_join( df_tmp, by="year" )
 
 
 ## Drop columns if all values are NA
-df_gpp <- df_gpp %>% select( which( colMeans(is.na(.)) < 0.1 ) )
+df_gpp <- df_gpp %>% dplyr::select( which( colMeans(is.na(.)) < 0.1 ) )
 
 ## Rename because dplyr can't handle '-'
 df_gpp <- df_gpp %>% rename( "LPJ_GUESS"="LPJ-GUESS", "LPX_Bern"="LPX-Bern" )
@@ -57,9 +63,49 @@ df_gpp_mean <- df_gpp %>% summarise(  CABLE=mean(CABLE),
 																			VEGAS=mean(VEGAS), 
 																			VISIT=mean(VISIT), 
 																			MTE=mean(MTE), 
+																			MTE_FLUXCOM=mean(MTE_FLUXCOM), 
 																			pmodel_s0=mean(pmodel_s0), 
 																			pmodel_s1=mean(pmodel_s1) 
 																			)
+
+df_gpp_var <- df_gpp %>% summarise( CABLE=var(CABLE), 
+																		CLM=var(CLM), 
+																		ISAM=var(ISAM), 
+																		JSBACH=var(JSBACH), 
+																		LPJ_GUESS=var(LPJ_GUESS), 
+																		LPX_Bern=var(LPX_Bern), 
+																		ORCHIDEE=var(ORCHIDEE), 
+																		SDGVM=var(SDGVM), 
+																		VEGAS=var(VEGAS), 
+																		VISIT=var(VISIT), 
+																		MTE=var(MTE), 
+																		MTE_FLUXCOM=var(MTE_FLUXCOM), 
+																		pmodel_s0=var(pmodel_s0), 
+																		pmodel_s1=var(pmodel_s1) 
+																		)
+
+###----------------------------------------------
+## Get land sink from Global Carbon Budget 2016 for each model
+##-----------------------------------------------
+df_nbp <- read.csv( paste0( myhome, "data/trendy/v5/Global_Carbon_Budget_2016v1.0_landsink.csv"), sep=";") %>%
+          filter( year %in% 1982:2011 )
+
+df_nbp_var <- df_nbp %>% summarise( CABLE=var(CABLE), 
+                                    CLM=var(CLM), 
+                                    ISAM=var(ISAM), 
+                                    JSBACH=var(JSBACH), 
+                                    LPJ_GUESS=var(LPJ_GUESS), 
+                                    LPX_Bern=var(LPX_Bern), 
+                                    ORCHIDEE=var(ORCHIDEE), 
+                                    SDGVM=var(SDGVM), 
+                                    VISIT=var(VISIT) 
+                                  )
+nbp_var_budget <- var( df_nbp$budget )
+tmp <- data.frame( var_nbp=t(df_nbp_var) ) %>% rownames_to_column( var = "model")
+df_emcon <- data.frame( var_gpp=t(df_gpp_var) ) %>% rownames_to_column( var = "model") %>% filter( model %in% names(df_nbp_var) ) %>% left_join( tmp, by="model" )
+
+with( df_emcon, plot( var_gpp, var_nbp, pch=16 ) )
+text( df_emcon$var_gpp, df_emcon$var_nbp, df_emcon$model, adj = 1 )
 
 ###----------------------------------------------
 ## Get linear model for each time series (model) and extract residuals (effectively detrending the time series)
@@ -76,25 +122,123 @@ for (modl in modls){
 }
 
 ##-----------------------------------------------
-## Plot distribution of annual global GPP anomalies from mean trend
+## Plot 
 ##-----------------------------------------------
-modls_trendy <- modls[ -which( modls %in% c( "MTE", "pmodel_s0", "pmodel_s1" ) ) ]
+modls_trendy <- modls[ -which( modls %in% c( "MTE", "MTE_FLUXCOM", "pmodel_s0", "pmodel_s1" ) ) ]
 cols_trendy <- c("springgreen3", "royalblue3", "tomato", "goldenrod", "orchid", "turquoise", "wheat", "darkslateblue", "grey70", "darkolivegreen" ) 
-cols <- c( cols_trendy, "red", "black", "black" ) 
-lwds <- c(rep( 2, length(modls_trendy) ), rep(3,3) )
-ltys <- c(rep( 1, length(modls_trendy) ), rep(1,2), 3 )
+cols <- c( cols_trendy, "red", "red", "black", "black" ) 
+lwds <- c(rep( 2, length(modls_trendy) ), rep(3,4) )
+ltys <- c(rep( 1, length(modls_trendy) ), c(1,3,1,3) )
 
+##-----------------------------------------------
+## Plot IAV: distribution of annual global GPP anomalies from mean trend
+##-----------------------------------------------
 par(las=1)
 plot( density( df_detr$CLM ), xlim=c(-5,5), ylim=c(0,0.5), main="Interannual variability (1982-2011)", xlab=expression(paste("global total GPP anomaly (PgC yr"^{-1}, ")")), type="n" )
 lapply( seq(length(modls)), function(x) lines( density( df_detr[[ x + 1 ]] ), col=cols[x], lwd=lwds[x], lty=ltys[x] ) )
 legend( "topright", modls, col=cols, lwd=lwds, lty=ltys, bty = "n" )
 
+##-----------------------------------------------
+## Plot relative IAV: distribution of annual global GPP anomalies (normalised by mean GPP) from mean trend
+##-----------------------------------------------
+pdf( "fig/relative_IAV.pdf")
 par(las=1)
 plot( density( df_detr_rel$CLM ), xlim=c(-5,5), ylim=c(0,0.75), main="Interannual variability, relative to mean (1982-2011)", xlab=expression(paste("global total GPP anomaly (%)")), type="n" )
 lapply( seq(length(modls)), function(x) lines( density( df_detr_rel[[ x + 1 ]] ), col=cols[x], lwd=lwds[x], lty=ltys[x] ) )
 legend( "topright", modls, col=cols, lwd=lwds, lty=ltys, bty = "n" )
+dev.off()
 
 
+
+
+##----------------------------------------------
+## Short time series (10 yr)
+##-----------------------------------------------
+## P-model, s0 simulation (without soil moisture stress)
+df_gpp_10y <- try( read.csv( paste0( myhome, "data/pmodel_fortran_output/pmodel_gpp_globaltotals0_fapar3g_global_10y.csv" ) ) %>% setNames( c( "year", "pmodel_s0" ) ) )
+
+## P-model, s1 simulation (with soil moisture stress)
+df_tmp <- try( read.csv( paste0( myhome, "data/pmodel_fortran_output/pmodel_gpp_globaltotals1_fapar3g_global_10y.csv" ) ) %>% setNames( c( "year", "pmodel_s1" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+## MTE
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_mte/gpp_mte_globaltotal_10y.csv" ) ) %>% setNames( c( "year", "MTE" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+## MTE FLUXCOM
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_mte/gpp_mte_fluxcom_globaltotal_10y.csv" ) ) %>% setNames( c( "year", "MTE_FLUXCOM" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+## VPM
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_vpm/gpp_vpm_globaltotal_10y.csv" ) ) %>% setNames( c( "year", "VPM" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+## BESS
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_bess/gpp_bess_globaltotal_10y.csv" ) ) %>% setNames( c( "year", "BESS" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+## MODIS
+df_tmp <- try( read.csv( paste0( myhome, "/data/gpp_modis/gpp_modis_globaltotal_10y.csv" ) ) %>% setNames( c( "year", "MODIS" ) ) )
+df_gpp_10y <- df_gpp_10y %>% left_join( df_tmp, by="year" )
+
+
+## Get mean GPP across all years for each model 
+df_gpp_mean_10y <- df_gpp_10y %>% summarise(  MTE=mean(MTE), 
+																							MTE_FLUXCOM=mean(MTE_FLUXCOM), 
+																							VPM=mean(VPM), 
+																							BESS=mean(BESS), 
+																							MODIS=mean(MODIS), 
+																							pmodel_s0=mean(pmodel_s0), 
+																							pmodel_s1=mean(pmodel_s1) 
+																							)
+
+df_gpp_var_10y <- df_gpp_10y %>% summarise( MTE=var(MTE), 
+                                            MTE_FLUXCOM=var(MTE_FLUXCOM), 
+                                            VPM=var(VPM), 
+                                            BESS=var(BESS), 
+                                            MODIS=var(MODIS), 
+                                            pmodel_s0=var(pmodel_s0), 
+                                            pmodel_s1=var(pmodel_s1) 
+)
+
+###----------------------------------------------
+## Get linear model for each time series (model) and extract residuals (effectively detrending the time series)
+##-----------------------------------------------
+modls <- names( df_gpp_10y )[ -which( names(df_gpp_10y)=="year" ) ]
+df_detr_10y <- df_gpp_10y
+df_detr_rel_10y <- df_gpp_10y
+
+for (modl in modls){
+	df_tmp <- df_gpp_10y %>% select( year, modl )
+	lm_tmp <- lm( df_tmp[[modl]] ~ df_tmp$year )
+	df_detr_10y[[ modl ]] <- lm_tmp$residuals
+	df_detr_rel_10y[[ modl ]] <- 100 * lm_tmp$residuals / df_gpp_mean_10y[[ modl ]]
+}
+
+##-----------------------------------------------
+## Plot 
+##-----------------------------------------------
+cols <- c("springgreen3", "royalblue3", "tomato", "goldenrod", "orchid", "turquoise", "wheat" ) 
+lwds <- rep( 2, length(modls) )
+ltys <- rep( 1, length(modls) )
+
+##-----------------------------------------------
+## Plot IAV: distribution of annual global GPP anomalies from mean trend
+##-----------------------------------------------
+par(las=1)
+plot( density( df_detr_10y$MTE_FLUXCOM ), xlim=c(-5,5), ylim=c(0,2), main="Interannual variability (2001-2011)", xlab=expression(paste("global total GPP anomaly (PgC yr"^{-1}, ")")), type="n" )
+lapply( seq(length(modls)), function(x) lines( density( df_detr_10y[[ x + 1 ]], adjust=2 ), col=cols[x], lwd=lwds[x], lty=ltys[x] ) )
+legend( "topright", modls, col=cols, lwd=lwds, lty=ltys, bty = "n" )
+
+##-----------------------------------------------
+## Plot relative IAV: distribution of annual global GPP anomalies (normalised by mean GPP) from mean trend
+##-----------------------------------------------
+pdf( "fig/relative_IAV_10y.pdf")
+par(las=1)
+plot( density( df_detr_rel_10y$MTE_FLUXCOM ), xlim=c(-5,5), ylim=c(0,2), main="Interannual variability, relative to mean (2001-2011)", xlab=expression(paste("global total GPP anomaly (%)")), type="n" )
+lapply( seq(length(modls)), function(x) lines( density( df_detr_rel_10y[[ x + 1 ]], adjust=2 ), col=cols[x], lwd=lwds[x], lty=ltys[x] ) )
+legend( "topright", modls, col=cols, lwd=lwds, lty=ltys, bty = "n" )
+dev.off()
 
 
 

@@ -29,161 +29,192 @@ mycurve <- function( func, from, to, col='black', add=FALSE, lwd=1, lty=1 ){
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-<!-- ## Aggregate site data -->
+## Aggregate site data
 
-<!-- Collect and aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period) -->
-<!-- ```{r aggregate_all, warning=FALSE, eval=FALSE} -->
-<!-- source("aggregate_all_fluxnet2015.R") -->
-<!-- ``` -->
+Collect and aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period)
+```{r aggregate_all, warning=FALSE, eval=FALSE}
+source("aggregate_all_fluxnet2015.R")
+```
 
-<!-- ### Indication of a bias under dry conditions -->
-<!-- The following boxplots give an indication that GPP model biases are related to drought conditions: Under dry conditions (daily AET/PET<0.95), the models exhibit a higher bias (ratio of modelled over observed GPP). The P-model is unbiased under moist conditions. For both MTE and MODIS GPP the low bias under moist conditions is partially compensated by a high bias (or apparently small bias) under dry conditions. Furthermore, the P-model bias exhibits a relationship to AET/PET: the drier the higher bias. The same is true for MTE and MODIS GPP, although the pattern is not as clear. -->
-<!-- ```{r plot_all, fig.width=5, fig.height=4, eval=TRUE} -->
-<!-- source("plot_agg_all_fluxnet2015.R") -->
-<!-- ``` -->
+### Indication of a bias under dry conditions
+The following boxplots give an indication that GPP model biases are related to drought conditions: Under dry conditions (daily AET/PET<0.95), the models exhibit a higher bias (ratio of modelled over observed GPP). The P-model is unbiased under moist conditions. For both MTE and MODIS GPP the low bias under moist conditions is partially compensated by a high bias (or apparently small bias) under dry conditions. Furthermore, the P-model bias exhibits a relationship to AET/PET: the drier the higher bias. The same is true for MTE and MODIS GPP, although the pattern is not as clear.
+```{r plot_all, fig.width=5, fig.height=4, eval=TRUE}
+source("plot_agg_all_fluxnet2015.R")
+```
 
-<!-- Aggregate data as before but now only for a subset of sites where the NN-FLUXNET2015 method performed well. This data includes the NN-predicted values of LUE and fLUE. -->
-<!-- ```{r aggregate_nn, warning=FALSE, eval=FALSE} -->
-<!-- source("aggregate_nn_fluxnet2015.R") -->
-<!-- ``` -->
+Aggregate data as before but now only for a subset of sites where the NN-FLUXNET2015 method performed well. This data includes the NN-predicted values of LUE and fLUE.
+```{r aggregate_nn, warning=FALSE, eval=FALSE}
+source("aggregate_nn_fluxnet2015.R")
+```
 
-<!-- ## Fit soil moisture stress function -->
-<!-- Derive the soil moisture stress function by fitting a quadratic function to fLUE data derived by (NN FLUXNET2015). The maximum LUE decline at low soil moisture is a function of mean AET/PET (see Fig. 9 in Stocker et al. XXX). Two approaches are shown here. These yield very similar results. -->
+## Fit soil moisture stress function
+Derive the soil moisture stress function by fitting a quadratic function to fLUE data derived by (NN FLUXNET2015). The maximum LUE decline at low soil moisture is a function of mean AET/PET (see Fig. 9 in Stocker et al. XXX). Two approaches are shown here. These yield very similar results.
 
-<!-- ### Two-step method, fitting fLUE -->
-<!-- This approach is based on a linear relationship between the maximum LUE reduction (mean fLUE values in lowest soil moisture bin fLUE$_0$) and mean annual AET/PET. -->
-<!-- ```{r linearfit} -->
-<!-- load( "data/nice_nn_agg_lue_obs_evi.Rdata" )       # loads 'nice_agg' -->
-<!-- ddf <- nice_agg -->
-<!-- rm("nice_agg")  # rename to be a bit more concise -->
+### Two-step method, fitting fLUE
+This approach is based on a linear relationship between the maximum LUE reduction (mean fLUE values in lowest soil moisture bin fLUE$_0$) and mean annual AET/PET.
+```{r linearfit}
+load( "data/nice_nn_agg_lue_obs_evi.Rdata" )       # loads 'nice_agg'
+ddf <- nice_agg
+rm("nice_agg")  # rename to be a bit more concise
 
-<!-- ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation) -->
-<!-- successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE ) -->
-<!-- do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename -->
-<!-- ddf <- ddf %>% filter( mysitename %in% do.sites ) -->
+## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
+successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
+ddf <- ddf %>% filter( mysitename %in% do.sites )
 
-<!-- ## Merge mean annual alpha (AET/PET) values into this dataframe -->
-<!-- load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha' -->
-<!-- ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" ) -->
-<!-- source("get_linearfit.R") -->
-<!-- source("plot_linearfit.R") -->
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+source("get_linearfit.R")
+source("plot_linearfit.R")
 
-<!-- # usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) ) -->
-<!-- linearfit  <- get_linearfit( filter( ddf, ratio_obs_mod < 5 ), monthly=FALSE ) -->
-<!-- plot_linearfit( linearfit ) -->
-<!-- save( linearfit,  file="linearfit.Rdata" ) -->
-<!-- ``` -->
+# usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) )
+linearfit  <- get_linearfit( filter( ddf, ratio_obs_mod < 5 ), monthly=FALSE )
+plot_linearfit( linearfit )
+save( linearfit,  file="linearfit.Rdata" )
+```
 
-<!-- Given fLUE$_0$ as a linear function of mean AET/PET, the soil moisture stress function can be calculated with -->
-<!-- ```{r correct_linearfit} -->
-<!-- calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){ -->
-<!--   flue0 <- apar + bpar * alpha -->
-<!--   beta  <- (flue0 - 1.0) / (cpar - dpar)^2 -->
-<!--   flue_est <- beta * (x - dpar)^2 + 1 -->
-<!--   return( flue_est ) -->
-<!-- } -->
+Given fLUE$_0$ as a linear function of mean AET/PET, the soil moisture stress function can be calculated with
+```{r correct_linearfit}
+calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
+  flue0 <- apar + bpar * alpha
+  beta  <- (flue0 - 1.0) / (cpar - dpar)^2
+  flue_est <- beta * (x - dpar)^2 + 1
+  return( flue_est )
+}
 
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 ) ) -->
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 ) )
 
-<!-- ## evaluate bias~soil moisture -->
-<!-- nbins <- 5 -->
-<!-- binwidth <- 1/nbins -->
-<!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )  -->
+## evaluate bias~soil moisture
+nbins <- 5
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
 
-<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1) ) -->
-<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- ``` -->
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1) )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+```
 
-<!-- <!-- ### Non-linear least squares, fitting fLUE -->
-<!-- This approach allows the linear relationship between mean AET/PET and the maximum LUE reduction to be freely determined from fitting a quadratic function to fLUE data. In addition to fitting the linear function of fLUE$_0$, here also the "tie-points" are fitted. Fitting is done using the `nlsLM` function of the `minpack.lm` package as follows: -->
-<!-- ```{r nlsfit, eval=FALSE} -->
-<!-- nlsfit <- nlsLM( -->
-<!--                 fvar ~ calc_flue_est_alpha( soilm_mean, meanalpha, apar, bpar, cpar, dpar ), -->
-<!--                 data=df, -->
-<!--                 start=list( apar=0.11, bpar=0.89, cpar=0.125, dpar=0.75 ), -->
-<!--                 lower=c( apar=0.001, bpar=0.5, cpar=0.001, dpar=0.3 ), -->
-<!--                 upper=c( apar=0.3, bpar=1.5, cpar=0.3, dpar=1.0 ), -->
-<!--                 algorithm="port" -->
-<!--                 ) -->
-<!-- ``` -->
-<!-- Get the fit using daily data, estimate flue and plot bias: -->
-<!-- ```{r get_nlsfit} -->
-<!-- source("get_nlsfit.R") -->
-<!-- nlsfit <- get_nlsfit( ddf, target="fvar", monthly=FALSE, bin=FALSE ) -->
-<!-- save( nlsfit, file="nlsfit.Rdata" ) -->
+<!-- ### Non-linear least squares, fitting fLUE
+This approach allows the linear relationship between mean AET/PET and the maximum LUE reduction to be freely determined from fitting a quadratic function to fLUE data. In addition to fitting the linear function of fLUE$_0$, here also the "tie-points" are fitted. Fitting is done using the `nlsLM` function of the `minpack.lm` package as follows:
+```{r nlsfit, eval=FALSE}
+nlsfit <- nlsLM(
+                fvar ~ calc_flue_est_alpha( soilm_mean, meanalpha, apar, bpar, cpar, dpar ),
+                data=df,
+                start=list( apar=0.11, bpar=0.89, cpar=0.125, dpar=0.75 ),
+                lower=c( apar=0.001, bpar=0.5, cpar=0.001, dpar=0.3 ),
+                upper=c( apar=0.3, bpar=1.5, cpar=0.3, dpar=1.0 ),
+                algorithm="port"
+                )
+```
+Get the fit using daily data, estimate flue and plot bias:
+```{r get_nlsfit}
+source("get_nlsfit.R")
+nlsfit <- get_nlsfit( ddf, target="fvar", monthly=FALSE, bin=FALSE )
+save( nlsfit, file="nlsfit.Rdata" )
 
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, coef(nlsfit)[[ "x0" ]], coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) ) -->
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, coef(nlsfit)[[ "x0" ]], coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) )
 
-<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) -->
-<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- ``` -->
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+```
 
-<!-- ### Non-linear least squares, binned -->
-<!-- This is basically the same as above, but here, we bin the data before fitting in order to avoid underrepresentation of data points where fLUE is low (low soil moisture). -->
-<!-- Get the fit using daily data, estimate flue and plot bias: -->
-<!-- ```{r get_nlsfit_binned} -->
-<!-- source("get_nlsfit.R") -->
-<!-- nlsfit <- get_nlsfit( ddf, target="fvar", monthly=FALSE, bin=TRUE ) -->
-<!-- save( nlsfit, file="nlsfit_binned.Rdata" ) -->
+### Non-linear least squares, binned
+This is basically the same as above, but here, we bin the data before fitting in order to avoid underrepresentation of data points where fLUE is low (low soil moisture).
+Get the fit using daily data, estimate flue and plot bias:
+```{r get_nlsfit_binned}
+source("get_nlsfit.R")
+nlsfit <- get_nlsfit( ddf, target="fvar", monthly=FALSE, bin=TRUE )
+save( nlsfit, file="nlsfit_binned.Rdata" )
 
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, coef(nlsfit)[[ "x0" ]], coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) ) -->
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, coef(nlsfit)[[ "x0" ]], coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) )
 
-<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) -->
-<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- ``` -->
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+```
 
-<!-- ### Two-step method, level 2, target: fvar -->
-<!-- Level 2 means that instead defining fLUE0 as the median in lowest bin, we define fLUE0 as the y-axis intersect of the fitted function. This works well but doesn't remove the bias fully. -->
-<!-- ```{r get_linearfit2_fvar} -->
-<!-- source("get_linearfit2.R") -->
-<!-- source("plot_linearfit2.R") -->
-<!-- source("stress_quad_1sided.R") -->
-<!-- x0_fix <- 0.9 -->
-<!-- linearfit2 <- get_linearfit2( ddf, target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix ) -->
-<!-- save( linearfit2, file="linearfit2_fvar.Rdata" ) -->
+### Two-step method, level 2, target: fvar
+Level 2 means that instead defining fLUE0 as the median in lowest bin, we define fLUE0 as the y-axis intersect of the fitted function. This works well but doesn't remove the bias fully.
+```{r get_linearfit2_fvar}
+source("get_linearfit2.R")
+source("plot_linearfit2.R")
+source("stress_quad_1sided.R")
+x0_fix <- 0.9
+linearfit2 <- get_linearfit2( ddf, target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix )
+save( linearfit2, file="linearfit2_fvar.Rdata" )
 
-<!-- ## plot fLUE0 vs. mean alpha -->
-<!-- plot_linearfit2( linearfit2, df=NULL ) -->
+## plot fLUE0 vs. mean alpha
+plot_linearfit2( linearfit2, df=NULL )
 
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) ) -->
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
 
-<!-- ## re-define bins for evaluation -->
-<!-- nbins <- 2 -->
-<!-- binwidth <- 1/nbins -->
-<!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )  -->
+## re-define bins for evaluation
+nbins <- 2
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
 
-<!-- ## plot boxplot: bias by soil moisture bin -->
-<!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) -->
-<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- ``` -->
+## plot boxplot: bias by soil moisture bin
+bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+```
 
-<!--  --> -->
-<!-- ### Two-step method, level 2, target: ratio_obs_mod -->
+ -->
+### Two-step method, level 2, target: ratio_obs_mod
+Level 2 means that instead defining fLUE0 as the median in lowest bin, we define fLUE0 as the y-axis intersect of the fitted function.
+```{r get_linearfit2_ratio}
+source("get_linearfit2.R")
+source("plot_linearfit2.R")
+source("stress_quad_1sided.R")
+
+## Use fixed point (soil moisture) above which stress function is 1 (no stress)
+x0_fix <- 0.9
+linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix )
+save( linearfit2, file="linearfit2_ratio.Rdata" )
+
+## plot fLUE0 vs. mean alpha
+plot_linearfit2( linearfit2, df=NULL )
+
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
+
+## re-define bins for evaluation
+nbins <- 5
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+
+## plot boxplot: bias by soil moisture bin
+bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+```
+
+<!-- ### Two-step method, level 2, target: ratio_obs_mod, means in 8-day bins -->
 <!-- Level 2 means that instead defining fLUE0 as the median in lowest bin, we define fLUE0 as the y-axis intersect of the fitted function. -->
-<!-- ```{r get_linearfit2_ratio} -->
+<!-- ```{r get_linearfit2_ratio_agg} -->
 <!-- source("get_linearfit2.R") -->
 <!-- source("plot_linearfit2.R") -->
 <!-- source("stress_quad_1sided.R") -->
 
 <!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
 <!-- x0_fix <- 0.9 -->
-<!-- linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix ) -->
-<!-- save( linearfit2, file="linearfit2_ratio.Rdata" ) -->
+<!-- linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, agg=8 ) -->
+<!-- save( linearfit2, file="linearfit2_ratio_agg.Rdata" ) -->
 
 <!-- ## plot fLUE0 vs. mean alpha -->
-<!-- plot_linearfit2( linearfit2, df=NULL ) -->
+<!-- plot_linearfit2( linearfit2, target="ratio_obs_mod", df=NULL ) -->
 
 <!-- ## add estimated fLUE to ddf -->
 <!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) ) -->
@@ -201,149 +232,120 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 <!-- abline( h=0.0, lty=3 ) -->
 <!-- ``` -->
 
-<!-- <!-- ### Two-step method, level 2, target: ratio_obs_mod, means in 8-day bins --> -->
-<!-- <!-- Level 2 means that instead defining fLUE0 as the median in lowest bin, we define fLUE0 as the y-axis intersect of the fitted function. --> -->
-<!-- <!-- ```{r get_linearfit2_ratio_agg} --> -->
-<!-- <!-- source("get_linearfit2.R") --> -->
-<!-- <!-- source("plot_linearfit2.R") --> -->
-<!-- <!-- source("stress_quad_1sided.R") --> -->
 
-<!-- <!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) --> -->
-<!-- <!-- x0_fix <- 0.9 --> -->
-<!-- <!-- linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, agg=8 ) --> -->
-<!-- <!-- save( linearfit2, file="linearfit2_ratio_agg.Rdata" ) --> -->
+<!-- ### Non-linear least squares, fitting ratio - DOESN'T WORK -->
+<!-- This approach allows the linear relationship between mean AET/PET and the maximum LUE reduction to be freely determined from fitting a quadratic function to fLUE data. In addition to fitting the linear function of fLUE$_0$, here also the "tie-points" are fitted. -->
+<!-- Get the fit using daily data, estimate flue and plot bias: -->
+<!-- ```{r get_nlsfit_ratio} -->
+<!-- source("get_nlsfit.R") -->
+<!-- x0_fix <- 0.9 -->
+<!-- nlsfit <- get_nlsfit( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix ) -->
+<!-- save( nlsfit, file="nlsfit.Rdata" ) -->
 
-<!-- <!-- ## plot fLUE0 vs. mean alpha --> -->
-<!-- <!-- plot_linearfit2( linearfit2, target="ratio_obs_mod", df=NULL ) --> -->
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) ) -->
 
-<!-- <!-- ## add estimated fLUE to ddf --> -->
-<!-- <!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) ) --> -->
-
-<!-- <!-- ## re-define bins for evaluation --> -->
-<!-- <!-- nbins <- 5 --> -->
-<!-- <!-- binwidth <- 1/nbins --> -->
-<!-- <!-- alphabins <- seq( from=0, to=1, by=binwidth ) --> -->
-<!-- <!-- soilmbins <- seq( from=0, to=1, by=binwidth ) --> -->
-<!-- <!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) --> -->
-
-<!-- <!-- ## plot boxplot: bias by soil moisture bin --> -->
-<!-- <!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) --> -->
-<!-- <!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) --> -->
-<!-- <!-- abline( h=0.0, lty=3 ) --> -->
-<!-- <!-- ``` --> -->
-
-
-<!-- <!-- ### Non-linear least squares, fitting ratio - DOESN'T WORK --> -->
-<!-- <!-- This approach allows the linear relationship between mean AET/PET and the maximum LUE reduction to be freely determined from fitting a quadratic function to fLUE data. In addition to fitting the linear function of fLUE$_0$, here also the "tie-points" are fitted. --> -->
-<!-- <!-- Get the fit using daily data, estimate flue and plot bias: --> -->
-<!-- <!-- ```{r get_nlsfit_ratio} --> -->
-<!-- <!-- source("get_nlsfit.R") --> -->
-<!-- <!-- x0_fix <- 0.9 --> -->
-<!-- <!-- nlsfit <- get_nlsfit( ddf, target="ratio_obs_mod", monthly=FALSE, bin=FALSE, x0_fix=x0_fix ) --> -->
-<!-- <!-- save( nlsfit, file="nlsfit.Rdata" ) --> -->
-
-<!-- <!-- ## add estimated fLUE to ddf --> -->
-<!-- <!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(nlsfit)[[ "apar" ]], coef(nlsfit)[[ "bpar" ]] ) ) --> -->
-
-<!-- <!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) --> -->
-<!-- <!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) --> -->
-<!-- <!-- abline( h=0.0, lty=3 ) --> -->
-<!-- <!-- ``` --> -->
-
-
-<!-- ### Estimate fLUE -->
-<!-- Finally, all dataframes are complemented with estimated fLUE (adds column `flue_est`). -->
-<!-- ```{r complement_flue, eval=FALSE} -->
-<!-- source("complement_all.R") -->
-<!-- load("linearfit2_ratio_agg.Rdata") -->
-<!-- complment_all( linearfit2 ) -->
+<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1) ) -->
+<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
+<!-- abline( h=0.0, lty=3 ) -->
 <!-- ``` -->
 
 
-<!-- ## Reshape data to align by drought events -->
-<!-- This is used for plotting the data -->
-<!-- ```{r reshape} -->
-<!-- source("execute_reshape_align_nn_fluxnet2015.R") -->
+### Estimate fLUE
+Finally, all dataframes are complemented with estimated fLUE (adds column `flue_est`).
+```{r complement_flue, eval=FALSE}
+source("complement_all.R")
+load("linearfit2_ratio_agg.Rdata")
+complment_all( linearfit2 )
+```
+
+
+## Reshape data to align by drought events
+This is used for plotting the data
+```{r reshape}
+source("execute_reshape_align_nn_fluxnet2015.R")
+```
+
+
+## Plot data to analyse bias, related to drought effect on LUE
+```{r plot_agg}
+source("plot_agg_nn_fluxnet2015.R")
+```
+
+<!-- -->
+
+<!-- 1. Define relationship between fLUE_0 and annual mean AET/PET -->
+<!-- ```{r flue_0} -->
+<!-- source("get_function_fvar_vs_soilm.R") -->
 <!-- ``` -->
 
-
-<!-- ## Plot data to analyse bias, related to drought effect on LUE -->
-<!-- ```{r plot_agg} -->
-<!-- source("plot_agg_nn_fluxnet2015.R") -->
+<!-- 2. Define correction function (function of soil moisture) for each site -->
+<!-- ```{r correctionfunction, eval=FALSE} -->
+<!-- source("xxx.R") -->
 <!-- ``` -->
 
-<!-- <!-- --> -->
-
-<!-- <!-- 1. Define relationship between fLUE_0 and annual mean AET/PET --> -->
-<!-- <!-- ```{r flue_0} --> -->
-<!-- <!-- source("get_function_fvar_vs_soilm.R") --> -->
-<!-- <!-- ``` --> -->
-
-<!-- <!-- 2. Define correction function (function of soil moisture) for each site --> -->
-<!-- <!-- ```{r correctionfunction, eval=FALSE} --> -->
-<!-- <!-- source("xxx.R") --> -->
-<!-- <!-- ``` --> -->
-
-<!-- <!-- 3. Apply function to estimate fLUE --> -->
-<!-- <!-- ```{r, eval=FALSE} --> -->
-<!-- <!-- source("xxx.R") --> -->
-<!-- <!-- ``` --> -->
-
-<!-- <!-- 4. Calculate corrected GPP --> -->
-<!-- <!-- ```{r, eval=FALSE} --> -->
-<!-- <!-- source("xxx.R") --> -->
-<!-- <!-- ``` --> -->
-
-<!-- <!-- ## Align data by drought events (dbt whether necessary -> check ratio vs. fLUE plot) --> -->
-
-<!-- <!-- ## Plot bias versus dryness --> -->
-
-<!-- <!-- ## in R, get IAV (distribution across gridcells) of P-model before and after soil moisture correction, MODIS GPP, MTE GPP, TRENDY models --> -->
-
-<!-- ### Process GPP datasets outputs -->
-
-<!-- 1. Subset years 1982-2015 for TRENDY outputs -->
-<!-- Using CDO: -->
-<!-- ```{sh, eval=FALSE} -->
-<!-- cdo selyear,1982/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_sub.nc -->
-<!-- cdo selyear,1982/2015 CLASS-CTEM_S2_gpp.nc CLASS-CTEM_S2_gpp_sub.nc -->
-<!-- cdo selyear,1982/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_sub.nc -->
-<!-- cdo selyear,1982/2015 ISAM_S2_gpp.nc ISAM_S2_gpp_sub.nc -->
-<!-- cdo selyear,1982/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_sub.nc -->
-<!-- cdo selyear,1982/2015 LPJ-GUESS_S2_gpp_fEst_sub.nc LPJ-GUESS_S2_gpp_fEst.nc -->
-<!-- cdo selyear,1982/2015 VEGAS_S2_gpp_sub.nc VEGAS_S2_gpp.nc -->
-<!-- cdo selyear,1982/2015 VISIT_S2_gpp.nc VISIT_S2_gpp_sub.nc -->
-<!-- ``` -->
-
-<!-- Using R for problematic files: -->
+<!-- 3. Apply function to estimate fLUE -->
 <!-- ```{r, eval=FALSE} -->
-<!-- source("selyears_dlem.R") -->
-<!-- source("selyears_jules.R") -->
-<!-- source("selyears_lpx.R") -->
-<!-- source("selyears_orchidee.R") -->
-<!-- source("selyears_sdgvm.R") -->
+<!-- source("xxx.R") -->
 <!-- ``` -->
 
-<!-- Using Ferret for JULES. In Ferret: -->
-<!-- ``` -->
-<!-- go selyears_jules.jnl -->
-<!-- ``` -->
-
-<!-- In Bash: -->
-<!-- ```{sh, eval=FALSE} -->
-<!-- cdo chname,GPP_SUB,gpp CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc tmp.nc -->
-<!-- mv tmp.nc CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc -->
-
-<!-- cdo chname,gpp.monthly,gpp /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc tmp.nc -->
-<!-- mv tmp.nc /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc -->
+<!-- 4. Calculate corrected GPP -->
+<!-- ```{r, eval=FALSE} -->
+<!-- source("xxx.R") -->
 <!-- ``` -->
 
-<!-- 2. Converting to annual totals. This is a bit complicated here because model output is given in units per seconds and months have variable number of seconds. This reduces time series of TRENDY outputs to 1982-2011, to be used for detrending and IAV calculation in the next step. -->
-<!-- ```{r getann, eval=FALSE} -->
-<!-- source("get_ann_trendy.R") -->
-<!-- source("get_ann_mte.R") -->
-<!-- source("get_ann_bess.R") -->
-<!-- ``` -->
+<!-- ## Align data by drought events (dbt whether necessary -> check ratio vs. fLUE plot) -->
+
+<!-- ## Plot bias versus dryness -->
+
+<!-- ## in R, get IAV (distribution across gridcells) of P-model before and after soil moisture correction, MODIS GPP, MTE GPP, TRENDY models -->
+
+### Process GPP datasets outputs
+
+1. Subset years 1982-2015 for TRENDY outputs
+Using CDO:
+```{sh, eval=FALSE}
+cdo selyear,1982/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLASS-CTEM_S2_gpp.nc CLASS-CTEM_S2_gpp_sub.nc
+cdo selyear,1982/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_sub.nc
+cdo selyear,1982/2015 ISAM_S2_gpp.nc ISAM_S2_gpp_sub.nc
+cdo selyear,1982/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_sub.nc
+cdo selyear,1982/2015 LPJ-GUESS_S2_gpp_fEst_sub.nc LPJ-GUESS_S2_gpp_fEst.nc
+cdo selyear,1982/2015 VEGAS_S2_gpp_sub.nc VEGAS_S2_gpp.nc
+cdo selyear,1982/2015 VISIT_S2_gpp.nc VISIT_S2_gpp_sub.nc
+```
+
+Using R for problematic files:
+```{r, eval=FALSE}
+source("selyears_dlem.R")
+source("selyears_jules.R")
+source("selyears_lpx.R")
+source("selyears_orchidee.R")
+source("selyears_sdgvm.R")
+```
+
+Using Ferret for JULES. In Ferret:
+```
+go selyears_jules.jnl
+```
+
+In Bash:
+```{sh, eval=FALSE}
+cdo chname,GPP_SUB,gpp CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc tmp.nc
+mv tmp.nc CRU-NCEP_1p1.update.vn4.6.S2.Annual.gpp_sub.nc
+
+cdo chname,gpp.monthly,gpp /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc tmp.nc
+mv tmp.nc /Users/benjaminstocker/data/trendy/v5/LPJ-GUESS/S2/LPJ-GUESS_S2_gpp_fEst_sub.nc
+```
+
+2. Converting to annual totals. This is a bit complicated here because model output is given in units per seconds and months have variable number of seconds. This reduces time series of TRENDY outputs to 1982-2011, to be used for detrending and IAV calculation in the next step.
+```{r getann, eval=FALSE}
+source("get_ann_trendy.R")
+source("get_ann_mte.R")
+source("get_ann_modis.R")
+source("get_ann_bess.R")
+source("get_ann_vpm.R")
+```
 
 3. Detrend, and calculate variance and relative variance. This is a bit complicated here because some TRENDY output is given as totals per gridcell, while most are (correctly) given in per square metre.
 ```{r getiav, eval=FALSE}
