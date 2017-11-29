@@ -29,20 +29,22 @@ mycurve <- function( func, from, to, col='black', add=FALSE, lwd=1, lty=1 ){
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-## Aggregate site data
+## The problem: high bias in simulated GPP under dry conditions
 
-Collect and aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period)
+### Pooled data from all available sites
+
+First, collect and aggregate FLUXNET 2015 site scale data to single data frame, using all sites. Aggregation is done for daily data using P-model output and observational data, and for 8-day periods using MTE and MODIS data, combined with observational data (mean over 8-day period)
 ```{r aggregate_all, warning=FALSE, eval=FALSE}
 source("aggregate_all_fluxnet2015.R")
 ```
 
-### Indication of a bias under dry conditions
-The following boxplots give an indication that GPP model biases are related to drought conditions: Under dry conditions (daily AET/PET<0.95), the models exhibit a higher bias (ratio of modelled over observed GPP). The P-model is unbiased under moist conditions. For both MTE and MODIS GPP the low bias under moist conditions is partially compensated by a high bias (or apparently small bias) under dry conditions. Furthermore, the P-model bias exhibits a relationship to AET/PET: the drier the higher bias. The same is true for MTE and MODIS GPP, although the pattern is not as clear.
+After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI.  
 ```{r plot_all, fig.width=5, fig.height=4, eval=TRUE}
 source("plot_agg_all_fluxnet2015.R")
 ```
 
-Aggregate data as before but now only for a subset of sites where the NN-FLUXNET2015 method performed well. This data includes the NN-predicted values of LUE and fLUE.
+### Pooled data soil moisture focus sites
+Aggregate data as before but now only for a subset of sites where the NN-FLUXNET2015 method (Stocker et al., submitted) performed well. That is, where a clear soil moisture control on light use efficiency is evident from the parallel CO2 flux, VPD, and and soil moisture data. The data aggregated by the following script includes the NN-predicted values of LUE and fLUE.
 ```{r aggregate_nn, warning=FALSE, eval=FALSE}
 source("aggregate_nn_fluxnet2015.R")
 ```
