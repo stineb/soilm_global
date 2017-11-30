@@ -3,15 +3,16 @@
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 
-library(dplyr)
-library(LSD)
+require(dplyr)
+require(LSD)
 
 source( "analyse_modobs.R" )
 source( "remove_outliers.R" )
 
 source("compl_df_flue_est.R")
-load("linearfit.Rdata")
-load("nlsfit.Rdata")
+
+# load("linearfit.Rdata")
+# load("nlsfit.Rdata")
 
 ## Manual settings ----------------
 nam_target = "lue_obs_evi"
@@ -76,7 +77,6 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
 df_dday_agg$ratio_obs_mod       <- remove_outliers( df_dday_agg$ratio_obs_mod,       coef=5 )
 df_dday_modis_agg$ratio_obs_mod <- remove_outliers( df_dday_modis_agg$ratio_obs_mod, coef=5 )
 df_dday_mte_agg$ratio_obs_mod   <- remove_outliers( df_dday_mte_agg$ratio_obs_mod,   coef=5 )
-
 
 ##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE

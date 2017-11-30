@@ -93,7 +93,7 @@ if (use_weights){
   char_wgt <- ""
 }
 
-print( paste( "Aggregating and complementing data for ", length(do.sites)," NN FLUXNET2015 sites ...") )
+print( paste( "Aggregating and complementing data for", length(do.sites), "NN FLUXNET2015 sites ...") )
 
 ##------------------------------------------------
 ## Initialise aggregated data
@@ -113,7 +113,7 @@ for (sitename in do.sites){
   jdx <- jdx + 1
   missing_mte <- FALSE
 
-  nicefiln <- paste0("data/nice_nn_", sitename, ".Rdata" )
+  nicefiln <- paste0("data/nice_nn/nice_nn_", sitename, ".Rdata" )
 
   if (file.exists(nicefiln)&&!overwrite_nice){
 
@@ -255,7 +255,7 @@ for (sitename in do.sites){
 
     if (is.element( sitename, mte_8d$Site.code)){
 
-      filn <- paste( "data/mte_nn_", sitename, ".Rdata", sep="" )
+      filn <- paste( "data/mte_nn/mte_nn_", sitename, ".Rdata", sep="" )
 
       if ( file.exists(filn) && !overwrite_mte ){
 
@@ -316,7 +316,7 @@ for (sitename in do.sites){
   ##------------------------------------------------
   if (avl_data_modis){
 
-    filn <- paste( "data/modis_nn_", sitename, ".Rdata", sep="" )
+    filn <- paste0( "data/modis_nn/modis_nn_", sitename, ".Rdata" )
 
     if ( file.exists(filn) && !overwrite_modis ){
 
@@ -326,8 +326,9 @@ for (sitename in do.sites){
 
     } else {
 
-      ## prepare 'nice_to_modis'
-      modis <- try( read.csv( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv", sep="" ), as.is=TRUE ))
+      ## Read from downloaded CSV file
+      modis <- try( read.csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ), as.is=TRUE )) %>% rename( data=Gpp ) %>% mutate( data=data*1e3 )
+      # modis <- try( read.csv( paste0( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv" ), as.is=TRUE ))
       if (class(modis)!="try-error"){
         avl_modisgpp <- TRUE
 
@@ -385,11 +386,11 @@ if ( length( dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysi
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
-  filn <- paste0("data/nice_nn_agg_",  nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_nn_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe nice_agg in file", filn) )
   save( nice_agg,  file=filn )
 
-  filn <- paste0("data/nice_nn_mte_agg_",   nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_nn_mte_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe mte_agg in file", filn) )
   save( mte_agg, file=filn )
 

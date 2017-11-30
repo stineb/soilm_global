@@ -9,7 +9,8 @@
 
 .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
-library(dplyr)
+require(dplyr)
+require(readr)
 
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
@@ -19,7 +20,7 @@ source( "reshape_align_nn_fluxnet2015.R" )
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
-siteinfo <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+siteinfo <- read_csv( "successcodes.csv" )
 do.sites <- dplyr::filter( siteinfo, successcode==1 )$mysitename
 
 # ## add classid column

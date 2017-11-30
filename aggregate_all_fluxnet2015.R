@@ -115,7 +115,7 @@ for (sitename in do.sites){
   jdx <- jdx + 1
   missing_mte <- FALSE
 
-  nicefiln <- paste0("data/nice_all_", sitename, ".Rdata" )
+  nicefiln <- paste0("data/nice_all/nice_all_", sitename, ".Rdata" )
 
   if (file.exists(nicefiln)&&!overwrite_nice){
 
@@ -308,7 +308,7 @@ for (sitename in do.sites){
 
     if (is.element( sitename, mte_8d$Site.code)){
 
-      filn <- paste( "data/mte_", sitename, ".Rdata", sep="" )
+      filn <- paste( "data/mte/mte_", sitename, ".Rdata", sep="" )
 
       if ( file.exists(filn) && !overwrite_mte ){
 
@@ -369,7 +369,7 @@ for (sitename in do.sites){
   ##------------------------------------------------
   if (avl_data_modis){
 
-    filn <- paste0( "data/modis_", sitename, ".Rdata" )
+    filn <- paste0( "data/modis/modis_", sitename, ".Rdata" )
 
     if ( file.exists(filn) && !overwrite_modis ){
 

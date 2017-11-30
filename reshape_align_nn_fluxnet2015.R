@@ -1,7 +1,7 @@
 reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
   # ## debug-------------------
-  # sitename = "AU-Dry"
+  # # sitename = "AU-Dry"
   # nam_target="lue_obs_evi"
   # bysm=FALSE
   # use_fapar=FALSE
@@ -95,22 +95,22 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                 "ratio_obs_mod", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
-                "dry",
-                "flue_est"
+                "dry"
+                # "flue_est"
                 )
 
   ##------------------------------------------------
   ## load "nice" data for this site
   ##------------------------------------------------
   if (verbose) print("loading nice file ...")
-  infil <- paste0( "data/nice_nn_", sitename, ".Rdata" )
+  infil <- paste0( "data/nice_nn/nice_nn_", sitename, ".Rdata" )
   load( infil )
   df <- nice; rm("nice")
 
   ##------------------------------------------------
-  ## load drought data for this site from NN FLUXNET2015 output
+  ## load drought data (only!) for this site from NN FLUXNET2015 output
   ##------------------------------------------------
-  droughtfil <- paste0( "./data/droughts_", sitename, ".Rdata" )
+  droughtfil <- paste0( "./data/droughts/droughts_", sitename, ".Rdata" )
   if (!file.exists(droughtfil)){
     dir <- paste( myhome, "data/nn_fluxnet/fvar/", sep="" )
     infil <- paste( dir, "nn_fluxnet2015_", sitename, "_", nam_target, char_fapar, ".Rdata", sep="" ) 
@@ -129,7 +129,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   ##--------------------------------------------------------
   if (nrow(droughts)>1){
 
-    filn <- paste( "./data/df_dday_", sitename, ".Rdata", sep="" )
+    filn <- paste( "./data/df_dday/df_dday_", sitename, ".Rdata", sep="" )
 
     if (!file.exists(filn)||overwrite){
       if (verbose) print( paste( "aligning df ", sitename, "..." ) )
@@ -209,7 +209,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
       ## drop rows dday=NA
       df_dday_aggbydday <- df_dday_aggbydday[ which( !is.na(df_dday_aggbydday$dday)), ]
-      save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday_", sitename, ".Rdata", sep="" ) )
+      save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday/df_dday_aggbydday_", sitename, ".Rdata", sep="" ) )
       
       ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
       save( df_dday, file=filn )
@@ -225,14 +225,14 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     ##--------------------------------------------------------
     ## re-arrange MODIS dataframe
     ##--------------------------------------------------------
-    infiln  <- paste( "data/modis_nn_", sitename, ".Rdata", sep="" )
-    outfiln <- paste( "data/df_dday_modis_", sitename, ".Rdata", sep="" )
+    infiln  <- paste( "data/modis_nn/modis_nn_", sitename, ".Rdata", sep="" )
+    outfiln <- paste( "data/df_dday_modis/df_dday_modis_", sitename, ".Rdata", sep="" )
 
     if (!file.exists(outfiln)||overwrite){
 
       if (file.exists(infiln)){
 
-        load( infiln ) # loads 'nice_to_modis', file prepared in 'plot_nn_fVAR_fluxnet2015.R'
+        load( infiln )  # loads 'nice_to_modis', file prepared in 'aggregate_nn_fluxnet2015.R'
         avl_modis <- TRUE
         
         droughts_modis <- get_consecutive( nice_to_modis$is_drought_byvar, leng_threshold=2, do_merge=FALSE )
@@ -267,7 +267,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
         ## drop rows dday=NA
         df_dday_aggbydday_modis <- df_dday_aggbydday_modis[ which( !is.na(df_dday_aggbydday_modis$dday)), ]
-        save( df_dday_aggbydday_modis, file=paste( "data/df_dday_aggbydday_modis_", sitename, ".Rdata", sep="" ) )
+        save( df_dday_aggbydday_modis, file=paste( "data/df_dday_aggbydday_modis/df_dday_aggbydday_modis_", sitename, ".Rdata", sep="" ) )
 
       } else {
 
@@ -284,8 +284,8 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     ##--------------------------------------------------------
     ## re-arrange MTE dataframe
     ##--------------------------------------------------------
-    infiln  <- paste( "data/mte_nn_", sitename, ".Rdata", sep="" )
-    outfiln <- paste( "data/df_dday_mte_", sitename, ".Rdata", sep="" )
+    infiln  <- paste( "data/mte_nn/mte_nn_", sitename, ".Rdata", sep="" )
+    outfiln <- paste( "data/df_dday_mte/df_dday_mte_", sitename, ".Rdata", sep="" )
 
     if (!file.exists(outfiln)||overwrite){
 
@@ -328,7 +328,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
           ## drop rows dday=NA
           df_dday_aggbydday <- df_dday_aggbydday[ which( !is.na(df_dday_aggbydday$dday)), ]
-          save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday_mte_", sitename, ".Rdata", sep="" ) )
+          save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday_mte/df_dday_aggbydday_mte_", sitename, ".Rdata", sep="" ) )
 
         } else {
 
