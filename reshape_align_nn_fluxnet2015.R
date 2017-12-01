@@ -1,14 +1,14 @@
-reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
+# reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
-  # ## debug-------------------
-  # # sitename = "AU-Dry"
-  # nam_target="lue_obs_evi"
-  # bysm=FALSE
-  # use_fapar=FALSE
-  # use_weights=FALSE
-  # overwrite=TRUE
-  # verbose=TRUE
-  # #--------------------------
+  ## debug-------------------
+  sitename = "FR-Pue"
+  nam_target="lue_obs_evi"
+  bysm=FALSE
+  use_fapar=FALSE
+  use_weights=FALSE
+  overwrite=TRUE
+  verbose=TRUE
+  #--------------------------
 
   .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
@@ -111,6 +111,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   ## load drought data (only!) for this site from NN FLUXNET2015 output
   ##------------------------------------------------
   droughtfil <- paste0( "./data/droughts/droughts_", sitename, ".Rdata" )
+  if (!dir.exists("./data/droughts")) system( "mkdir -p ./data/droughts" )
   if (!file.exists(droughtfil)){
     dir <- paste( myhome, "data/nn_fluxnet/fvar/", sep="" )
     infil <- paste( dir, "nn_fluxnet2015_", sitename, "_", nam_target, char_fapar, ".Rdata", sep="" ) 
@@ -130,7 +131,8 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   if (nrow(droughts)>1){
 
     filn <- paste( "./data/df_dday/df_dday_", sitename, ".Rdata", sep="" )
-
+    if (!dir.exists("./data/df_dday")) system( "mkdir -p ./data/df_dday" )
+    
     if (!file.exists(filn)||overwrite){
       if (verbose) print( paste( "aligning df ", sitename, "..." ) )
 
@@ -209,6 +211,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
       ## drop rows dday=NA
       df_dday_aggbydday <- df_dday_aggbydday[ which( !is.na(df_dday_aggbydday$dday)), ]
+      if (!dir.exists("data/df_dday_aggbydday")) system( "mkdir -p data/df_dday_aggbydday")
       save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday/df_dday_aggbydday_", sitename, ".Rdata", sep="" ) )
       
       ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
@@ -227,7 +230,8 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     ##--------------------------------------------------------
     infiln  <- paste( "data/modis_nn/modis_nn_", sitename, ".Rdata", sep="" )
     outfiln <- paste( "data/df_dday_modis/df_dday_modis_", sitename, ".Rdata", sep="" )
-
+    if (!dir.exists("./data/df_dday_modis")) system( "mkdir -p ./data/df_dday_modis" )
+    
     if (!file.exists(outfiln)||overwrite){
 
       if (file.exists(infiln)){
@@ -267,6 +271,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
         ## drop rows dday=NA
         df_dday_aggbydday_modis <- df_dday_aggbydday_modis[ which( !is.na(df_dday_aggbydday_modis$dday)), ]
+        if (!dir.exists("data/df_dday_aggbydday_modis")) system( "mkdir -p data/df_dday_aggbydday_modis")
         save( df_dday_aggbydday_modis, file=paste( "data/df_dday_aggbydday_modis/df_dday_aggbydday_modis_", sitename, ".Rdata", sep="" ) )
 
       } else {
@@ -286,6 +291,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
     ##--------------------------------------------------------
     infiln  <- paste( "data/mte_nn/mte_nn_", sitename, ".Rdata", sep="" )
     outfiln <- paste( "data/df_dday_mte/df_dday_mte_", sitename, ".Rdata", sep="" )
+    if (!dir.exists("./data/df_dday_mte")) system( "mkdir -p ./data/df_dday_mte" )
 
     if (!file.exists(outfiln)||overwrite){
 
@@ -313,7 +319,8 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
               dday <- dday[ -drophead ]
             }
             addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
-            df_dday_mte <- rbind( df_dday_mte, addrows )
+            # df_dday_mte <- rbind( df_dday_mte, addrows )
+            df_dday_mte <- df_dday_mte %>% bind_rows( addrows )
           }
 
           ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
@@ -327,8 +334,9 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                                                     mutate( mysitename=sitename )
 
           ## drop rows dday=NA
-          df_dday_aggbydday <- df_dday_aggbydday[ which( !is.na(df_dday_aggbydday$dday)), ]
-          save( df_dday_aggbydday, file=paste( "data/df_dday_aggbydday_mte/df_dday_aggbydday_mte_", sitename, ".Rdata", sep="" ) )
+          df_dday_aggbydday_mte <- df_dday_aggbydday_mte[ which( !is.na(df_dday_aggbydday_mte$dday)), ]
+          if (!dir.exists("data/df_dday_aggbydday_mte")) system( "mkdir -p data/df_dday_aggbydday_mte")
+          save( df_dday_aggbydday_mte, file=paste( "data/df_dday_aggbydday_mte/df_dday_aggbydday_mte_", sitename, ".Rdata", sep="" ) )
 
         } else {
 
@@ -360,4 +368,4 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_modis=df_dday_modis, df_dday_mte=df_dday_mte )
   return( out )
 
-}
+# }

@@ -322,7 +322,7 @@ for (sitename in do.sites){
         missing_mte <- FALSE
 
         ## make mte a bit nicer
-        mte <-  filter( mte_8d, Site.code==sitename ) %>%
+        mte <-  dplyr::filter( mte_8d, Site.code==sitename ) %>%
                 rename( mysitename=Site.code, gpp_mte=MTE, gpp_mte_m=MTE_M, gpp_mte_viterbo=MTE_Viterbo, gpp_rf=RF, gpp_rf_fromdaily=RF_from_daily, doy_start=StartDoY, doy_end=EndDoY, year_start=StartYear, year_end=EndYear ) %>%
                 mutate( doy_end = doy_end - 1 ) %>%  # assuming that the doy_end is not counted towards bins aggregate
                 mutate( date_start = as.POSIXct( as.Date( paste( as.character(year_start), "-01-01", sep="" ) ) + doy_start - 1 ),
@@ -380,7 +380,8 @@ for (sitename in do.sites){
     } else {
 
       ## prepare 'nice_to_modis'
-      modis <- try( read.csv( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv", sep="" ), as.is=TRUE ))
+      modis <- try( read.csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ), as.is=TRUE )) %>% rename( data=Gpp ) %>% mutate( data=data*1e3 )
+      # modis <- try( read.csv( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv", sep="" ), as.is=TRUE ))
       if (class(modis)!="try-error"){
         avl_modisgpp <- TRUE
 

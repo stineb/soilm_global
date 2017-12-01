@@ -14,7 +14,11 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 
 
-## add vegetation type info to nice_agg
+
+## load nice_agg to get data outside droughts
+load( "data/nice_nn_agg_lue_obs_evi.Rdata" )  # loads nice_agg
+load( "data/nice_nn_modis_agg_lue_obs_evi.Rdata" )   # loads modis_agg
+load( "data/nice_nn_mte_agg_lue_obs_evi.Rdata" )   # loads mte_agg
 nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid ), by="mysitename" )
 
 ##------------------------------------------------
