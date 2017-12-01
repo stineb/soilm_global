@@ -143,10 +143,10 @@ for (sitename in do.sites){
     ## additional variables
     ##------------------------------------------------
     nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs, 
-                              ratio_obs_mod = gpp_obs / gpp_pmodel, 
+                              ratio_obs_mod_pmodel = gpp_obs / gpp_pmodel, 
                               alpha = aet_pmodel / pet_pmodel ) %>% 
                       mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), 
-                              ratio_obs_mod = ifelse( is.infinite(ratio_obs_mod), NA, ratio_obs_mod ),
+                              ratio_obs_mod_pmodel = ifelse( is.infinite(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ),
                               alpha = ifelse( is.infinite(alpha), NA, alpha )
                               )
 
@@ -207,7 +207,7 @@ for (sitename in do.sites){
                 "soilm_swbm",
                 "soilm_mean",
                 "bias_pmodel", 
-                "ratio_obs_mod", 
+                "ratio_obs_mod_pmodel", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry",

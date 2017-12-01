@@ -1,14 +1,14 @@
-# reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
+reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
-  ## debug-------------------
-  sitename = "FR-Pue"
-  nam_target="lue_obs_evi"
-  bysm=FALSE
-  use_fapar=FALSE
-  use_weights=FALSE
-  overwrite=TRUE
-  verbose=TRUE
-  #--------------------------
+  # ## debug-------------------
+  # sitename = "FR-Pue"
+  # nam_target="lue_obs_evi"
+  # bysm=FALSE
+  # use_fapar=FALSE
+  # use_weights=FALSE
+  # overwrite=TRUE
+  # verbose=TRUE
+  # #--------------------------
 
   .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
@@ -92,7 +92,7 @@
                 "soilm_swbm",
                 "soilm_mean",
                 "bias_pmodel", 
-                "ratio_obs_mod", 
+                "ratio_obs_mod_pmodel", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry"
@@ -147,8 +147,9 @@
           idxs <- idxs[ -drophead ]
           dday <- dday[ -drophead ]
         }
-        addrows <- df %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
-        df_dday <- rbind( df_dday, addrows )
+        addrows <- df %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, vpd, soilm_mean, fpar, evi, fvar, gpp_pmodel, bias_pmodel, ratio_obs_mod_pmodel )
+        # df_dday <- rbind( df_dday, addrows )
+        df_dday <- df_dday %>% bind_rows( addrows )              
       }
 
       ##--------------------------------------------------------
@@ -255,8 +256,9 @@
             idxs <- idxs[ -drophead ]
             dday <- dday[ -drophead ]
           }
-          addrows <- nice_to_modis %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
-          df_dday_modis <- rbind( df_dday_modis, addrows )
+          addrows <- nice_to_modis %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_modis, bias_modis, ratio_obs_mod_modis, fvar )
+          # df_dday_modis <- rbind( df_dday_modis, addrows )
+          df_dday_modis <- df_dday_modis %>% bind_rows( addrows )
         }
 
         ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
@@ -318,7 +320,7 @@
               idxs <- idxs[ -drophead ]
               dday <- dday[ -drophead ]
             }
-            addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst )
+            addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_mte, bias_mte, ratio_obs_mod_mte, bias_rf, ratio_obs_mod_rf, fvar )
             # df_dday_mte <- rbind( df_dday_mte, addrows )
             df_dday_mte <- df_dday_mte %>% bind_rows( addrows )
           }
@@ -368,4 +370,4 @@
   out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_modis=df_dday_modis, df_dday_mte=df_dday_mte )
   return( out )
 
-# }
+}
