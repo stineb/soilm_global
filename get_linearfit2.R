@@ -1,10 +1,8 @@
-get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA ){
+get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA ){
 
-  require( dplyr )
+  require(dplyr)
   require(tidyr)
   require(minpack.lm)
-
-  source("stress_quad_1sided.R")
 
   if (!is.element("fvar", names(df))||!is.element("soilm_mean", names(df))){
     
@@ -40,7 +38,7 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
     ##------------------------------------------------
     ## Fit by medians in bis - 1SIDED
     ##------------------------------------------------
-    eq <- paste0( target, "~ stress_quad_1sided( soilm_mean, x0, beta )")
+    eq <- paste0( target, " ~ stress_quad_1sided( soilm_mean, x0, beta )")
     fit <- try( 
                 nlsLM( 
                       eq,
@@ -49,7 +47,7 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
                       lower=c( x0_fix,  beta_min ),
                       upper=c( x0_fix,  99  ),
                       algorithm="port"
-                      ) 
+                      )
                 )
 
     ## return coefficients of fitted function
@@ -65,7 +63,7 @@ get_yintersect <- function( df, target="ratio_obs_mod", bin=TRUE, beta_min=0.01,
 }
 
 
-get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA ){
+get_linearfit2 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA ){
   
   require(dplyr)
   require(tidyr)
@@ -93,7 +91,11 @@ get_linearfit2 <- function( df, target="ratio_obs_mod", monthly=FALSE, bin=TRUE,
   df_flue0 <- df_flue0 %>% mutate( flue0 = NA )
   out <- c()
   for (sitename in df_flue0$mysitename){
-    out <- rbind( out, get_yintersect( dplyr::select( dplyr::filter( df, mysitename==sitename ), year, doy, soilm_mean, ratio_obs_mod, fvar ), target=target, bin=bin, beta_min=beta_min, x0_fix=x0_fix, agg=agg ) )
+    out <- rbind( out, get_yintersect( 
+                                      dplyr::select( dplyr::filter( df, mysitename==sitename ), year, doy, soilm_mean, ratio_obs_mod_pmodel, fvar ), 
+                                      target=target, bin=bin, beta_min=beta_min, x0_fix=x0_fix, agg=agg 
+                                      ) 
+                )
   }
 
   out <- as.data.frame( cbind( df_flue0, out ) )

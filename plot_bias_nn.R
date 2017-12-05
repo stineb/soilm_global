@@ -64,7 +64,7 @@ widths <- c(magn, 0.3*magn, magn, 0.3*magn )
 heights <- 1.2*c(0.8*magn,0.8*magn,0.8*magn)
 order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
 
-pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
+# pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
 
   panel <- layout(
                   order,
@@ -157,7 +157,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
     lines( c(-99,99), c(-99,99), col='red' )
-    mtext( "MODIS", line=1, adj=0.5 )
+    mtext( "MOD17A2H", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
     nbins <- 10
@@ -166,7 +166,8 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_dday_modis_agg <- df_dday_modis_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
     df_bins <- df_dday_modis_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) ) %>% 
-      summarise( peak=getpeak(ratio_obs_mod_modis), uhalfpeak=getuhalfpeak( ratio_obs_mod_modis, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_modis, lev=0.75 ) ) %>%
+      summarise( peak=getpeak(ratio_obs_mod_modis), uhalfpeak=getuhalfpeak( ratio_obs_mod_modis, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_modis, lev=0.75 ),
+                 q25=quantile(ratio_obs_mod_modis, probs=0.25), q75=quantile(ratio_obs_mod_modis, probs=0.75) ) %>%
       mutate( mids=xvals )
     
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -223,7 +224,8 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_dday_mte_agg <- df_dday_mte_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
     df_bins <- df_dday_mte_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_mte) ) %>% 
-      summarise( peak=getpeak(ratio_obs_mod_mte), uhalfpeak=getuhalfpeak( ratio_obs_mod_mte, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_mte, lev=0.75 ) ) %>%
+      summarise( peak=getpeak(ratio_obs_mod_mte), uhalfpeak=getuhalfpeak( ratio_obs_mod_mte, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_mte, lev=0.75 ),
+      q25=quantile(ratio_obs_mod_mte, probs=0.25), q75=quantile(ratio_obs_mod_mte, probs=0.75) ) %>%
       mutate( mids=xvals )
     
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -271,7 +273,8 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     
     xvals <- fvarbins[1:nbins]+binwidth/2
     df_bins <- df_dday_mte_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_rf) ) %>% 
-      summarise( peak=getpeak(ratio_obs_mod_rf), uhalfpeak=getuhalfpeak( ratio_obs_mod_rf, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_rf, lev=0.75 ) ) %>%
+      summarise( peak=getpeak(ratio_obs_mod_rf), uhalfpeak=getuhalfpeak( ratio_obs_mod_rf, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_rf, lev=0.75 ),
+                 q25=quantile(ratio_obs_mod_rf, probs=0.25), q75=quantile(ratio_obs_mod_rf, probs=0.75) ) %>%
       mutate( mids=xvals )
     
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -285,7 +288,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     boxplot( filter( df_dday_mte_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     abline( h=1.0, lwd=0.5, lty=2 )
 
-dev.off()
+# dev.off()
 
 
 # #---------------------------------------------------------

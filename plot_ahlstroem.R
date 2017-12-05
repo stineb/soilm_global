@@ -2,7 +2,6 @@ library(ncdf4)
 
 source("get_ahlstroem_f.R")
 source("../utilities/plot_map.R")
-# source("plot_map.R")
 
 filpath_detr <- c(  paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_detr_s0_fapar3g_global.nc"), 
                     paste0( myhome, "/data/pmodel_fortran_output/pmodel_gpp_detr_s1_fapar3g_global.nc")
@@ -31,4 +30,4 @@ detr[[ "diff" ]] <- detr[[ "Pmodel_S0" ]] - detr[[ "Pmodel_S1" ]]
 ## get ahlstroem-f
 ahlstroem_f <- get_ahlstroem_f( detr$diff, isabs=FALSE )
 
-plot_map( ahlstroem_f*1e4, lev=seq(-2.5,2.5,0.25), positive=FALSE ) # , file="fig/map_ahlstroem_gpploss.pdf"
+plot_map( ahlstroem_f*1e4, lev=seq(-2.5,2.5,0.25), positive=FALSE, maxval=4 ) # , file="fig/map_ahlstroem_gpploss.pdf"
