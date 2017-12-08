@@ -1,7 +1,9 @@
 .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
-library( dplyr )
-library( cgwtools )
+library(dplyr)
+library(cgwtools)
+library(R.matlab)
+library(readr)
 
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
@@ -26,6 +28,7 @@ package    = "nnet"
 overwrite_nice = TRUE
 overwrite_modis = TRUE
 overwrite_mte = TRUE
+overwrite_bess = TRUE
 verbose    = FALSE
 ##---------------------------------
 
@@ -40,10 +43,6 @@ if ( file.exists( filn ) ){
 
   ## replace with NA
   for (ivar in names(mte_8d)){ mte_8d[[ ivar ]][ which( mte_8d[[ ivar ]]==-9999 ) ] <- NA }
-  # for (ivar in names(dmte)){
-  #   dmte[[ ivar ]][ which( dmte[[ ivar ]]==-9999 ) ] <- NA
-  # }
-
   avl_data_mte <- TRUE
 } else {
   avl_data_mte <- FALSE
@@ -59,6 +58,31 @@ if (length(fillist)==0) {
   avl_data_modis <- TRUE
 }
 
+##------------------------------------------------
+## Get BESS-GPP for all sites
+##------------------------------------------------
+if ( file.exists( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Daily.mat" ) ) ){
+
+  df_bess_gpp_v1 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Daily.mat" ) )$data %>% as.data.frame()
+  df_bess_gpp_v2 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv2.GPP.Daily.mat" ) )$data %>% as.data.frame()
+
+  meta <- read_csv("/alphadata01/bstocker/data/gpp_bess/sitescale_fluxnet/FLUXNET2015v1-3.csv")
+
+  colnames(df_bess_gpp_v1) <- meta$Name
+  colnames(df_bess_gpp_v2) <- meta$Name
+
+  df_tmp <- init_dates_dataframe( 2001, 2014, noleap=TRUE )
+
+  df_bess_gpp_v1 <- df_tmp %>% bind_cols( df_bess_gpp_v1 )
+  df_bess_gpp_v2 <- df_tmp %>% bind_cols( df_bess_gpp_v2 )
+
+  avl_data_bess <- TRUE
+
+} else {
+
+  avl_data_bess <- FALSE
+
+}
 
 ## check and override if necessary
 if ( nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
@@ -174,6 +198,7 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## save to file
     ##------------------------------------------------
+    if (verbose) print( paste( "saving to file", nicefiln ) )
     save( nice, file=nicefiln )
 
   }    
@@ -217,7 +242,7 @@ for (sitename in do.sites){
                 paste( "moist_", varnams_swc_full, sep="" )
                 )
 
-  nice_agg <- rbind( nice_agg, select( nice, one_of( usecols ) ) )
+  nice_agg <- bind_rows( nice_agg, select( nice, one_of( usecols ) ) )
 
   # ##------------------------------------------------
   # ## Reshape dataframe to stack data from differen soil moisture datasets along rows
@@ -269,7 +294,7 @@ for (sitename in do.sites){
         missing_mte <- FALSE
 
         ## make mte a bit nicer
-        mte <-  filter( mte_8d, Site.code==sitename ) %>%
+        mte <-  dplyr::filter( mte_8d, Site.code==sitename ) %>%
                 rename( mysitename=Site.code, gpp_mte=MTE, gpp_mte_m=MTE_M, gpp_mte_viterbo=MTE_Viterbo, gpp_rf=RF, gpp_rf_fromdaily=RF_from_daily, doy_start=StartDoY, doy_end=EndDoY, year_start=StartYear, year_end=EndYear ) %>%
                 mutate( doy_end = doy_end - 1 ) %>%  # assuming that the doy_end is not counted towards bins aggregate
                 mutate( date_start = as.POSIXct( as.Date( paste( as.character(year_start), "-01-01", sep="" ) ) + doy_start - 1 ),
@@ -295,12 +320,13 @@ for (sitename in do.sites){
                                         mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_mte, file=filn )
 
       }
 
       ## add row to aggregated data
-      mte_agg <- rbind( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
+      mte_agg <- bind_rows( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
 
     } else {
 
@@ -356,6 +382,7 @@ for (sitename in do.sites){
                                            mutate( mysitename = sitename )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_modis, file=filn )
 
       } else {
@@ -368,7 +395,62 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- rbind( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+      modis_agg <- bind_rows( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+    }
+
+  }
+
+  ##------------------------------------------------
+  ## Get BESS-GPP for this site
+  ##------------------------------------------------
+  if (avl_data_bess){
+
+    if (is.element( sitename, colnames(df_bess_gpp_v1))){
+
+      filn <- paste( "data/bess/bess_", sitename, ".Rdata", sep="" )
+      if (!dir.exists("data/bess")) system("mkdir -p data/bess")
+
+      if ( file.exists(filn) && !overwrite_bess ){
+
+        ## load 'nice_to_bess' from file
+        load( filn )
+
+      } else {
+
+        ## prepare dataframe 'nice_to_bess'
+        missing_bess <- FALSE
+
+        ## make bess a bit nicer
+        bess <- df_bess_gpp_v1[ , c( 1:6, which(names(df_bess_gpp_v1)==sitename) ) ] %>%
+                setNames( c( names(.)[1:6], "gpp_bess_v1" ) )
+
+        bess <- df_bess_gpp_v2[ , c( 6, which(names(df_bess_gpp_v2)==sitename) ) ] %>%
+                setNames( c( names(.)[1], "gpp_bess_v2" ) ) %>%
+                right_join( bess, by="date" ) %>%
+                select( date, year, moy, dom, doy, year_dec, gpp_bess_v1, gpp_bess_v2 )
+
+        ## merge dataframes
+        nice_to_bess <- nice %>% select( year, moy, dom, gpp_obs, soilm_mean, alpha, temp, ppfd, vpd, evi, fvar, is_drought_byvar ) %>%
+                        mutate( mysitename=sitename ) %>%
+                        left_join( bess, by=c("year", "moy", "dom") ) %>%
+                        mutate( bias_bess_v1 = gpp_bess_v1 / gpp_obs ) %>% mutate( bias_bess_v1 = ifelse( is.infinite( bias_bess_v1 ), NA, bias_bess_v1 ) ) %>% 
+                        mutate( ratio_obs_mod_bess_v1 = gpp_obs / gpp_bess_v1 ) %>% mutate( ratio_obs_mod_bess_v1=ifelse( is.infinite( bias_bess_v1 ), NA, ratio_obs_mod_bess_v1 ) )  %>%
+                        mutate( bias_bess_v2 = gpp_bess_v2 / gpp_obs ) %>% mutate( bias_bess_v2 = ifelse( is.infinite( bias_bess_v2 ), NA, bias_bess_v2 ) ) %>% 
+                        mutate( ratio_obs_mod_bess_v2 = gpp_obs / gpp_bess_v2 ) %>% mutate( ratio_obs_mod_bess_v2=ifelse( is.infinite( bias_bess_v2 ), NA, ratio_obs_mod_bess_v2 ) )
+
+        ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
+        save( nice_to_bess, file=filn )
+
+      }
+
+      ## add row to aggregated data
+      bess_agg <- bind_rows( bess_agg, nice_to_bess )
+
+    } else {
+
+      missing_bess <- TRUE
+
     }
 
   }

@@ -15,6 +15,7 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'nice_agg'
 load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
 load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
+load( paste( "data/nice_all_bess_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'bess_agg'
 
 successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
@@ -23,6 +24,7 @@ do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysit
 nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
 mte_agg  <- mte_agg  %>% filter( mysitename %in% do.sites )
 modis_agg<- modis_agg%>% filter( mysitename %in% do.sites )
+bess_agg <- bess_agg %>% filter( mysitename %in% do.sites )
 
 ##------------------------------------------------
 ## Bin data w.r.t. alpha
@@ -33,12 +35,14 @@ soilmbins <- seq( from=0, to=1, by=binwidth )
 nice_agg <- nice_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 mte_agg  <- mte_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 modis_agg<- modis_agg%>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
+bess_agg <- bess_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 
 ## get additional variables
 cutoff <- 0.5
 nice_agg <- nice_agg %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 mte_agg  <- mte_agg  %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 modis_agg<- modis_agg%>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
+bess_agg <- bess_agg %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 
 par(las=1)
 
@@ -54,9 +58,24 @@ boxplot( log( bias_mte ) ~ dry, data=mte_agg, outline=FALSE, col="grey70", ylab=
 # boxplot( log( bias_mte * flue_est_nls ) ~ dry, data=mte_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
+boxplot( log( bias_bess_v1 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
+# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
+abline( h=0, lty=3 )
+
+boxplot( log( bias_bess_v2 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
+# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
+abline( h=0, lty=3 )
 
 ## bias in P-model versus alpha
 boxplot( log( bias_pmodel ) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70", main="P-model", xlab="AET/PET bins" )
+abline( h=0, lty=3 )
+
+## bias in BESS v1 versus alpha
+boxplot( log( bias_bess_v1 ) ~ inalphabin, data=bess_agg, outline=FALSE, col="grey70", main="BESS v1", xlab="AET/PET bins" )
+abline( h=0, lty=3 )
+
+## bias in BESS v2 versus alpha
+boxplot( log( bias_bess_v2 ) ~ inalphabin, data=bess_agg, outline=FALSE, col="grey70", main="BESS v2", xlab="AET/PET bins" )
 abline( h=0, lty=3 )
 
 # ## bias in MTE versus alpha

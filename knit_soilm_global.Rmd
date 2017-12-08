@@ -42,7 +42,7 @@ source("aggregate_all_fluxnet2015.R")
 
 After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS MOD17A2H GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI.
 ```{r plot_all, fig.width=5, fig.height=4, eval=TRUE, message=FALSE, warning=FALSE}
-source("plot_agg_all_fluxnet2015.R")
+source("plot_bias_all.R")
 ```
 
 ### Pooled data from soil moisture focus sites
@@ -309,6 +309,7 @@ For most gridcells (within the lower and upper quartiles), the amplification fac
 
 ## Additional analyses
 
+### Distribution of variance in annual GPP
 Considering that the remote-sensing driven GPP models (below termed RS-models) have a commong high bias related to soil moisture effects on LUE, I expected that these models should also have a tendency to underestimate variability at the gridcell level. But what's the reference? I compared them to DGVMs from the TRENDY bunch.
 
 Below, I'm plotting the distribution of gridcell-level variance and relative variance in annual GPP for different models. 30-year time series are available from the P-model (driven by fAPAR) and the two MTE products, and for the TRENDY models. For other RS-models (MOD17AH2, BESS, VPM), only 10 year time series are evaluated, but the general picture is the same.  
@@ -323,6 +324,14 @@ The comparison of the P-model to other RS-models and to TRENDY DGVMs doesn't giv
 - Compared to TRENDY models, relative variance in the P-model middle-of-the-road, but the spread between models is very large (>1 order of magnitude). Moving from `s0` to `s1` (= additionally accounting for soil moisture limitation) induces a smaller change in relative variance than the order of the model spread. DGVMs don't really serve us here helping to discriminate whether accounting for the soil moisture effect moves the P-model (as a representant of RS-models) to a more realistic range (considering that DGVMs do acccount for soil moisture limitation and should therefore be more realistic).
 
 I'm a bit unsre if and if so how I should use these results. But anyhow, the effort of looking into this wasn't in vain. It lead me on to another track, wich I will let you know about asap...
+
+### Extreme events
+Accounting for the soil moisture effect should also affect the distribution of extreme events. With negative GPP extremes that are related to drought becoming more negative (additional GPP reduction by soil moisture), the tails of the distribution may get fatter. On the other hand, smaller events, otherwise not detected/simulated may be more frequent.
+
+We applied Jakob's method to identify contingent GPP anomalies in time and space as extreme events. A binary 3D field (space x time) is defined with *true* for points where the GPP anomaly is in the lower 5% quantile w.r.t. the distribution of all values in space and time. The integral of these anomalies across contingent regions in space-time quantify extremes as the GPP "loss" in units of PgC yr$^{-1}$. We derived the distribution of these extremes using monthly aggregated outputs from the two P-model simulations. 
+
+While the question at hand here sounds highly exciting, the results are not. The difference between the distribution is not that big. The top 20-or-so events are a bit bigger in the `s1` simulation (however, the top 1 and 2 events are bigger in the `s0` simulation).
+![](fig/extremes.pdf)
 
 
 <!-- The gridcell-level change in variance shown by maps above should be clearly visible in its distribution function. Also at this scale, P-model suggests a much higher variability than MTE GPP. And again, the TRENDY model don't allow us to argue that when including soil moisture stress, we get closer to a (realistic) DGVM with a satellite-driven GPP estimate. There are some models out there that have an even larger variability than the P-model (e.g. LPJ-GUESS or LPX). I'm showing density plots with straight and with logarithmic axes. -->

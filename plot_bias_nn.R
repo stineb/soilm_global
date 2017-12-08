@@ -64,7 +64,7 @@ widths <- c(magn, 0.3*magn, magn, 0.3*magn )
 heights <- 1.2*c(0.8*magn,0.8*magn,0.8*magn)
 order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
 
-# pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
+pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
 
   panel <- layout(
                   order,
@@ -288,7 +288,7 @@ order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
     boxplot( filter( df_dday_mte_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     abline( h=1.0, lwd=0.5, lty=2 )
 
-# dev.off()
+dev.off()
 
 
 # #---------------------------------------------------------
