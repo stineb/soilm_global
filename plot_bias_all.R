@@ -51,27 +51,21 @@ vpm_agg  <- vpm_agg  %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 par(las=1)
 
 boxplot( log( bias_pmodel ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="P-model" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_pmodel * flue_est_nls ) ~ dry, data=nice_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 boxplot( log( bias_modis )  ~ dry, data=modis_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="MODIS" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_modis * flue_est_nls ) ~ dry, data=modis_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 boxplot( log( bias_mte ) ~ dry, data=mte_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="MTE" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_mte * flue_est_nls ) ~ dry, data=mte_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 boxplot( log( bias_bess_v1 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 boxplot( log( bias_bess_v2 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 boxplot( log( bias_vpm ) ~ dry, data=vpm_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="VPM" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 
 ## bias in P-model versus alpha

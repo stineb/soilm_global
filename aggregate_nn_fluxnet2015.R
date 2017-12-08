@@ -21,12 +21,12 @@ successcodes <- read.csv( "successcodes.csv", as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = "FR-Pue"
-nam_target = "lue_obs_evi"
-use_weights= FALSE    
-use_fapar  = FALSE
-package    = "nnet"
-overwrite_nice = TRUE
+# do.sites        = "AR-SLu"
+nam_target      = "lue_obs_evi"
+use_weights     = FALSE    
+use_fapar       = FALSE
+package         = "nnet"
+overwrite_nice  = TRUE
 overwrite_modis = TRUE
 overwrite_mte   = TRUE
 overwrite_bess  = TRUE
@@ -351,7 +351,7 @@ for (sitename in do.sites){
       }
 
       ## add row to aggregated data
-      mte_agg <- bind_rows( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
+      mte_agg <- bind_rows( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" ) ) ) )
 
     } else {
 
@@ -404,7 +404,8 @@ for (sitename in do.sites){
         ## get additional variables
         nice_to_modis <- nice_to_modis %>% mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
                                            mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) ) %>%
-                                           mutate( mysitename = sitename )
+                                           mutate( mysitename = sitename ) %>% 
+                                           mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
         if (verbose) print( paste( "saving to file", filn ) )
@@ -420,7 +421,7 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- bind_rows( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+      modis_agg <- bind_rows( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" )) ) )
     }
 
   }
@@ -432,8 +433,8 @@ for (sitename in do.sites){
 
     if (is.element( sitename, colnames(df_bess_gpp_v1))){
 
-      filn <- paste( "data/bess/bess_", sitename, ".Rdata", sep="" )
-      if (!dir.exists("data/bess")) system("mkdir -p data/bess")
+      filn <- paste( "data/bess_nn/bess_nn_", sitename, ".Rdata", sep="" )
+      if (!dir.exists("data/bess_nn")) system("mkdir -p data/bess_nn")
 
       if ( file.exists(filn) && !overwrite_bess ){
 
@@ -485,8 +486,8 @@ for (sitename in do.sites){
   ##------------------------------------------------
   if (avl_data_vpm){
     
-    filn <- paste0( "data/vpm/vpm_", sitename, ".Rdata" )
-    if (!dir.exists("data/vpm")) system("mkdir -p data/vpm")
+    filn <- paste0( "data/vpm_nn/vpm_nn_", sitename, ".Rdata" )
+    if (!dir.exists("data/vpm_nn")) system("mkdir -p data/vpm_nn")
     
     if ( file.exists(filn) && !overwrite_vpm ){
 
@@ -523,7 +524,8 @@ for (sitename in do.sites){
         ## get additional variables
         nice_to_vpm <- nice_to_vpm %>% mutate( bias_vpm = gpp_vpm / gpp_obs ) %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
                                        mutate( ratio_obs_mod_vpm = gpp_obs / gpp_vpm ) %>% mutate( ratio_obs_mod_vpm=ifelse( is.infinite( bias_vpm ), NA, ratio_obs_mod_vpm ) ) %>%
-                                       mutate( mysitename = sitename )
+                                       mutate( mysitename = sitename ) %>% 
+                                       mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
         if (verbose) print( paste( "saving to file", filn ) )
@@ -539,7 +541,7 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_vpmgpp){
-      vpm_agg <- bind_rows( vpm_agg, select( nice_to_vpm, one_of( c( usecols, "bias_vpm", "ratio_obs_mod_vpm", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+      vpm_agg <- bind_rows( vpm_agg, select( nice_to_vpm, one_of( c( usecols, "bias_vpm", "ratio_obs_mod_vpm", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" )) ) )
     }
 
   }
