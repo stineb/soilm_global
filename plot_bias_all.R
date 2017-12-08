@@ -16,6 +16,7 @@ load( paste( "data/nice_all_agg_lue_obs_evi.Rdata", sep="" ) )       # loads 'ni
 load( paste( "data/nice_all_mte_agg_lue_obs_evi.Rdata", sep="" ) )   # loads 'mte_agg'
 load( paste( "data/nice_all_modis_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'modis_agg'
 load( paste( "data/nice_all_bess_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'bess_agg'
+load( paste( "data/nice_all_vpm_agg_lue_obs_evi.Rdata", sep="" ) ) # loads 'vpm_agg'
 
 successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
@@ -25,6 +26,7 @@ nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
 mte_agg  <- mte_agg  %>% filter( mysitename %in% do.sites )
 modis_agg<- modis_agg%>% filter( mysitename %in% do.sites )
 bess_agg <- bess_agg %>% filter( mysitename %in% do.sites )
+vpm_agg  <- vpm_agg  %>% filter( mysitename %in% do.sites )
 
 ##------------------------------------------------
 ## Bin data w.r.t. alpha
@@ -36,6 +38,7 @@ nice_agg <- nice_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = a
 mte_agg  <- mte_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 modis_agg<- modis_agg%>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 bess_agg <- bess_agg %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
+vpm_agg  <- vpm_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
 
 ## get additional variables
 cutoff <- 0.5
@@ -43,6 +46,7 @@ nice_agg <- nice_agg %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 mte_agg  <- mte_agg  %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 modis_agg<- modis_agg%>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 bess_agg <- bess_agg %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
+vpm_agg  <- vpm_agg  %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
 
 par(las=1)
 
@@ -63,6 +67,10 @@ boxplot( log( bias_bess_v1 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", 
 abline( h=0, lty=3 )
 
 boxplot( log( bias_bess_v2 ) ~ dry, data=bess_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
+# boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
+abline( h=0, lty=3 )
+
+boxplot( log( bias_vpm ) ~ dry, data=vpm_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="VPM" ) #, xlim=c(0.5,4.5), at=c(1,3))       
 # boxplot( log( bias_bess * flue_est_nls ) ~ dry, data=bess_agg, outline=FALSE, at=c(2,4), add=TRUE, col=add_alpha("springgreen", 0.5) )
 abline( h=0, lty=3 )
 

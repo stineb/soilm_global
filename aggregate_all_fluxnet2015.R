@@ -25,15 +25,16 @@ use_fapar   = FALSE
 
 ## Manual settings ----------------
 # do.sites   = "AU-Dry"
-nam_target = "lue_obs_evi"
-use_weights= FALSE    
-use_fapar  = FALSE
-package    = "nnet"
-overwrite_nice = TRUE
+nam_target      = "lue_obs_evi"
+use_weights     = FALSE    
+use_fapar       = FALSE
+package         = "nnet"
+overwrite_nice  = TRUE
 overwrite_modis = TRUE
-overwrite_mte = TRUE
-overwrite_bess = TRUE
-verbose    = FALSE
+overwrite_mte   = TRUE
+overwrite_bess  = TRUE
+overwrite_vpm   = TRUE
+verbose         = FALSE
 ##---------------------------------
 
 ##------------------------------------------------
@@ -87,6 +88,27 @@ if ( file.exists( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Da
 
 }
 
+##------------------------------------------------
+## Get VPM-GPP for all sites
+##------------------------------------------------
+filn <- paste0( myhome, "data/gpp_vpm/sitescale_fluxnet/gpp_vpm_combined_data_for_figure_allsites_v20.csv" )
+if ( file.exists( filn ) ){
+
+  df_gpp_vpm <- read_csv( filn ) %>% 
+                mutate( year=as.integer( substr( as.character(date), start=1, stop=4 )), 
+                        doy=as.integer( substr( as.character(date), start=5, stop=7 ) ) ) %>%
+                rename( mysitename=sid ) %>%
+                select( -n, -biome, -date ) %>%
+                mutate( date=as.POSIXct( as.Date( paste0( as.character(year), "-01-01" ) ) + doy - 1 ) )
+
+  avl_data_vpm <- TRUE
+
+} else {
+
+  avl_data_vpm <- FALSE
+
+}
+
 ## check and override if necessary
 if ( nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
   plotlue <- TRUE
@@ -130,6 +152,7 @@ nice_agg  <- data.frame()
 mte_agg   <- data.frame()
 modis_agg <- data.frame()
 bess_agg  <- data.frame()
+vpm_agg  <- data.frame()
 # nice_resh         <- data.frame()
 
 ## all possible soil moisture datasets
@@ -290,7 +313,7 @@ for (sitename in do.sites){
                 "soilm_swbm",
                 "soilm_mean",
                 "bias_pmodel", 
-                "ratio_obs_mod", 
+                "ratio_obs_mod_pmodel", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry"
@@ -361,7 +384,7 @@ for (sitename in do.sites){
         ## summarise by bin taking means
         nice_to_mte <- nice %>% group_by( inmtebin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp         <- nice %>% select( inmtebin, doy, year ) %>% group_by( inmtebin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_mte <- cbind( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_mte <- bind_cols( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and mte)
         nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
@@ -370,8 +393,7 @@ for (sitename in do.sites){
         nice_to_mte <- nice_to_mte %>%  mutate( bias_mte = gpp_mte / gpp_obs )          %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
                                         mutate( ratio_obs_mod_mte = gpp_obs / gpp_mte ) %>% mutate( ratio_obs_mod_mte=ifelse( is.infinite( ratio_obs_mod_mte ), NA, ratio_obs_mod_mte ) ) %>%  
                                         mutate( bias_rf = gpp_rf / gpp_obs )            %>% mutate( bias_rf=ifelse( is.infinite( bias_rf ), NA, bias_rf ) )  %>%  
-                                        mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( ratio_obs_mod_rf ), NA, ratio_obs_mod_rf ) ) %>% 
-                                        mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
+                                        mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( ratio_obs_mod_rf ), NA, ratio_obs_mod_rf ) )
 
         ## save to file
         if (verbose) print( paste( "saving to file", filn ) )
@@ -424,7 +446,7 @@ for (sitename in do.sites){
         ## summarise by bin taking means
         nice_to_modis <- nice %>% group_by( inmodisbin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp           <- nice %>% select( inmodisbin, doy, year ) %>% group_by( inmodisbin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_modis <- cbind( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_modis <- bind_cols( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and modis)
         nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
@@ -508,6 +530,70 @@ for (sitename in do.sites){
 
   }
 
+  ##------------------------------------------------
+  ## Get VPP-GPP for this site
+  ##------------------------------------------------
+  if (avl_data_vpm){
+    
+    filn <- paste0( "data/vpm/vpm_", sitename, ".Rdata" )
+    if (!dir.exists("data/vpm")) system("mkdir -p data/vpm")
+    
+    if ( file.exists(filn) && !overwrite_vpm ){
+
+      ## load 'nice_to_vpm' from file
+      load( filn )
+      avl_vpmgpp <- TRUE
+
+    } else {
+
+      vpm <- df_gpp_vpm %>% filter( mysitename==sitename )
+
+      if (nrow(vpm)>0){
+
+        avl_vpmgpp <- TRUE
+
+        ## make vpm a bit nicer
+        vpm <- vpm %>%  select( -GPP ) %>% rename( gpp_vpm = VPM ) %>% 
+                        mutate( doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, 
+                                date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 )
+                                )
+
+        ## group nice by 8d bins from vpm data
+        nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
+                          mutate( invpmbin = cut( as.numeric(date), breaks = c( vpm$date_start ), right = FALSE ) )
+
+        ## summarise by bin taking means
+        nice_to_vpm <- nice %>% group_by( invpmbin ) %>% summarise_all( mean, na.rm=TRUE )
+        tmp         <- nice %>% select( invpmbin, doy, year ) %>% group_by( invpmbin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
+        nice_to_vpm <- bind_cols( nice_to_vpm, select( tmp, doy_start, doy_end, year_start, year_end ) )
+
+        ## merge dataframes (averaged nice and vpm)
+        nice_to_vpm <- nice_to_vpm %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( vpm, by=c("doy_start", "year_start") )
+        
+        ## get additional variables
+        nice_to_vpm <- nice_to_vpm %>% mutate( bias_vpm = gpp_vpm / gpp_obs ) %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
+                                       mutate( ratio_obs_mod_vpm = gpp_obs / gpp_vpm ) %>% mutate( ratio_obs_mod_vpm=ifelse( is.infinite( bias_vpm ), NA, ratio_obs_mod_vpm ) ) %>%
+                                       mutate( mysitename = sitename )
+
+        ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
+        save( nice_to_vpm, file=filn )
+
+      } else {
+
+        avl_vpmgpp <- FALSE
+
+      }
+
+    }
+
+    ## add row to aggregated data
+    if (avl_vpmgpp){
+      vpm_agg <- bind_rows( vpm_agg, select( nice_to_vpm, one_of( c( usecols, "bias_vpm", "ratio_obs_mod_vpm", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+    }
+
+  }
+
 }
 
 print("... done.")
@@ -527,17 +613,25 @@ if ( length( dplyr::filter( siteinfo, code!=0 )$mysitename ) == length( do.sites
 
   # save( nice_all_resh, file=paste("data/nice_all_resh_", nam_target, char_fapar, ".Rdata", sep="") )
 
+  ## save aggregated mte
   filn <- paste0("data/nice_all_mte_agg_",   nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe mte_agg in file", filn) )
   save( mte_agg, file=filn )
 
+  ## save aggregated modis
   filn <- paste0("data/nice_all_modis_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe modis_agg in file", filn) )
   save( modis_agg, file=filn )
 
+  ## save aggregated bess
   filn <- paste0("data/nice_all_bess_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe bess_agg in file", filn) )
   save( bess_agg, file=filn )
+
+  ## save aggregated vpm
+  filn <- paste0("data/nice_all_vpm_agg_", nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe vpm_agg in file", filn) )
+  save( vpm_agg, file=filn )
 
 } else {
 
