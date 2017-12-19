@@ -147,7 +147,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
           idxs <- idxs[ -drophead ]
           dday <- dday[ -drophead ]
         }
-        addrows <- df %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, vpd, soilm_mean, fpar, evi, fvar, gpp_pmodel, bias_pmodel, ratio_obs_mod_pmodel )
+        addrows <- df %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, vpd, soilm_mean, fpar, evi, fvar, alpha, gpp_pmodel, bias_pmodel, ratio_obs_mod_pmodel )
         # df_dday <- rbind( df_dday, addrows )
         df_dday <- df_dday %>% bind_rows( addrows )              
       }
@@ -256,7 +256,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
             idxs <- idxs[ -drophead ]
             dday <- dday[ -drophead ]
           }
-          addrows <- nice_to_modis %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_modis, bias_modis, ratio_obs_mod_modis, fvar )
+          addrows <- nice_to_modis %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_modis, bias_modis, ratio_obs_mod_modis, fvar, soilm_mean, alpha )
           # df_dday_modis <- rbind( df_dday_modis, addrows )
           df_dday_modis <- df_dday_modis %>% bind_rows( addrows )
         }
@@ -287,6 +287,132 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
       load( outfiln )
 
     }
+
+    ##--------------------------------------------------------
+    ## re-arrange BESS dataframe
+    ##--------------------------------------------------------
+    infiln  <- paste( "data/bess_nn/bess_nn_", sitename, ".Rdata", sep="" )
+    outfiln <- paste( "data/df_dday_bess/df_dday_bess_", sitename, ".Rdata", sep="" )
+    if (!dir.exists("./data/df_dday_bess")) system( "mkdir -p ./data/df_dday_bess" )
+    
+    if (!file.exists(outfiln)||overwrite){
+
+      if (file.exists(infiln)){
+
+        load( infiln )  # loads 'nice_to_bess', file prepared in 'aggregate_nn_fluxnet2015.R'
+        avl_bess <- TRUE
+        
+        before_bess <- floor( max(droughts$len) / 2 )
+        after_bess  <- max(droughts$len)
+        
+        df_dday_bess <- data.frame()
+        nice_to_bess <- nice_to_bess %>% mutate( mysitename=sitename )
+        for ( iinst in 1:nrow(droughts) ){
+          after_inst <- min( after, droughts$len[iinst] )
+          dday <- seq( from=-before, to=after_inst, by=1 )
+          idxs <- dday + droughts$idx_start[iinst]
+          drophead <- which( idxs < 1 )
+          if (length(drophead)>0){
+            idxs <- idxs[ -drophead ]
+            dday <- dday[ -drophead ]
+          }
+          addrows <- nice_to_bess %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_bess_v1, bias_bess_v1, ratio_obs_mod_bess_v1, gpp_bess_v2, bias_bess_v2, ratio_obs_mod_bess_v2, fvar, soilm_mean, alpha )
+          # df_dday_bess <- rbind( df_dday_bess, addrows )
+          df_dday_bess <- df_dday_bess %>% bind_rows( addrows )
+        }
+
+        ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
+        save( df_dday_bess, file=outfiln )
+
+        ## aggregate by 'dday'
+        df_dday_aggbydday_bess <- df_dday_bess %>%  group_by( dday ) %>% 
+                                                    summarise( bias_bess_v1_med=median(   bias_bess_v1, na.rm=TRUE ), 
+                                                               bias_bess_v1_upp=quantile( bias_bess_v1, 0.75, na.rm=TRUE ), 
+                                                               bias_bess_v1_low=quantile( bias_bess_v1, 0.25, na.rm=TRUE ),
+                                                               bias_bess_v2_med=median(   bias_bess_v2, na.rm=TRUE ), 
+                                                               bias_bess_v2_upp=quantile( bias_bess_v2, 0.75, na.rm=TRUE ), 
+                                                               bias_bess_v2_low=quantile( bias_bess_v2, 0.25, na.rm=TRUE ) ) %>%
+                                                    mutate( mysitename=sitename )
+
+        ## drop rows dday=NA
+        df_dday_aggbydday_bess <- df_dday_aggbydday_bess[ which( !is.na(df_dday_aggbydday_bess$dday)), ]
+        if (!dir.exists("data/df_dday_aggbydday_bess")) system( "mkdir -p data/df_dday_aggbydday_bess")
+        save( df_dday_aggbydday_bess, file=paste( "data/df_dday_aggbydday_bess/df_dday_aggbydday_bess_", sitename, ".Rdata", sep="" ) )
+
+      } else {
+
+        df_dday_bess <- NULL
+
+      }
+
+    } else {
+
+      load( outfiln )
+
+    }
+
+    ##--------------------------------------------------------
+    ## re-arrange VPM dataframe
+    ##--------------------------------------------------------
+    infiln  <- paste( "data/vpm_nn/vpm_nn_", sitename, ".Rdata", sep="" )
+    outfiln <- paste( "data/df_dday_vpm/df_dday_vpm_", sitename, ".Rdata", sep="" )
+    if (!dir.exists("./data/df_dday_vpm")) system( "mkdir -p ./data/df_dday_vpm" )
+        
+    if (!file.exists(outfiln)||overwrite){
+
+      if (file.exists(infiln)){
+
+        load( infiln )  # loads 'nice_to_vpm', file prepared in 'aggregate_nn_fluxnet2015.R'
+        avl_vpm <- TRUE
+        
+        droughts_vpm <- get_consecutive( nice_to_vpm$is_drought_byvar, leng_threshold=2, do_merge=FALSE )
+
+        before_vpm <- floor( max(droughts_vpm$len) / 2 )
+        after_vpm  <- max(droughts_vpm$len)
+        
+        df_dday_vpm <- data.frame()
+        nice_to_vpm <- nice_to_vpm %>% mutate( mysitename=sitename )
+        for ( iinst in 1:nrow(droughts_vpm) ){
+          after_inst <- min( after, droughts_vpm$len[iinst] )
+          dday <- seq( from=-before, to=after_inst, by=1 )
+          idxs <- dday + droughts_vpm$idx_start[iinst]
+          drophead <- which( idxs < 1 )
+          if (length(drophead)>0){
+            idxs <- idxs[ -drophead ]
+            dday <- dday[ -drophead ]
+          }
+          addrows <- nice_to_vpm %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_vpm, bias_vpm, ratio_obs_mod_vpm, fvar, soilm_mean, alpha )
+          # df_dday_vpm <- rbind( df_dday_vpm, addrows )
+          df_dday_vpm <- df_dday_vpm %>% bind_rows( addrows )
+        }
+
+        ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
+        save( df_dday_vpm, file=outfiln )
+
+        ## aggregate by 'dday'
+        df_dday_aggbydday_vpm <- df_dday_vpm %>%  group_by( dday ) %>% 
+                                                    summarise( bias_vpm_med=median(   bias_vpm, na.rm=TRUE ), 
+                                                               bias_vpm_upp=quantile( bias_vpm, 0.75, na.rm=TRUE ), 
+                                                               bias_vpm_low=quantile( bias_vpm, 0.25, na.rm=TRUE ) ) %>%
+                                                    mutate( mysitename=sitename )
+
+        ## drop rows dday=NA
+        df_dday_aggbydday_vpm <- df_dday_aggbydday_vpm[ which( !is.na(df_dday_aggbydday_vpm$dday)), ]
+        if (!dir.exists("data/df_dday_aggbydday_vpm")) system( "mkdir -p data/df_dday_aggbydday_vpm")
+        save( df_dday_aggbydday_vpm, file=paste( "data/df_dday_aggbydday_vpm/df_dday_aggbydday_vpm_", sitename, ".Rdata", sep="" ) )
+
+      } else {
+
+        df_dday_vpm <- NULL
+        print(paste("No data for site", sitename))
+
+      }
+
+    } else {
+
+      load( outfiln )
+
+    }    
 
     ##--------------------------------------------------------
     ## re-arrange MTE dataframe
@@ -320,7 +446,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
               idxs <- idxs[ -drophead ]
               dday <- dday[ -drophead ]
             }
-            addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_mte, bias_mte, ratio_obs_mod_mte, bias_rf, ratio_obs_mod_rf, fvar )
+            addrows <- nice_to_mte %>% slice( idxs ) %>% mutate( dday=dday, inst=iinst ) %>% select( mysitename, dday, inst, is_drought_byvar, gpp_mte, bias_mte, ratio_obs_mod_mte, bias_rf, ratio_obs_mod_rf, fvar, soilm_mean, alpha )
             # df_dday_mte <- rbind( df_dday_mte, addrows )
             df_dday_mte <- df_dday_mte %>% bind_rows( addrows )
           }
@@ -360,14 +486,18 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
   } else {
 
-    df_dday <- NA
-    df_dday_aggbydday <- NA
-    df_dday_modis <- NA
-    df_dday_mte <- NA
+    df_dday           <- NULL
+    df_dday_aggbydday <- NULL
+    df_dday_modis     <- NULL
+    df_dday_mte       <- NULL
+    df_dday_bess      <- NULL
+    df_dday_vpm       <- NULL
 
   }
 
-  out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_modis=df_dday_modis, df_dday_mte=df_dday_mte )
+  out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_modis=df_dday_modis, df_dday_mte=df_dday_mte, df_dday_bess=df_dday_bess, df_dday_vpm=df_dday_vpm )
   return( out )
 
 }
+
+  

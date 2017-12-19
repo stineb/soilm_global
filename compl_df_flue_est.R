@@ -16,7 +16,7 @@ compl_df_flue_est <- function( df, linearfit, x0_fix=0.9 ){
   ## add estimated fLUE values to data frame
   ##------------------------------------
   ## Estimate fLUE based on linear fit between fLUE0 and mean-alpha (fixed "tie points")
-  df <- df %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
+  df <- df %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit$linmod)[["(Intercept)"]], coef(linearfit$linmod)[["meanalpha"]] ) )
 
   return( df )
 

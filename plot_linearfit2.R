@@ -1,8 +1,6 @@
-plot_linearfit2 <- function( linearfit, target="fvar", df=NULL ){
+plot_linearfit2 <- function( linearfit2, linearfit, target="fvar", df=NULL ){
 
   require(dplyr)
-
-  source("stress_quad_1sided.R")
 
   ## merge vegetation class info into data frame
   load( "../nn_fluxnet2015/data/overview_data_fluxnet2015_L1.Rdata" ) # loads 'overview'
@@ -10,16 +8,16 @@ plot_linearfit2 <- function( linearfit, target="fvar", df=NULL ){
 
   growtype <- list( herb=c("GRA", "CRO"), sav=c("SAV", "WSA"), shrub=c("OSH", "CSH"), woody_dec=c("MF", "DBF"), woody_evg=c("ENF", "EBF"), wet=c("WET") )
 
-  print("plotting scatter plot: fLUE0 vs. alpha (one point per site)")
   ##-----------------------------------------------
   ## Plot scatter plot: fLUE0 vs. alpha (one point per site)
   ##-----------------------------------------------
   par( las=1 )
   with( linearfit$data, plot( meanalpha, y0, pch=16, xlab="AET/PET", ylab=expression(paste("fLUE"[0])), xlim=c(0,1.1), type="n" ) )
-  abline( linearfit$linmod, col="black" )
+  abline( linearfit$linmod, col="black", lty=2 )
+  abline( linearfit2$linmod, col="black" )
 
-  mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit$linmod )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 )
-  cf <- coef(linearfit$linmod) %>% round( 2 )
+  mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit2$linmod )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 )
+  cf <- coef(linearfit2$linmod) %>% round( 2 )
   eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " )
   mtext( line=-2.5, eq, adj=0.1 )
 
@@ -49,43 +47,36 @@ plot_linearfit2 <- function( linearfit, target="fvar", df=NULL ){
 
 
   if (!is.null(df)){
-    print("plotting fLUE vs. soil moisture for each site...")
+    filn <- "fig/fit_to_bias_plot_per_site.pdf" 
+    print( paste( "plotting fLUE vs. soil moisture for each site into file ", filn, "..." ) )
     ##-----------------------------------------------
     ## Plot scatter plot: fLUE vs. soil moisture for each site
     ##-----------------------------------------------
-    for (sitename in linearfit$data$mysitename){
+    pdf( filn, width = 5, height = 4 )
+    for (sitename in linearfit2$data$mysitename){
 
       df_tmp <- dplyr::filter(df, mysitename==sitename)
-      data_tmp <- dplyr::filter( linearfit$data, mysitename==sitename )
+      data_tmp <- dplyr::filter( linearfit2$data, mysitename==sitename )
 
-      print(sitename)
-      pdf( paste0( "fig/fit_", sitename, ".pdf" ) )
-        par(las=1)
-        plot( df_tmp$soilm_mean, df_tmp[[ target ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("royalblue3", 0.2) )
-        abline( h=1.0, lwd=0.5 )
 
-        if (!is.na(dplyr::select( data_tmp, meanalpha))){ 
-    
-          ## Plot 1-sided curve using estimated y0 as a function of mean alpha (red)
-          mycurve(  function(x) stress_quad_1sided_alpha( x, 
-                                                          dplyr::select( data_tmp, meanalpha), 
-                                                          dplyr::select( data_tmp, x0), 
-                                                          coef(linearfit$linmod)[["(Intercept)"]], 
-                                                          coef(linearfit$linmod)[["meanalpha"]] 
-                                                         ),
-                    from=0.0, to=1.0, col='red', add=TRUE, lwd=2 )
-    
-          ## Plot 1-sided curve using estimated y0 as a function of mean alpha (red)
-          mycurve(  function(x) stress_quad_1sided( x, 
-                                                    dplyr::select( data_tmp, x0), 
-                                                    dplyr::select( data_tmp, beta)
-                                                   ),
-                    from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
-    
-        }
-      dev.off()
+      par(las=1)
+      plot( df_tmp$soilm_mean, df_tmp[[ target ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("royalblue3", 0.2) )
+      abline( h=1.0, lwd=0.5 )
 
+      if (!is.na(dplyr::select( data_tmp, meanalpha))){ 
+  
+        ## Plot 1-sided curve using estimated y0 as a function of mean alpha (red)
+        mycurve(  function(x) stress_quad_1sided_alpha( x, 
+                                                        dplyr::select( data_tmp, meanalpha), 
+                                                        dplyr::select( data_tmp, x0), 
+                                                        coef(linearfit2$linmod)[["(Intercept)"]], 
+                                                        coef(linearfit2$linmod)[["meanalpha"]] 
+                                                       ),
+                  from=0.0, to=1.0, col='red', add=TRUE, lwd=2 )
+  
+      }
     }
+    dev.off()
   }
 
 }

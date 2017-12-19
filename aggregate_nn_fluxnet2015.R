@@ -1,12 +1,15 @@
 .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
-library( dplyr )
-library( cgwtools )
+library(dplyr)
+library(cgwtools)
+library(R.matlab)
+library(readr)
 
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 
 source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
+source( "../utilities/init_dates_dataframe.R" )
 
 # IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
 load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
@@ -18,15 +21,17 @@ successcodes <- read.csv( "successcodes.csv", as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = "FR-Pue"
-nam_target = "lue_obs_evi"
-use_weights= FALSE    
-use_fapar  = FALSE
-package    = "nnet"
-overwrite_nice = TRUE
+# do.sites        = "AR-SLu"
+nam_target      = "lue_obs_evi"
+use_weights     = FALSE    
+use_fapar       = FALSE
+package         = "nnet"
+overwrite_nice  = TRUE
 overwrite_modis = TRUE
-overwrite_mte = TRUE
-verbose    = FALSE
+overwrite_mte   = TRUE
+overwrite_bess  = TRUE
+overwrite_vpm   = TRUE
+verbose         = FALSE
 ##---------------------------------
 
 
@@ -40,10 +45,6 @@ if ( file.exists( filn ) ){
 
   ## replace with NA
   for (ivar in names(mte_8d)){ mte_8d[[ ivar ]][ which( mte_8d[[ ivar ]]==-9999 ) ] <- NA }
-  # for (ivar in names(dmte)){
-  #   dmte[[ ivar ]][ which( dmte[[ ivar ]]==-9999 ) ] <- NA
-  # }
-
   avl_data_mte <- TRUE
 } else {
   avl_data_mte <- FALSE
@@ -59,6 +60,52 @@ if (length(fillist)==0) {
   avl_data_modis <- TRUE
 }
 
+##------------------------------------------------
+## Get BESS-GPP for all sites
+##------------------------------------------------
+if ( file.exists( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Daily.mat" ) ) ){
+
+  df_bess_gpp_v1 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Daily.mat" ) )$data %>% as.data.frame()
+  df_bess_gpp_v2 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv2.GPP.Daily.mat" ) )$data %>% as.data.frame()
+
+  meta <- read_csv("/alphadata01/bstocker/data/gpp_bess/sitescale_fluxnet/FLUXNET2015v1-3.csv")
+
+  colnames(df_bess_gpp_v1) <- meta$Name
+  colnames(df_bess_gpp_v2) <- meta$Name
+
+  df_tmp <- init_dates_dataframe( 2001, 2014, noleap=TRUE )
+
+  df_bess_gpp_v1 <- df_tmp %>% bind_cols( df_bess_gpp_v1 )
+  df_bess_gpp_v2 <- df_tmp %>% bind_cols( df_bess_gpp_v2 )
+
+  avl_data_bess <- TRUE
+
+} else {
+
+  avl_data_bess <- FALSE
+
+}
+
+##------------------------------------------------
+## Get VPM-GPP for all sites
+##------------------------------------------------
+filn <- paste0( myhome, "data/gpp_vpm/sitescale_fluxnet/gpp_vpm_combined_data_for_figure_allsites_v20.csv" )
+if ( file.exists( filn ) ){
+
+  df_gpp_vpm <- read_csv( filn ) %>% 
+                mutate( year=as.integer( substr( as.character(date), start=1, stop=4 )), 
+                        doy=as.integer( substr( as.character(date), start=5, stop=7 ) ) ) %>%
+                rename( mysitename=sid ) %>%
+                select( -n, -biome, -date ) %>%
+                mutate( date=as.POSIXct( as.Date( paste0( as.character(year), "-01-01" ) ) + doy - 1 ) )
+
+  avl_data_vpm <- TRUE
+
+} else {
+
+  avl_data_vpm <- FALSE
+
+}
 
 ## check and override if necessary
 if ( nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
@@ -102,6 +149,8 @@ print( paste( "Aggregating and complementing data for", length(do.sites), "NN FL
 nice_agg  <- data.frame()
 mte_agg   <- data.frame()
 modis_agg <- data.frame()
+bess_agg  <- data.frame()
+vpm_agg   <- data.frame()
 # nice_resh         <- data.frame()
 
 ## all possible soil moisture datasets
@@ -174,6 +223,7 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## save to file
     ##------------------------------------------------
+    if (verbose) print( paste( "saving to file", nicefiln ) )
     save( nice, file=nicefiln )
 
   }    
@@ -217,7 +267,7 @@ for (sitename in do.sites){
                 paste( "moist_", varnams_swc_full, sep="" )
                 )
 
-  nice_agg <- rbind( nice_agg, select( nice, one_of( usecols ) ) )
+  nice_agg <- bind_rows( nice_agg, select( nice, one_of( usecols ) ) )
 
   # ##------------------------------------------------
   # ## Reshape dataframe to stack data from differen soil moisture datasets along rows
@@ -269,7 +319,7 @@ for (sitename in do.sites){
         missing_mte <- FALSE
 
         ## make mte a bit nicer
-        mte <-  filter( mte_8d, Site.code==sitename ) %>%
+        mte <-  dplyr::filter( mte_8d, Site.code==sitename ) %>%
                 rename( mysitename=Site.code, gpp_mte=MTE, gpp_mte_m=MTE_M, gpp_mte_viterbo=MTE_Viterbo, gpp_rf=RF, gpp_rf_fromdaily=RF_from_daily, doy_start=StartDoY, doy_end=EndDoY, year_start=StartYear, year_end=EndYear ) %>%
                 mutate( doy_end = doy_end - 1 ) %>%  # assuming that the doy_end is not counted towards bins aggregate
                 mutate( date_start = as.POSIXct( as.Date( paste( as.character(year_start), "-01-01", sep="" ) ) + doy_start - 1 ),
@@ -282,7 +332,7 @@ for (sitename in do.sites){
         ## summarise by bin taking means
         nice_to_mte <- nice %>% group_by( inmtebin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp         <- nice %>% select( inmtebin, doy, year ) %>% group_by( inmtebin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_mte <- cbind( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_mte <- bind_cols( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and mte)
         nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
@@ -295,12 +345,13 @@ for (sitename in do.sites){
                                         mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_mte, file=filn )
 
       }
 
       ## add row to aggregated data
-      mte_agg <- rbind( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
+      mte_agg <- bind_rows( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" ) ) ) )
 
     } else {
 
@@ -345,7 +396,7 @@ for (sitename in do.sites){
         ## summarise by bin taking means
         nice_to_modis <- nice %>% group_by( inmodisbin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp           <- nice %>% select( inmodisbin, doy, year ) %>% group_by( inmodisbin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_modis <- cbind( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_modis <- bind_cols( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and modis)
         nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
@@ -353,9 +404,11 @@ for (sitename in do.sites){
         ## get additional variables
         nice_to_modis <- nice_to_modis %>% mutate( bias_modis = gpp_modis / gpp_obs )          %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
                                            mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) ) %>%
-                                           mutate( mysitename = sitename )
+                                           mutate( mysitename = sitename ) %>% 
+                                           mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
 
         ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
         save( nice_to_modis, file=filn )
 
       } else {
@@ -368,7 +421,127 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- rbind( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+      modis_agg <- bind_rows( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" )) ) )
+    }
+
+  }
+
+  ##------------------------------------------------
+  ## Get BESS-GPP for this site
+  ##------------------------------------------------
+  if (avl_data_bess){
+
+    if (is.element( sitename, colnames(df_bess_gpp_v1))){
+
+      filn <- paste( "data/bess_nn/bess_nn_", sitename, ".Rdata", sep="" )
+      if (!dir.exists("data/bess_nn")) system("mkdir -p data/bess_nn")
+
+      if ( file.exists(filn) && !overwrite_bess ){
+
+        ## load 'nice_to_bess' from file
+        load( filn )
+
+      } else {
+
+        ## prepare dataframe 'nice_to_bess'
+        missing_bess <- FALSE
+
+        ## make bess a bit nicer
+        bess <- df_bess_gpp_v1[ , c( 1:6, which(names(df_bess_gpp_v1)==sitename) ) ] %>%
+                setNames( c( names(.)[1:6], "gpp_bess_v1" ) )
+
+        bess <- df_bess_gpp_v2[ , c( 6, which(names(df_bess_gpp_v2)==sitename) ) ] %>%
+                setNames( c( names(.)[1], "gpp_bess_v2" ) ) %>%
+                right_join( bess, by="date" ) %>%
+                select( date, year, moy, dom, doy, year_dec, gpp_bess_v1, gpp_bess_v2 )
+
+        ## merge dataframes
+        nice_to_bess <- nice %>% select( year, moy, dom, gpp_obs, soilm_mean, alpha, temp, ppfd, vpd, evi, fvar, is_drought_byvar ) %>%
+                        mutate( mysitename=sitename ) %>%
+                        left_join( bess, by=c("year", "moy", "dom") ) %>%
+                        mutate( bias_bess_v1 = gpp_bess_v1 / gpp_obs ) %>% mutate( bias_bess_v1 = ifelse( is.infinite( bias_bess_v1 ), NA, bias_bess_v1 ) ) %>% 
+                        mutate( ratio_obs_mod_bess_v1 = gpp_obs / gpp_bess_v1 ) %>% mutate( ratio_obs_mod_bess_v1=ifelse( is.infinite( bias_bess_v1 ), NA, ratio_obs_mod_bess_v1 ) )  %>%
+                        mutate( bias_bess_v2 = gpp_bess_v2 / gpp_obs ) %>% mutate( bias_bess_v2 = ifelse( is.infinite( bias_bess_v2 ), NA, bias_bess_v2 ) ) %>% 
+                        mutate( ratio_obs_mod_bess_v2 = gpp_obs / gpp_bess_v2 ) %>% mutate( ratio_obs_mod_bess_v2=ifelse( is.infinite( bias_bess_v2 ), NA, ratio_obs_mod_bess_v2 ) )
+
+        ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
+        save( nice_to_bess, file=filn )
+
+      }
+
+      ## add row to aggregated data
+      bess_agg <- bind_rows( bess_agg, nice_to_bess )
+
+    } else {
+
+      missing_bess <- TRUE
+
+    }
+
+  }
+
+  ##------------------------------------------------
+  ## Get VPP-GPP for this site
+  ##------------------------------------------------
+  if (avl_data_vpm){
+    
+    filn <- paste0( "data/vpm_nn/vpm_nn_", sitename, ".Rdata" )
+    if (!dir.exists("data/vpm_nn")) system("mkdir -p data/vpm_nn")
+    
+    if ( file.exists(filn) && !overwrite_vpm ){
+
+      ## load 'nice_to_vpm' from file
+      load( filn )
+      avl_vpmgpp <- TRUE
+
+    } else {
+
+      vpm <- df_gpp_vpm %>% filter( mysitename==sitename )
+
+      if (nrow(vpm)>0){
+
+        avl_vpmgpp <- TRUE
+
+        ## make vpm a bit nicer
+        vpm <- vpm %>%  select( -GPP ) %>% rename( gpp_vpm = VPM ) %>% 
+                        mutate( doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, 
+                                date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 )
+                                )
+
+        ## group nice by 8d bins from vpm data
+        nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
+                          mutate( invpmbin = cut( as.numeric(date), breaks = c( vpm$date_start ), right = FALSE ) )
+
+        ## summarise by bin taking means
+        nice_to_vpm <- nice %>% group_by( invpmbin ) %>% summarise_all( mean, na.rm=TRUE )
+        tmp         <- nice %>% select( invpmbin, doy, year ) %>% group_by( invpmbin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
+        nice_to_vpm <- bind_cols( nice_to_vpm, select( tmp, doy_start, doy_end, year_start, year_end ) )
+
+        ## merge dataframes (averaged nice and vpm)
+        nice_to_vpm <- nice_to_vpm %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( vpm, by=c("doy_start", "year_start") )
+        
+        ## get additional variables
+        nice_to_vpm <- nice_to_vpm %>% mutate( bias_vpm = gpp_vpm / gpp_obs ) %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
+                                       mutate( ratio_obs_mod_vpm = gpp_obs / gpp_vpm ) %>% mutate( ratio_obs_mod_vpm=ifelse( is.infinite( bias_vpm ), NA, ratio_obs_mod_vpm ) ) %>%
+                                       mutate( mysitename = sitename ) %>% 
+                                       mutate( is_drought_byvar = ifelse( is_drought_byvar>=0.5, TRUE, FALSE ) )
+
+        ## save to file
+        if (verbose) print( paste( "saving to file", filn ) )
+        save( nice_to_vpm, file=filn )
+
+      } else {
+
+        avl_vpmgpp <- FALSE
+
+      }
+
+    }
+
+    ## add row to aggregated data
+    if (avl_vpmgpp){
+      vpm_agg <- bind_rows( vpm_agg, select( nice_to_vpm, one_of( c( usecols, "bias_vpm", "ratio_obs_mod_vpm", "doy_start", "doy_end", "year_start", "year_end", "is_drought_byvar" )) ) )
     }
 
   }
@@ -390,16 +563,25 @@ if ( length( dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysi
   print( paste( "saving dataframe nice_agg in file", filn) )
   save( nice_agg,  file=filn )
 
+  ## save aggregated NN mte
   filn <- paste0("data/nice_nn_mte_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe mte_agg in file", filn) )
   save( mte_agg, file=filn )
 
+  ## save aggregated NN modis
   filn <- paste0("data/nice_nn_modis_agg_", nam_target, char_fapar, ".Rdata")
   print( paste( "saving dataframe modis_agg in file", filn) )
   save( modis_agg, file=filn )
 
-  # save( nice_resh, file="data/nice_resh_lue_obs_evi.Rdata" )
-  # save( overview, file="data/overview_data_fluxnet2015_L3.Rdata" )
+  ## save aggregated NN bess
+  filn <- paste0("data/nice_nn_bess_agg_", nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe bess_agg in file", filn) )
+  save( bess_agg, file=filn )
+
+  ## save aggregated NN vpm
+  filn <- paste0("data/nice_nn_vpm_agg_", nam_target, char_fapar, ".Rdata")
+  print( paste( "saving dataframe vpm_agg in file", filn) )
+  save( vpm_agg, file=filn )
 
 } else {
 

@@ -19,8 +19,8 @@ get_linearfit <- function( df, monthly=FALSE ){
   intervals <- seq(0, 1, 0.25)
   df$ininterval <- NULL
   df <- df %>% mutate( ininterval = cut( soilm_mean , breaks = intervals ) ) %>% group_by( mysitename, ininterval )
-  df_flue0 <- df %>%  dplyr::summarise( flue0=mean( fvar, na.rm=TRUE ) ) %>% 
-                      complete( ininterval, fill = list( flue0 = NA ) ) %>% 
+  df_flue0 <- df %>%  dplyr::summarise( y0=mean( fvar, na.rm=TRUE ) ) %>% 
+                      complete( ininterval, fill = list( y0 = NA ) ) %>% 
                       dplyr::filter( ininterval=="(0,0.25]" )
 
   ## Merge mean annual alpha (AET/PET) values into this dataframe
@@ -30,8 +30,8 @@ get_linearfit <- function( df, monthly=FALSE ){
   ##------------------------------------------------------------------------
   ## Fit linear model
   ##------------------------------------------------------------------------
-  linmod <- lm( flue0 ~ meanalpha, data=df_flue0 )
+  linmod <- lm( y0 ~ meanalpha, data=df_flue0 )
 
-  return( list( linmod=linmod, df_flue0=df_flue0 ) )
+  return( list( linmod=linmod, data=df_flue0 ) )
 
 }
