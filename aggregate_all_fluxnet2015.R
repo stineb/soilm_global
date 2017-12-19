@@ -1,7 +1,8 @@
 .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
 library( dplyr )
-library( cgwtools )
+library( readr )
+library( lubridate )
 
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
@@ -14,14 +15,14 @@ load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
-siteinfo <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/soilm_data_usability_fluxnet2015.csv", sep="" ), as.is=TRUE )
-do.sites <- dplyr::filter( siteinfo, code!=0 )$mysitename
+siteinfo <- read_csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/soilm_data_usability_fluxnet2015.csv", sep="" ) )
+do.sites <- filter( siteinfo, code!=0 )$mysitename
 nam_target  = "lue_obs_evi"
 use_weights = FALSE
 use_fapar   = FALSE
 
 ## Manual settings ----------------
-# do.sites   = "AU-Dry"
+do.sites   = "FR-Pue"
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -32,19 +33,36 @@ overwrite_mte = TRUE
 verbose    = FALSE
 ##---------------------------------
 
+norm_to_max <- function( vec ){
+  vec <- ( vec - min( vec, na.rm=TRUE ) ) / ( max( vec, na.rm=TRUE ) - min( vec, na.rm=TRUE ) )
+  return( vec )
+}
+
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
 ##------------------------------------------------
-filn <- paste( myhome, "data/gpp_mte_rf_fluxnet_tramontana/GPP_8Days_4Beni.csv", sep="" )
+filn <- paste0( myhome, "data/gpp_mte_rf_fluxnet_tramontana/GPP_8Days_4Beni.csv" )
 if ( file.exists( filn ) ){
-  mte_dl <- read.csv( paste( myhome, "data/gpp_mte_rf_fluxnet_tramontana/GPP_Daily_4Beni.csv", sep="" ), as.is=TRUE )
-  mte_8d <- read.csv( filn, as.is=TRUE )
-
+  mte_dl <- read_csv( paste0( myhome, "data/gpp_mte_rf_fluxnet_tramontana/GPP_Daily_4Beni.csv" ) )
+  mte_8d <- read_csv( filn ) %>% rename(  mysitename=`Site-code`, 
+                                          gpp_mte=MTE, 
+                                          gpp_mte_m=MTE_M, 
+                                          gpp_mte_viterbo=MTE_Viterbo, 
+                                          gpp_rf=RF, 
+                                          gpp_rf_fromdaily=RF_from_daily, 
+                                          doy_start=StartDoY, 
+                                          doy_end=EndDoY, 
+                                          year_start=StartYear, 
+                                          year_end=EndYear 
+                                          ) %>%
+                                  mutate( mysitename=as.character(mysitename),
+                                          year_start=as.integer(year_start),
+                                          year_end=as.integer(year_end),
+                                          doy_start=as.integer(doy_start),
+                                          doy_end=as.integer(doy_end)
+                                          )
   ## replace with NA
   for (ivar in names(mte_8d)){ mte_8d[[ ivar ]][ which( mte_8d[[ ivar ]]==-9999 ) ] <- NA }
-  # for (ivar in names(dmte)){
-  #   dmte[[ ivar ]][ which( dmte[[ ivar ]]==-9999 ) ] <- NA
-  # }
 
   avl_data_mte <- TRUE
 } else {
@@ -54,7 +72,7 @@ if ( file.exists( filn ) ){
 ##------------------------------------------------
 ## Check availability of MODIS GPP data
 ##------------------------------------------------
-fillist <- list.files( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sep="" ) )
+fillist <- list.files( paste0( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/" ) )
 if (length(fillist)==0) {
   avl_data_modis <- FALSE
 } else {
@@ -126,11 +144,11 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## load site data and "detatch"
     ##------------------------------------------------
-    nice <- fluxnet[[ sitename ]]$ddf$s13
+    nice <- as_tibble( fluxnet[[ sitename ]]$ddf$s13 )
 
     if (!is.null(nice)){
 
-      nice <- nice %>% dplyr::select( year_dec, year, doy, moy, dom, soilm_splash150=wcont, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
+      nice <- nice %>% select( year, doy, moy, dom, soilm_splash150=wcont, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
 
       ##------------------------------------------------
       ## Get alternative soil moisture data
@@ -151,48 +169,63 @@ for (sitename in do.sites){
       # nice <- nice %>% mutate( soilm_etobs     = soilm_etobs     / 220 )
       # nice <- nice %>% mutate( soilm_etobs_ob  = soilm_etobs_ob  / 220 )
 
-      nice <- nice %>% mutate( soilm_splash150 = soilm_splash150 / max( soilm_splash150, na.rm=TRUE ) )
-      nice <- nice %>% mutate( soilm_splash220 = soilm_splash220 / max( soilm_splash220, na.rm=TRUE ) )
-      nice <- nice %>% mutate( soilm_swbm      = soilm_swbm      / max( soilm_swbm     , na.rm=TRUE ) )
-      nice <- nice %>% mutate( soilm_etobs     = soilm_etobs     / max( soilm_etobs    , na.rm=TRUE ) )
-      nice <- nice %>% mutate( soilm_etobs_ob  = soilm_etobs_ob  / max( soilm_etobs_ob , na.rm=TRUE ) )
+      nice <- nice %>% mutate( soilm_splash150 = soilm_splash150 / max( soilm_splash150, na.rm=TRUE ),
+                               soilm_splash220 = soilm_splash220 / max( soilm_splash220, na.rm=TRUE ),
+                               soilm_swbm      = soilm_swbm      / max( soilm_swbm     , na.rm=TRUE ),
+                               soilm_etobs     = soilm_etobs     / max( soilm_etobs    , na.rm=TRUE ),
+                               soilm_etobs_ob  = soilm_etobs_ob  / max( soilm_etobs_ob , na.rm=TRUE ) 
+                               )
 
       ##------------------------------------------------
       ## Get observational soil moisture data (variable availability!)
       ##------------------------------------------------
-      varnams_swc_obs <- c()
+      ## add mean of soil moisture across observational and model data ('soilm_mean')
+      nice <- nice %>%  left_join( fluxnet[[ sitename ]]$ddf$swc_obs, by=c( "year", "moy", "dom" ) ) %>%
 
-      ## Get observational soil moisture data (variable availability!)
-      if ( is.element( "soilm_obs", varnams_swc ) ){
-        relevant <- names(fluxnet[[ sitename ]]$ddf$swc_obs)[(is.element( substr(names(fluxnet[[ sitename ]]$ddf$swc_obs), start=1, stop=3), "SWC" ))]
-        if (length(relevant)>0){
-          for (iobs in seq(length(relevant))){
-            varnam <- paste( "soilm_obs_", iobs, sep="" )
-            nice[[ varnam ]] <- fluxnet[[ sitename ]]$ddf$swc_obs[[ relevant[iobs] ]]
-            varnams_swc_obs <- c( varnams_swc_obs, varnam )
-          }
-          varnams_swc <- c( varnams_swc, "soilm_obs" )
-        } else {
-          ## no obs. soilm. data found, remove from data list
-          varnams_swc <- varnams_swc[ -which( "soilm_obs" ) ]
-        }  
-      }
+                        ## normalise to within zero and one
+                        mutate_at( vars(starts_with("SWC_F_MDS")), funs(norm_to_max(.)) ) %>%
+      
+                        ## get mean soil observational moisture across different depths (if available)
+                        mutate( soilm_obs_mean = apply( select( ., starts_with("SWC_F_MDS") ), 1, FUN=mean, na.rm=TRUE ) ) %>%
+                        mutate( soilm_obs_mean = ifelse( is.nan(soilm_obs_mean), NA, soilm_obs_mean ) ) %>%
+
+                        ## get mean soil moisture across all datasets (observational and modeled)
+                        mutate( soilm_mean = apply( select( ., starts_with("SWC_F_MDS"), soilm_splash150, soilm_splash220, soilm_swbm, soilm_etobs, soilm_etobs_ob ), 1, FUN = mean, na.rm = TRUE ) ) %>%
+                        mutate( soilm_mean = ifelse( is.nan(soilm_mean), NA, soilm_mean ) )
+
+      # varnams_swc_obs <- c()
+
+      # ## Get observational soil moisture data (variable availability!)
+      # if ( is.element( "soilm_obs", varnams_swc ) ){
+      #   relevant <- names(fluxnet[[ sitename ]]$ddf$swc_obs)[(is.element( substr(names(fluxnet[[ sitename ]]$ddf$swc_obs), start=1, stop=3), "SWC" ))]
+      #   if (length(relevant)>0){
+      #     for (iobs in seq(length(relevant))){
+      #       varnam <- paste( "soilm_obs_", iobs, sep="" )
+      #       nice[[ varnam ]] <- fluxnet[[ sitename ]]$ddf$swc_obs[[ relevant[iobs] ]]
+      #       varnams_swc_obs <- c( varnams_swc_obs, varnam )
+      #     }
+      #     varnams_swc <- c( varnams_swc, "soilm_obs" )
+      #   } else {
+      #     ## no obs. soilm. data found, remove from data list
+      #     varnams_swc <- varnams_swc[ -which( "soilm_obs" ) ]
+      #   }  
+      # }
 
     }
 
-    ## Average over soil moisture datasets; all and obs-only
-    if (length(varnams_swc_obs)>0){
-      nice$soilm_obs <- apply( dplyr::select( nice, one_of(varnams_swc_obs)), 1, FUN=mean, na.rm=TRUE )
-      nice$soilm_obs[ is.nan( nice$soilm_obs ) ] <- NA
-    }
+    # ## Average over soil moisture datasets; all and obs-only
+    # if (length(varnams_swc_obs)>0){
+    #   nice$soilm_obs <- apply( select( nice, one_of(varnams_swc_obs)), 1, FUN=mean, na.rm=TRUE )
+    #   nice$soilm_obs[ is.nan( nice$soilm_obs ) ] <- NA
+    # }
 
-    nice$soilm_mean <- apply( dplyr::select( nice, one_of(varnams_swc)), 1, FUN=mean, na.rm=TRUE )
-    nice$soilm_mean[ is.nan( nice$soilm_mean ) ] <- NA
+    # nice$soilm_mean <- apply( select( nice, one_of(varnams_swc)), 1, FUN=mean, na.rm=TRUE )
+    # nice$soilm_mean[ is.nan( nice$soilm_mean ) ] <- NA
 
     ##------------------------------------------------
     ## Get observational data and add to 'data'
     ##------------------------------------------------
-    obs <- dplyr::select( fluxnet[[ sitename ]]$ddf$obs, year, moy, dom, gpp_obs2015_GPP_NT_VUT_REF, gpp_obs2015_GPP_NT_VUT_REF_gfd, le_f_mds )
+    obs <- select( fluxnet[[ sitename ]]$ddf$obs, year, moy, dom, gpp_obs2015_GPP_NT_VUT_REF, gpp_obs2015_GPP_NT_VUT_REF_gfd, le_f_mds )
 
     nice <- nice  %>% left_join( obs, by=c( "year", "moy", "dom" ) ) %>%
                       rename( gpp_obs=gpp_obs2015_GPP_NT_VUT_REF, gpp_obs_gfd=gpp_obs2015_GPP_NT_VUT_REF_gfd, et_obs=le_f_mds ) %>%
@@ -201,7 +234,7 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## Get input data
     ##------------------------------------------------
-    inp <- fluxnet[[ sitename ]]$ddf$inp %>% dplyr::select( year, moy, dom, temp, ppfd, vpd, prec, evi, fpar )
+    inp <- fluxnet[[ sitename ]]$ddf$inp %>% select( year, moy, dom, temp, ppfd, vpd, prec, evi, fpar )
 
     nice <- nice %>% left_join( inp, by=c( "year", "moy", "dom" ) )
 
@@ -211,9 +244,9 @@ for (sitename in do.sites){
     nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
     nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
 
-    for (ivar in varnams_swc_obs){
-      nice[[ ivar ]]  <- nice[[ ivar ]]  / max( nice[[ ivar ]] , na.rm=TRUE )
-    }
+    # for (ivar in varnams_swc_obs){
+    #   nice[[ ivar ]]  <- nice[[ ivar ]]  / max( nice[[ ivar ]] , na.rm=TRUE )
+    # }
 
     ##------------------------------------------------
     ## additional variables
@@ -226,13 +259,15 @@ for (sitename in do.sites){
                               alpha = ifelse( is.infinite(alpha), NA, alpha )
                               )
 
-
-    ## add row to aggregated data
+    ## add site name as column
     nice <- nice %>% mutate( mysitename=sitename )
 
     ## fLUE estimate based on current soil moisture and average AET/PET
     meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
     nice <- nice %>%  mutate( dry=ifelse(alpha<0.95, TRUE, FALSE))
+
+    ## date as ymd from the lubridate package
+    nice <- nice %>%  mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days( doy - 1 ) )
 
     ##------------------------------------------------
     ## save to file
@@ -247,7 +282,7 @@ for (sitename in do.sites){
   ##------------------------------------------------
   usecols <- c(
                 "mysitename",
-                "year_dec",
+                "date",
                 "year",
                 "doy",
                 "gpp_obs",
@@ -270,7 +305,7 @@ for (sitename in do.sites){
                 "dry"
                 )
 
-  nice_agg <- rbind( nice_agg, select( nice, one_of( usecols ) ) )
+  nice_agg <- bind_rows( nice_agg, select( nice, one_of( usecols ) ) )
 
   # ##------------------------------------------------
   # ## Reshape dataframe to stack data from differen soil moisture datasets along rows
@@ -286,7 +321,6 @@ for (sitename in do.sites){
   #   }
   #   addrows <- data.frame( 
   #                           mysitename = sitename,
-  #                           year_dec   = nice$year_dec,
   #                           var_nn_act = nice[[ paste( "var_nn_act_", isoilm, sep="" ) ]],
   #                           var_nn_pot = nice[[ paste( "var_nn_pot_", isoilm, sep="" ) ]],
   #                           var_nn_vpd = nice[[ paste( "var_nn_vpd_", isoilm, sep="" ) ]],
@@ -297,7 +331,7 @@ for (sitename in do.sites){
   #                           iabs       = nice$evi * nice$ppfd,
   #                           soilm_data = rep( isoilm, nrow(nice) )
   #                           )
-  #   nice_resh <- rbind( nice_resh, addrows )
+  #   nice_resh <- bind_rows( nice_resh, addrows )
   # }
 
 
@@ -306,9 +340,9 @@ for (sitename in do.sites){
   ##------------------------------------------------
   if (avl_data_mte){
 
-    if (is.element( sitename, mte_8d$Site.code)){
+    if (is.element( sitename, mte_8d$mysitename)){
 
-      filn <- paste( "data/mte/mte_", sitename, ".Rdata", sep="" )
+      filn <- paste0( "data/mte/mte_", sitename, ".Rdata" )
 
       if ( file.exists(filn) && !overwrite_mte ){
 
@@ -318,24 +352,22 @@ for (sitename in do.sites){
       } else {
 
         ## prepare dataframe 'nice_to_mte'
-        # dmte <- dplyr::filter( mte_dl, Site.code==sitename )
+        # dmte <- filter( mte_dl, Site.code==sitename )
         missing_mte <- FALSE
 
         ## make mte a bit nicer
-        mte <-  dplyr::filter( mte_8d, Site.code==sitename ) %>%
-                rename( mysitename=Site.code, gpp_mte=MTE, gpp_mte_m=MTE_M, gpp_mte_viterbo=MTE_Viterbo, gpp_rf=RF, gpp_rf_fromdaily=RF_from_daily, doy_start=StartDoY, doy_end=EndDoY, year_start=StartYear, year_end=EndYear ) %>%
+        mte <-  filter( mte_8d, mysitename==sitename ) %>%
                 mutate( doy_end = doy_end - 1 ) %>%  # assuming that the doy_end is not counted towards bins aggregate
-                mutate( date_start = as.POSIXct( as.Date( paste( as.character(year_start), "-01-01", sep="" ) ) + doy_start - 1 ),
-                        date_end   = as.POSIXct( as.Date( paste( as.character(year_end  ), "-01-01", sep="" ) ) + doy_end   - 1 ) )
+                mutate( date_start = ymd( paste0( as.character(year_start), "-01-01" ) ) + days( doy_start - 1 ),
+                        date_end   = ymd( paste0( as.character(year_end  ), "-01-01" ) ) + days( doy_end   - 1 ) )
 
         ## group by 8d bins from MTE data
-        nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
-                          mutate( inmtebin = cut( as.numeric(date), breaks = c( mte$date_start ), right = FALSE ) ) 
+        nice <- nice %>% mutate( inmtebin = cut( date, breaks = mte$date_start, right = FALSE ) ) 
 
         ## summarise by bin taking means
         nice_to_mte <- nice %>% group_by( inmtebin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp         <- nice %>% select( inmtebin, doy, year ) %>% group_by( inmtebin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_mte <- cbind( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_mte <- bind_cols( nice_to_mte, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and mte)
         nice_to_mte <- nice_to_mte %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( mte, by=c("doy_start", "year_start") )
@@ -353,7 +385,7 @@ for (sitename in do.sites){
       }
 
       ## add row to aggregated data
-      mte_agg <- rbind( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
+      mte_agg <- bind_rows( mte_agg, select( nice_to_mte, one_of( c( usecols, "bias_mte", "ratio_obs_mod_mte", "bias_rf", "ratio_obs_mod_rf", "doy_start", "doy_end", "year_start", "year_end" ) ) ) )
 
     } else {
 
@@ -380,25 +412,24 @@ for (sitename in do.sites){
     } else {
 
       ## prepare 'nice_to_modis'
-      modis <- try( read.csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ), as.is=TRUE )) %>% rename( data=Gpp ) %>% mutate( data=data*1e3 )
-      # modis <- try( read.csv( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv", sep="" ), as.is=TRUE ))
+      modis <- try( read_csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ) )) %>% rename( data=Gpp ) %>% mutate( data=data*1e3 )
+      # modis <- try( read_csv( paste( myhome, "data/modis_gpp_fluxnet_cutouts_tseries/", sitename, "/gpp_8d_modissubset_", sitename, ".csv", sep="" ) ))
       if (class(modis)!="try-error"){
         avl_modisgpp <- TRUE
 
         ## make modis a bit nicer
         modis <- modis %>%  rename( gpp_modis = data ) %>% 
-                            mutate( gpp_modis = gpp_modis / 8.0, doy_start = doy, doy_end = lead( doy ) - 1, year_start = year, 
-                                    date_start = as.POSIXct( as.Date( date ) ), date_end = as.POSIXct( as.Date( lead( date ) ) - 1 )
+                            mutate( gpp_modis = gpp_modis / 8.0, doy_start = doy, doy_end = lead( doy ) - 1, year_start = year,
+                                    date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1)
                                     )
 
         ## group nice by 8d bins from MODIS data
-        nice <- nice %>%  mutate( date = as.POSIXct( as.Date( paste( as.character(year), "-01-01", sep="" ) ) + doy - 1 ) ) %>% 
-                          mutate( inmodisbin = cut( as.numeric(date), breaks = c( modis$date_start ), right = FALSE ) )
+        nice <- nice %>%  mutate( inmodisbin = cut( date, breaks = modis$date_start, right = FALSE ) )
 
         ## summarise by bin taking means
         nice_to_modis <- nice %>% group_by( inmodisbin ) %>% summarise_all( mean, na.rm=TRUE )
         tmp           <- nice %>% select( inmodisbin, doy, year ) %>% group_by( inmodisbin ) %>% summarise( doy_start=min( doy ), doy_end=max( doy ), year_start=min( year ), year_end=max( year ) )
-        nice_to_modis <- cbind( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
+        nice_to_modis <- bind_cols( nice_to_modis, select( tmp, doy_start, doy_end, year_start, year_end ) )
 
         ## merge dataframes (averaged nice and modis)
         nice_to_modis <- nice_to_modis %>% select( doy_start, year_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c("doy_start", "year_start") )
@@ -422,7 +453,7 @@ for (sitename in do.sites){
 
     ## add row to aggregated data
     if (avl_modisgpp){
-      modis_agg <- rbind( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
+      modis_agg <- bind_rows( modis_agg, select( nice_to_modis, one_of( c( usecols, "bias_modis", "ratio_obs_mod_modis", "doy_start", "doy_end", "year_start", "year_end" )) ) )
     }
 
   }
@@ -435,7 +466,7 @@ print( paste( "site data with FLUXCOM MTE data has been saved in files data/mte_
 print( paste( "site data with MODIS GPP data has been saved in files   data/modis_<sitename>.Rdata"))
 
 
-if ( length( dplyr::filter( siteinfo, code!=0 )$mysitename ) == length( do.sites ) ){
+if ( length( filter( siteinfo, code!=0 )$mysitename ) == length( do.sites ) ){
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
