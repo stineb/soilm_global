@@ -36,7 +36,7 @@ df_dday_aggbydday_agg <- c()
 
 for (sitename in do.sites){
 
-  # print( paste( "reshaping for site", sitename ) )
+  print( paste( "reshaping for site", sitename ) )
   out <- reshape_align_nn_fluxnet2015( sitename, nam_target="lue_obs_evi", overwrite=TRUE, verbose=FALSE )
 
   if (!is.null(out$df_dday))           df_dday_agg           <- bind_rows( df_dday_agg,           out$df_dday )
@@ -52,7 +52,7 @@ if ( length( dplyr::filter( siteinfo, successcode==1 )$mysitename ) == length( d
   ## Aggregated data from MODIS and MTE around drought events
   ##------------------------------------------------
   filn <- "data/data_aligned_agg.Rdata"
-  print( paste( "saving variables 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg', and 'df_dday_aggbydday_agg' to file:", filn ) )
+  print( paste( "saving variables 'df_dday_agg', 'df_dday_8d_agg', and 'df_dday_aggbydday_agg' to file:", filn ) )
   save( df_dday_agg, df_dday_8d_agg, df_dday_aggbydday_agg, file=filn )
 
 } else {

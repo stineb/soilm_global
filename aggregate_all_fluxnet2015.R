@@ -350,17 +350,17 @@ for (sitename in do.sites){
     print("getting MODIS data")
 
     ## prepare 'nice_8d'
-    modis <- try( read_csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ) ) ) %>% rename( data=Gpp ) %>% mutate( data=data*1e3 )
+    modis <- try( read_csv( paste0( myhome, "data/gpp_MODIS_GPP_MOD17A2H_fluxnet2015_gee_subset/raw/", sitename, "_MOD17A2H_gee_subset.csv" ) ) )
 
-    if (class(modis)!="try-error"){
+    if (class(modis)[1]!="try-error"){
 
       avl_modisgpp <- TRUE
 
       ## make modis a bit nicer
-      modis <- modis %>%  rename( gpp_modis = data ) %>% 
-                          mutate( gpp_modis = gpp_modis / 8.0,
-                                  date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1)
-                                  )
+      modis <- modis %>%  rename( gpp_modis = Gpp ) %>% 
+                          mutate( gpp_modis = ifelse( any(!is.na(gpp_modis)), gpp_modis * 1e3 / 8.0, NA ),
+                                  date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1) ) %>%
+                          select( -date )
 
       ## group nice by 8d bins from MODIS data
       nice <- nice %>%  mutate( in8dbin = cut( date, breaks = modis$date_start, right = FALSE ) )

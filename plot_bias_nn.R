@@ -38,15 +38,12 @@ getuhalfpeak <- function( vec, lev=0.5 ) {
 siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
 
 ## Load aligned aggregated data
-load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_modis_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg'
+load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_8d_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg'
 
 ## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
 load( "data/linearfit2_ratio.Rdata" )
-df_dday_agg       <- compl_df_flue_est( df_dday_agg      , linearfit2, x0_fix=0.9  )
-df_dday_modis_agg <- compl_df_flue_est( df_dday_modis_agg, linearfit2, x0_fix=0.9  )
-df_dday_mte_agg   <- compl_df_flue_est( df_dday_mte_agg  , linearfit2, x0_fix=0.9  )
-df_dday_bess_agg  <- compl_df_flue_est( df_dday_bess_agg , linearfit2, x0_fix=0.9  )
-df_dday_vpm_agg   <- compl_df_flue_est( df_dday_vpm_agg  , linearfit2, x0_fix=0.9  )
+df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
+df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
 
 ## group data by fLUE
 nbins <- 10
@@ -54,18 +51,12 @@ binwidth <- 1.0/nbins
 fvarbins <- seq( from=0, to=1, by=binwidth )
 xvals <- fvarbins[1:nbins]+binwidth/2
 
-df_dday_agg       <- df_dday_agg       %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
-df_dday_modis_agg <- df_dday_modis_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
-df_dday_mte_agg   <- df_dday_mte_agg   %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
-df_dday_bess_agg  <- df_dday_bess_agg  %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
-df_dday_vpm_agg   <- df_dday_vpm_agg   %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+df_dday_agg       <- df_dday_agg    %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+df_dday_8d_agg    <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
 
 ## load nice_agg to get data outside droughts
 load( "data/nice_nn_agg_lue_obs_evi.Rdata" )  # loads nice_agg
-load( "data/nice_nn_modis_agg_lue_obs_evi.Rdata" )   # loads modis_agg
-load( "data/nice_nn_mte_agg_lue_obs_evi.Rdata" )   # loads mte_agg
-load( "data/nice_nn_bess_agg_lue_obs_evi.Rdata" )   # loads bess_agg
-load( "data/nice_nn_vpm_agg_lue_obs_evi.Rdata" )   # loads vpm_agg
+load( "data/nice_nn_8d_agg_lue_obs_evi.Rdata" )   # loads nice_8d_agg
 nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid ), by="mysitename" )
 
 
@@ -175,14 +166,11 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #---------------------------------------------------------
   # MODIS
   #---------------------------------------------------------
-    ## filtering is necessary to get sensible bins for coloring in the heatscatter function
-    df_dday_modis_agg <- df_dday_modis_agg %>% filter( ratio_obs_mod_modis<5 )
-    
     par( las=1, mar=c(4,4.5,2.5,0) )
     xlim <- c(0,1.2)
     ylim <- c(0,3)
     with( 
-          filter( df_dday_modis_agg, ratio_obs_mod_modis<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_modis<5 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_modis, 
@@ -201,7 +189,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     mtext( "MOD17A2H", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
-    df_bins <- df_dday_modis_agg %>%  group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_modis) ) %>% 
+    df_bins <- df_dday_8d_agg %>%  group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_modis) ) %>% 
                                       summarise(  peak           = getpeak(      ratio_obs_mod_modis ), 
                                                   uhalfpeak      = getuhalfpeak( ratio_obs_mod_modis, lev=0.75 ), 
                                                   lhalfpeak      = getlhalfpeak( ratio_obs_mod_modis, lev=0.75 ),
@@ -216,7 +204,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     #---------------------------------------------------------
     # Distribution 
     #---------------------------------------------------------
-    vec <- df_dday_modis_agg %>% filter( dday < 0 ) %>% select( ratio_obs_mod_modis )
+    vec <- df_dday_8d_agg %>% filter( dday < 0 & !is.nan(ratio_obs_mod_modis) & !is.na(ratio_obs_mod_modis) ) %>% select( ratio_obs_mod_modis )
     dens <- density(vec$ratio_obs_mod_modis)
     df_before <- vec %>% 
                     summarise( 
@@ -234,21 +222,18 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     lines( dens$y/max(dens$y), dens$x )
     abline( h=1.0, lty=3 )
 
-    # boxplot( filter( df_dday_modis_agg, dday < 0 )$ratio_obs_mod_modis, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+    # boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_modis, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     # abline( h=1.0, lwd=0.5, lty=2 )
 
 
   #---------------------------------------------------------
   # BESS v1
   #---------------------------------------------------------
-    ## filtering is necessary to get sensible bins for coloring in the heatscatter function
-    df_dday_bess_agg <- df_dday_bess_agg %>% filter( ratio_obs_mod_bess_v1<5 )
-    
     par( las=1, mar=c(4,4.5,2.5,0) )
     xlim <- c(0,1.2)
     ylim <- c(0,3)
     with( 
-          filter( df_dday_bess_agg, ratio_obs_mod_bess_v1<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_agg, ratio_obs_mod_bess_v1<5 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_bess_v1, 
@@ -266,9 +251,9 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     mtext( "BESS v1", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
-    df_dday_bess_agg <- df_dday_bess_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+    df_dday_agg <- df_dday_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
-    df_bins <- df_dday_bess_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v1) ) %>% 
+    df_bins <- df_dday_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v1) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_bess_v1 ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_bess_v1, lev=0.75 ), 
                                                 lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v1, lev=0.75 ),
@@ -283,7 +268,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     #---------------------------------------------------------
     # Distribution 
     #---------------------------------------------------------
-    vec <- df_dday_bess_agg %>% filter( dday < 0 ) %>% select( ratio_obs_mod_bess_v1 )
+    vec <- df_dday_agg %>% filter( dday < 0 & !is.nan(ratio_obs_mod_bess_v1) & !is.na(ratio_obs_mod_bess_v1) ) %>% select( ratio_obs_mod_bess_v1 )
     dens <- density(vec$ratio_obs_mod_bess_v1)
     df_before <- vec %>% 
                     summarise( 
@@ -301,21 +286,18 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     lines( dens$y/max(dens$y), dens$x )
     abline( h=1.0, lty=3 )
 
-    # boxplot( filter( df_dday_bess_agg, dday < 0 )$ratio_obs_mod_bess_v1, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+    # boxplot( filter( df_dday_agg, dday < 0 )$ratio_obs_mod_bess_v1, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     # abline( h=1.0, lwd=0.5, lty=2 )
 
 
   #---------------------------------------------------------
   # BESS v2
   #---------------------------------------------------------
-    ## filtering is necessary to get sensible bins for coloring in the heatscatter function
-    df_dday_bess_agg <- df_dday_bess_agg %>% filter( ratio_obs_mod_bess_v2<5 )
-    
     par( las=1, mar=c(4,4.5,2.5,0) )
     xlim <- c(0,1.2)
     ylim <- c(0,3)
     with( 
-          filter( df_dday_bess_agg, ratio_obs_mod_bess_v2<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_agg, ratio_obs_mod_bess_v2<5 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_bess_v2, 
@@ -333,9 +315,9 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     mtext( "BESS v2", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
-    df_dday_bess_agg <- df_dday_bess_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+    df_dday_agg <- df_dday_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
-    df_bins <- df_dday_bess_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v2) ) %>% 
+    df_bins <- df_dday_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v2) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_bess_v2 ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_bess_v2, lev=0.75 ), 
                                                 lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v2, lev=0.75 ),
@@ -350,7 +332,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     #---------------------------------------------------------
     # Distribution 
     #---------------------------------------------------------
-    vec <- df_dday_bess_agg %>% filter( dday < 0 ) %>% select( ratio_obs_mod_bess_v2 )
+    vec <- df_dday_agg %>% filter( dday < 0 & !is.nan(ratio_obs_mod_bess_v2) & !is.na(ratio_obs_mod_bess_v2) ) %>% select( ratio_obs_mod_bess_v2 )
     dens <- density(vec$ratio_obs_mod_bess_v2)
     df_before <- vec %>% 
                     summarise( 
@@ -368,20 +350,17 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     lines( dens$y/max(dens$y), dens$x )
     abline( h=1.0, lty=3 )
 
-    # boxplot( filter( df_dday_bess_agg, dday < 0 )$ratio_obs_mod_bess_v2, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+    # boxplot( filter( df_dday_agg, dday < 0 )$ratio_obs_mod_bess_v2, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     # abline( h=1.0, lwd=0.5, lty=2 )
 
   #---------------------------------------------------------
   # VPM
   #---------------------------------------------------------
-    ## filtering is necessary to get sensible bins for coloring in the heatscatter function
-    df_dday_vpm_agg <- df_dday_vpm_agg %>% filter( ratio_obs_mod_vpm<5 )
-    
     par( las=1, mar=c(4,4.5,2.5,0) )
     xlim <- c(0,1.2)
     ylim <- c(0,3)
     with( 
-          filter( df_dday_vpm_agg, ratio_obs_mod_vpm<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_vpm<5 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_vpm, 
@@ -400,9 +379,9 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     mtext( "VPM", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
-    df_dday_vpm_agg <- df_dday_vpm_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+    df_dday_8d_agg <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
-    df_bins <- df_dday_vpm_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_vpm) ) %>% 
+    df_bins <- df_dday_8d_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_vpm) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_vpm ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_vpm, lev=0.75 ), 
                                                 lhalfpeak      = getlhalfpeak( ratio_obs_mod_vpm, lev=0.75 ),
@@ -417,7 +396,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     #---------------------------------------------------------
     # Distribution during days before drought onset
     #---------------------------------------------------------
-    vec <- df_dday_vpm_agg %>% filter( dday < 0 ) %>% select( ratio_obs_mod_vpm )
+    vec <- df_dday_8d_agg %>% filter( dday < 0 & !is.nan(ratio_obs_mod_vpm) & !is.na(ratio_obs_mod_vpm) ) %>% select( ratio_obs_mod_vpm )
     dens <- density(vec$ratio_obs_mod_vpm)
     df_before <- vec %>% 
                     summarise( 
@@ -435,7 +414,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     lines( dens$y/max(dens$y), dens$x )
     abline( h=1.0, lty=3 )
 
-    # boxplot( filter( df_dday_vpm_agg, dday < 0 )$ratio_obs_mod_vpm, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+    # boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_vpm, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     # abline( h=1.0, lwd=0.5, lty=2 )
 
 
@@ -444,7 +423,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #---------------------------------------------------------
     par( las=1, mar=c(4,4.5,2.5,0) )
     with( 
-          filter( df_dday_mte_agg, ratio_obs_mod_mte<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_mte<5 ),  # necessary to get useful bins with heatscatter()
           plot( 
                 fvar, 
                 ratio_obs_mod_mte, 
@@ -465,9 +444,9 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     mtext( "FLUXCOM MTE", line=1, adj=0.5 )
 
     ## add boxes for distribution within bins
-    df_dday_mte_agg <- df_dday_mte_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+    df_dday_8d_agg <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
-    df_bins <- df_dday_mte_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_mte) ) %>% 
+    df_bins <- df_dday_8d_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_mte) ) %>% 
       summarise( peak=getpeak(ratio_obs_mod_mte), uhalfpeak=getuhalfpeak( ratio_obs_mod_mte, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_mte, lev=0.75 ),
       q25=quantile(ratio_obs_mod_mte, probs=0.25), q75=quantile(ratio_obs_mod_mte, probs=0.75) ) %>%
       mutate( mids=xvals )
@@ -479,7 +458,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     #---------------------------------------------------------
     # Distribution 
     #---------------------------------------------------------
-    vec <- df_dday_mte_agg %>% filter( dday < 0 & !is.na(ratio_obs_mod_mte) ) %>% select( ratio_obs_mod_mte )
+    vec <- df_dday_8d_agg %>% filter( dday < 0 & !is.na(ratio_obs_mod_mte) & !is.nan(ratio_obs_mod_mte) ) %>% select( ratio_obs_mod_mte )
     dens <- density(vec$ratio_obs_mod_mte)
     df_before <- vec %>% 
                     summarise( 
@@ -497,7 +476,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     lines( dens$y/max(dens$y), dens$x )
     abline( h=1.0, lty=3 )
 
-    # boxplot( filter( df_dday_mte_agg, dday < 0 )$ratio_obs_mod_mte, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+    # boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_mte, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
     # abline( h=1.0, lwd=0.5, lty=2 )
 
 
@@ -506,7 +485,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   # #---------------------------------------------------------
   #   par( las=1, mar=c(4,4.5,2.5,0) )
   #   with( 
-  #         filter( df_dday_mte_agg, ratio_obs_mod_rf<5 ),  # necessary to get useful bins with heatscatter()
+  #         filter( df_dday_8d_agg, ratio_obs_mod_rf<5 ),  # necessary to get useful bins with heatscatter()
   #         plot( 
   #               fvar, 
   #               ratio_obs_mod_rf, 
@@ -526,10 +505,10 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #   lines( c(-99,99), c(-99,99), col='red' )
   #   mtext( "FLUXCOM MTE-RF", line=1, adj=0.5 )
 
-  #   df_dday_mte_agg <- df_dday_mte_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
+  #   df_dday_8d_agg <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     
   #   xvals <- fvarbins[1:nbins]+binwidth/2
-  #   df_bins <- df_dday_mte_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_rf) ) %>% 
+  #   df_bins <- df_dday_8d_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_rf) ) %>% 
   #     summarise( peak=getpeak(ratio_obs_mod_rf), uhalfpeak=getuhalfpeak( ratio_obs_mod_rf, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_rf, lev=0.75 ),
   #                q25=quantile(ratio_obs_mod_rf, probs=0.25), q75=quantile(ratio_obs_mod_rf, probs=0.75) ) %>%
   #     mutate( mids=xvals )
@@ -542,7 +521,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #   #---------------------------------------------------------
   #   par( las=1, mar=c(4,0,2.5,2), xpd=FALSE )
 
-  #   boxplot( filter( df_dday_mte_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+  #   boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
   #   abline( h=1.0, lwd=0.5, lty=2 )
 
 dev.off()
