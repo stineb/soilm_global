@@ -11,6 +11,7 @@ source( "remove_outliers.R" )
 source( "compl_df_flue_est.R" )
 
 getpeak <- function( vec ) {
+  vec  <- vec[!is.na(vec)]
   dens <- density( vec, kernel=c("gaussian") )
   peak <- dens$x[ dens$y==max(dens$y) ]
   return( peak )   
@@ -18,6 +19,7 @@ getpeak <- function( vec ) {
 
 getlhalfpeak <- function( vec, lev=0.5 ) {
   require(dplyr)
+  vec  <- vec[!is.na(vec)]
   dens <- density( vec, kernel=c("gaussian") )
   peak <- dens$x[dens$y==max(dens$y)]
   df_tmp <- tibble( x=dens$x, y=dens$y ) %>% filter( x<peak )
@@ -27,6 +29,7 @@ getlhalfpeak <- function( vec, lev=0.5 ) {
 
 getuhalfpeak <- function( vec, lev=0.5 ) {
   require(dplyr)
+  vec  <- vec[!is.na(vec)]
   dens <- density( vec, kernel=c("gaussian") )
   peak <- dens$x[dens$y==max(dens$y)]
   df_tmp <- tibble( x=dens$x, y=dens$y ) %>% filter( x>peak )
@@ -72,15 +75,15 @@ widths <- c(magn, 0.2*magn, magn, 0.2*magn )
 heights <- 1.2*c(0.8*magn,0.8*magn,0.8*magn)
 order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
 
-pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
-
-  panel <- layout(
-                  order,
-                  widths=widths,
-                  heights=heights,
-                  TRUE
-                  )
-  # layout.show(panel)
+# pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
+# 
+#   panel <- layout(
+#                   order,
+#                   widths=widths,
+#                   heights=heights,
+#                   TRUE
+#                   )
+#   # layout.show(panel)
 
   #---------------------------------------------------------
   # P-model
@@ -111,10 +114,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_bins <- df_dday_agg %>%  group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_pmodel) ) %>% 
                                 summarise(  peak           = getpeak(      ratio_obs_mod_pmodel ), 
                                             uhalfpeak      = getuhalfpeak( ratio_obs_mod_pmodel, lev=0.75 ), 
-                                            lhalfpeak      = getlhalfpeak( ratio_obs_mod_pmodel, lev=0.75 ),
-                                            peak_corr      = getpeak(      ratio_obs_mod_pmodel / flue_est ), 
-                                            uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_pmodel / flue_est, lev=0.75 ), 
-                                            lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_pmodel / flue_est, lev=0.75 ) ) %>%
+                                            lhalfpeak      = getlhalfpeak( ratio_obs_mod_pmodel, lev=0.75 ) ) %>%
                                 mutate( mids=xvals )
 
     ## plot uncorrected  
@@ -192,10 +192,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_bins <- df_dday_8d_agg %>%  group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_modis) ) %>% 
                                       summarise(  peak           = getpeak(      ratio_obs_mod_modis ), 
                                                   uhalfpeak      = getuhalfpeak( ratio_obs_mod_modis, lev=0.75 ), 
-                                                  lhalfpeak      = getlhalfpeak( ratio_obs_mod_modis, lev=0.75 ),
-                                                  peak_corr      = getpeak(      ratio_obs_mod_modis / flue_est ), 
-                                                  uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_modis / flue_est, lev=0.75 ), 
-                                                  lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_modis / flue_est, lev=0.75 ) ) %>%
+                                                  lhalfpeak      = getlhalfpeak( ratio_obs_mod_modis, lev=0.75 ) ) %>%
                                       mutate( mids=xvals )
 
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -256,10 +253,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_bins <- df_dday_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v1) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_bess_v1 ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_bess_v1, lev=0.75 ), 
-                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v1, lev=0.75 ),
-                                                peak_corr      = getpeak(      ratio_obs_mod_bess_v1 / flue_est ), 
-                                                uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_bess_v1 / flue_est, lev=0.75 ), 
-                                                lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_bess_v1 / flue_est, lev=0.75 ) ) %>%
+                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v1, lev=0.75 ) ) %>%
                                     mutate( mids=xvals )
 
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -320,10 +314,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     df_bins <- df_dday_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_bess_v2) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_bess_v2 ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_bess_v2, lev=0.75 ), 
-                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v2, lev=0.75 ),
-                                                peak_corr      = getpeak(      ratio_obs_mod_bess_v2 / flue_est ), 
-                                                uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_bess_v2 / flue_est, lev=0.75 ), 
-                                                lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_bess_v2 / flue_est, lev=0.75 ) ) %>%
+                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_bess_v2, lev=0.75 ) ) %>%
                                     mutate( mids=xvals )
     
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -381,13 +372,10 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
     ## add boxes for distribution within bins
     df_dday_8d_agg <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
     xvals <- fvarbins[1:nbins]+binwidth/2
-    df_bins <- df_dday_8d_agg %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_vpm) ) %>% 
+    df_bins <- df_dday_8d_agg   %>% group_by( infvarbin ) %>% filter( !is.na(infvarbin) & !is.na(ratio_obs_mod_vpm) ) %>% 
                                     summarise(  peak           = getpeak(      ratio_obs_mod_vpm ), 
                                                 uhalfpeak      = getuhalfpeak( ratio_obs_mod_vpm, lev=0.75 ), 
-                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_vpm, lev=0.75 ),
-                                                peak_corr      = getpeak(      ratio_obs_mod_vpm / flue_est ), 
-                                                uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_vpm / flue_est, lev=0.75 ), 
-                                                lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_vpm / flue_est, lev=0.75 ) ) %>%
+                                                lhalfpeak      = getlhalfpeak( ratio_obs_mod_vpm, lev=0.75 ) ) %>%
                                     mutate( mids=xvals )
 
     rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("white", 0.5) )
@@ -524,7 +512,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #   boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
   #   abline( h=1.0, lwd=0.5, lty=2 )
 
-dev.off()
+# dev.off()
 
 
 # #---------------------------------------------------------

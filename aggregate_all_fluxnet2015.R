@@ -1,7 +1,6 @@
 .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
 
 library(dplyr)
-library(cgwtools)
 library(R.matlab)
 library(readr)
 library(lubridate)
@@ -30,7 +29,7 @@ siteinfo <- siteinfo %>% left_join( df_error_fapar, by="mysitename" ) %>% rename
 do.sites <- filter( siteinfo, code!=0 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = c("FR-Pue", "AU-How")
+# do.sites   = "AR-Vir" # uncomment to run for single site
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -306,8 +305,6 @@ for (sitename in do.sites){
   usecols <- c(
                 "mysitename",
                 "date",
-                "year",
-                "doy",
                 "gpp_obs",
                 "gpp_pmodel",
                 "aet_pmodel",
@@ -350,17 +347,17 @@ for (sitename in do.sites){
     print("getting MODIS data")
 
     ## prepare 'nice_8d'
-    modis <- try( read_csv( paste0( myhome, "data/gpp_MODIS_GPP_MOD17A2H_fluxnet2015_gee_subset/raw/", sitename, "_MOD17A2H_gee_subset.csv" ) ) )
+    modis <- try( read_csv( paste0( myhome, "data/gpp_MODIS_GPP_MOD17A2H_fluxnet2015_gee_subset/gpp_MODIS_GPP_MOD17A2H_", sitename, "_gee_subset.csv" ) ) )
 
     if (class(modis)[1]!="try-error"){
 
       avl_modisgpp <- TRUE
 
       ## make modis a bit nicer
-      modis <- modis %>%  rename( gpp_modis = Gpp ) %>% 
-                          mutate( gpp_modis = ifelse( any(!is.na(gpp_modis)), gpp_modis * 1e3 / 8.0, NA ),
+      modis <- modis %>%  rename( gpp_modis = modisvar ) %>% 
+                          mutate( gpp_modis = ifelse( !is.na(gpp_modis), gpp_modis * 1e3 / 8.0, NA ),
                                   date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1) ) %>%
-                          select( -date )
+                          select( date_start, date_end, gpp_modis )
 
       ## group nice by 8d bins from MODIS data
       nice <- nice %>%  mutate( in8dbin = cut( date, breaks = modis$date_start, right = FALSE ) )

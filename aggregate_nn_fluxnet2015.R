@@ -26,7 +26,7 @@ successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-do.sites   = "FR-Pue"
+# do.sites   = "AR-Vir" # uncomment to run for single site
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -261,8 +261,6 @@ for (sitename in do.sites){
   usecols <- c(
                 "mysitename",
                 "date",
-                "year",
-                "doy",
                 "gpp_obs",
                 "var_nn_pot", 
                 "var_nn_act",
@@ -316,19 +314,17 @@ for (sitename in do.sites){
     print("getting MODIS data")
 
     ## prepare 'nice_8d'
-    # modis <- try( read_csv( paste0( myhome, "data/gpp_modis_fluxnet2015_cutouts_gee/", sitename, "_MOD17A2H_gee_subset.csv" ) ) ) 
-    modis <- try( read_csv( paste0( myhome, "data/gpp_MODIS_GPP_MOD17A2H_fluxnet2015_gee_subset/raw/", sitename, "_MOD17A2H_gee_subset.csv" ) ) )
-  
+    modis <- try( read_csv( paste0( myhome, "data/gpp_MODIS_GPP_MOD17A2H_fluxnet2015_gee_subset/gpp_MODIS_GPP_MOD17A2H_", sitename, "_gee_subset.csv" ) ) )
+
     if (class(modis)[1]!="try-error"){
 
       avl_modisgpp <- TRUE
 
       ## make modis a bit nicer
-      modis <- modis %>%  rename( gpp_modis = Gpp ) %>% 
-                          mutate( gpp_modis = ifelse( any(!is.na(gpp_modis)), gpp_modis, NA ) ) %>%
-                          mutate( gpp_modis = gpp_modis * 1e3 / 8.0,
+      modis <- modis %>%  rename( gpp_modis = modisvar ) %>% 
+                          mutate( gpp_modis = ifelse( !is.na(gpp_modis), gpp_modis * 1e3 / 8.0, NA ),
                                   date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1) ) %>%
-                          select( -date )
+                          select( -date, -doy, -year_dec )
 
       ## group nice by 8d bins from MODIS data
       nice <- nice %>%  mutate( in8dbin = cut( date, breaks = modis$date_start, right = FALSE ) )

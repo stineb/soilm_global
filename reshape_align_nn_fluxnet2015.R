@@ -1,7 +1,7 @@
 reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
   # ## debug-------------------
-  # sitename = "FR-Pue"
+  # sitename = "AR-Vir"
   # nam_target="lue_obs_evi"
   # bysm=FALSE
   # use_fapar=FALSE
