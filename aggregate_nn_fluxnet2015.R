@@ -26,7 +26,7 @@ successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = "AR-Vir" # uncomment to run for single site
+do.sites   = "AR-SLu" # uncomment to run for single site
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -392,7 +392,7 @@ for (sitename in do.sites){
 
         ## make vpm a bit nicer
         vpm <- vpm %>%  select( -GPP ) %>% rename( gpp_vpm = VPM ) %>% 
-                        mutate( date_start = date, date_end = lead( date ) - days(1) )
+                        mutate( date_start = date , date_end = lead( date ) - days(1) )
 
         # ## check if the bins in the MTE data are identical to the ones in the MODIS data
         # print( is.element( vpm$date_start, nice_8d$date_start ) )
