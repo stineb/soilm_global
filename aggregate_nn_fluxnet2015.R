@@ -1,5 +1,3 @@
-.libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
 library(dplyr)
 library(R.matlab)
 library(readr)
@@ -26,7 +24,7 @@ successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-do.sites   = "AR-SLu" # uncomment to run for single site
+# do.sites   = "AR-SLu" # uncomment to run for single site
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -179,7 +177,6 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## get LUE and remove outliers
     ##------------------------------------------------
-    nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
     nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
 
     ##------------------------------------------------
@@ -254,6 +251,7 @@ for (sitename in do.sites){
     save( nice, file=nicefiln )
 
   }
+
 
   ##------------------------------------------------
   ## record for aggregated data

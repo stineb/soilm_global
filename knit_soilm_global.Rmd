@@ -53,24 +53,24 @@ After pooling all data and calculating the bias of simulated GPP from different 
 source("plot_bias_all.R")
 ```
 
-<!-- ### Pooled data from soil moisture focus sites -->
+### Pooled data from soil moisture focus sites
 
-<!-- For a subset of the FLUXNET Tier 1 sites, a clear soil moisture control on light use efficiency is evident from the parallel CO2 flux, VPD, and and soil moisture data. These sites were used in the paper we have submitted and allow us here to investigate the bias in GPP model predictions to be related to the degree of soil moisture limitation. The latter is quantified by fLUE, the fractional of light use efficiency reduction due to soil moisture. -->
+For a subset of the FLUXNET Tier 1 sites, a clear soil moisture control on light use efficiency is evident from the parallel CO2 flux, VPD, and and soil moisture data. These sites were used in the paper we have submitted and allow us here to investigate the bias in GPP model predictions to be related to the degree of soil moisture limitation. The latter is quantified by fLUE, the fractional of light use efficiency reduction due to soil moisture.
 
-<!-- First, aggregate data for the subset of these 71 sites only. This also reads originally downloaded MODIS GPP files and saves data for each site as Rdata files. -->
-<!-- ```{r aggregate_nn, warning=FALSE, eval=FALSE} -->
-<!-- source("aggregate_nn_fluxnet2015.R") -->
-<!-- ``` -->
+First, aggregate data for the subset of these 71 sites only. This also reads originally downloaded MODIS GPP files and saves data for each site as Rdata files.
+```{r aggregate_nn, warning=FALSE, eval=FALSE}
+source("aggregate_nn_fluxnet2015.R")
+```
 
-<!-- Then align data along the start of "fLUE droughts". This also aggregates across drought events for each site and thereby quantifies the mean course of variables through drought events (not shown). Furthermore, this retains only datapoints that are either 20 days before the onset of a drought or during droughts and thereby allows us to focus on model bias associated with soil dryness. This uses only data with successcode 1, i.e. where a certain minimum number of days in the data were classified as *fLUE drought* in Stocker et al. (subm.). -->
-<!-- ```{r align, warning=FALSE, eval=FALSE} -->
-<!-- source("execute_reshape_align_nn_fluxnet2015.R") -->
-<!-- ``` -->
-<!-- For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset. -->
+Then align data along the start of "fLUE droughts". This also aggregates across drought events for each site and thereby quantifies the mean course of variables through drought events (not shown). Furthermore, this retains only datapoints that are either 20 days before the onset of a drought or during droughts and thereby allows us to focus on model bias associated with soil dryness. This uses only data with successcode 1, i.e. where a certain minimum number of days in the data were classified as *fLUE drought* in Stocker et al. (subm.).
+```{r align, warning=FALSE, eval=FALSE}
+source("execute_reshape_align_nn_fluxnet2015.R")
+```
+For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset.
 
-<!-- ```{r plot_bias, eval=TRUE, message=FALSE, warning=FALSE} -->
-<!-- source("plot_bias_nn.R") -->
-<!-- ``` -->
+```{r plot_bias, eval=TRUE, message=FALSE, warning=FALSE}
+source("plot_bias_nn.R")
+```
 
 
 <!-- ## **The solution**: Fitting an empirical soil moisture stress function -->

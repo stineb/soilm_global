@@ -1,5 +1,3 @@
-.libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 

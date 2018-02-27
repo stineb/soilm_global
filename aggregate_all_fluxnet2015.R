@@ -37,14 +37,12 @@ norm_to_max <- function( vec ){
   return( vec )
 }
 
-
 ##------------------------------------------------
 ## Get FLUXNET 2015 data and SOFUN outputs from site-scale simulations
 ## The file loaded here is created by 'get_modobs.R'
 ##------------------------------------------------
 datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v4.Rdata" )
 load( datafilnam_flat )  # loads 'df_fluxnet'
-
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
@@ -157,7 +155,6 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## get LUE and remove outliers
     ##------------------------------------------------
-    # nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
     nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
 
     ##------------------------------------------------

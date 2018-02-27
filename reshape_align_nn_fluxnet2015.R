@@ -1,7 +1,7 @@
 reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
   # ## debug-------------------
-  # sitename = "AR-Vir"
+  # sitename = "IT-Ro1"
   # nam_target="lue_obs_evi"
   # bysm=FALSE
   # use_fapar=FALSE
@@ -10,8 +10,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   # verbose=TRUE
   # #--------------------------
 
-  .libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
   syshome <- Sys.getenv( "HOME" )
   source( paste( syshome, "/.Rprofile", sep="" ) )
 
@@ -19,39 +17,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   require( tidyr )
 
   source( paste( myhome, "sofun/utils_sofun/analysis_sofun/get_consecutive.R", sep="" ) ) 
-
-  ## check and override if necessary
-  if ( nam_target=="lue_obs" || nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
-    plotlue <- TRUE
-    if (nam_target=="lue_obs_evi"){
-      fapar_data <- "evi"
-    } else if (nam_target=="lue_obs_fpar"){
-      fapar_data <- "fpar"
-    }
-    if (use_fapar){
-      print("WARNING: setting use_fapar to FALSE")
-      use_fapar <- FALSE
-    }
-  }
-
-  ## identifier for output files
-  if (use_fapar){
-    if (nam_target=="lue_obs_evi"){
-      char_fapar <- "_withEVI"
-    } else if (nam_target=="lue_obs_fpar"){
-      char_fapar <- "_withFPAR"
-    } else {
-      print("ERROR: PROVIDE VALID FAPAR DATA!")
-    }
-  } else {
-    char_fapar <- ""
-  }
-
-  if (bysm){
-    char_bysm <- "_bysm"
-  } else {
-    char_bysm <- ""
-  }
 
   before <- 30
   after  <- 300
@@ -71,7 +36,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                 "vpd", 
                 "soilm_mean", 
                 "fpar", 
-                "evi", 
                 "fvar", 
                 "alpha", 
                 "gpp_pmodel", 
@@ -88,7 +52,6 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                     "vpd", 
                     "soilm_mean", 
                     "fpar", 
-                    "evi", 
                     "fvar", 
                     "alpha", 
                     "gpp_modis", 
@@ -117,7 +80,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   if (!dir.exists("./data/droughts")) system( "mkdir -p ./data/droughts" )
   if (!file.exists(droughtfil)){
     dir <- paste( myhome, "data/nn_fluxnet/fvar/", sep="" )
-    infil <- paste( dir, "nn_fluxnet2015_", sitename, "_", nam_target, char_fapar, ".Rdata", sep="" ) 
+    infil <- paste( dir, "nn_fluxnet2015_", sitename, "_lue_obs_evi.Rdata", sep="" ) 
     if (verbose) print( paste( "reading file", infil ) )
     load( infil )     ## gets list 'nn_fluxnet'
     droughts <- nn_fluxnet[[ sitename ]]$droughts
@@ -180,11 +143,11 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
       ## add row: normalised fAPAR (EVI)
       tmp <- df_dday %>% group_by( infaparbin ) %>% 
-                         summarise( evi  = median( evi , na.rm=TRUE ) ) %>%
-                         complete( infaparbin, fill = list( evi  = NA ) ) %>% 
-                         dplyr::select( evi )
+                         summarise( fpar  = median( fpar , na.rm=TRUE ) ) %>%
+                         complete( infaparbin, fill = list( fpar  = NA ) ) %>% 
+                         dplyr::select( fpar )
       tmp <- unlist( tmp )[1:(length(faparbins)-1)]
-      df_dday$evi_norm = df_dday$evi / tmp[1]
+      df_dday$fpar_norm = df_dday$fpar / tmp[1]
 
 
       ## aggregate by 'dday'
@@ -203,8 +166,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                                                   ## fLUE
                                                   fvar_med=median( fvar, na.rm=TRUE ), fvar_upp=quantile( fvar, 0.75, na.rm=TRUE ), fvar_low=quantile( fvar, 0.25, na.rm=TRUE ),
 
-                                                  ## EVI and FPAR
-                                                  evi_med=median( evi, na.rm=TRUE ), evi_upp=quantile( evi, 0.75, na.rm=TRUE ), evi_low=quantile( evi, 0.25, na.rm=TRUE ),
+                                                  ## FPAR
                                                   fpar_med=median( fpar, na.rm=TRUE ), fpar_upp=quantile( fpar, 0.75, na.rm=TRUE ), fpar_low=quantile( fpar, 0.25, na.rm=TRUE ),
 
                                                   ## P-model bias
