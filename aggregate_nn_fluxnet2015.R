@@ -24,7 +24,9 @@ successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-do.sites   = "FR-Pue" # uncomment to run for single site
+# do.sites   = "FR-Pue" # uncomment to run for single site
+simsuite = "fluxnet2015"
+outputset = "s15"
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -38,6 +40,13 @@ norm_to_max <- function( vec ){
   vec <- ( vec - min( vec, na.rm=TRUE ) ) / ( max( vec, na.rm=TRUE ) - min( vec, na.rm=TRUE ) )
   return( vec )
 }
+
+##------------------------------------------------
+## Get FLUXNET 2015 data and SOFUN outputs from site-scale simulations
+## The file loaded here is created by 'get_modobs.R'
+##------------------------------------------------
+datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v4.Rdata" )
+load( datafilnam_flat )  # loads 'df_fluxnet'
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
@@ -109,39 +118,6 @@ if ( file.exists( filn ) ){
 
 }
 
-## check and override if necessary
-if ( nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
-  plotlue <- TRUE
-  if (nam_target=="lue_obs_evi"){
-    fapar_data <- "evi"
-  } else if (nam_target=="lue_obs_fpar"){
-    fapar_data <- "fpar"
-  }
-  if (use_fapar){
-    print("WARNING: setting use_fapar to FALSE")
-    use_fapar <- FALSE
-  }
-}
-
-## identifier for output files
-if (use_fapar){
-  if (nam_target=="lue_obs_evi"){
-    char_fapar <- "_withEVI"
-  } else if (nam_target=="lue_obs_fpar"){
-    char_fapar <- "_withFPAR"
-  } else {
-    print("ERROR: PROVIDE VALID FAPAR DATA!")
-  }
-} else {
-  char_fapar <- ""
-}
-
-if (use_weights){
-  char_wgt <- "_wgt"
-} else {
-  char_wgt <- ""
-}
-
 print( paste( "Aggregating and complementing data for", length(do.sites), "NN FLUXNET2015 sites ...") )
 
 ##------------------------------------------------
@@ -150,9 +126,6 @@ print( paste( "Aggregating and complementing data for", length(do.sites), "NN FL
 ## fvar and soilm data to be complemented with cluster info
 nice_agg  <- data.frame()
 nice_8d_agg <- data.frame()
-
-## all possible soil moisture datasets
-varnams_swc_full <- c( "soilm_splash150", "soilm_splash220", "soilm_swbm", "soilm_etobs", "soilm_etobs_ob", "soilm_obs" )
 
 for (sitename in do.sites){
 
@@ -168,12 +141,27 @@ for (sitename in do.sites){
 
   } else {
 
-    infil <- paste( myhome, "data/nn_fluxnet/fvar/nn_fluxnet2015_", sitename, "_", nam_target, char_wgt, char_fapar, ".Rdata", sep="" ) 
-    if (verbose) print( paste( "opening file", infil ) )
+    ##------------------------------------------------
+    ## load site data and "detatch"
+    ##------------------------------------------------
+    nice <- filter( df_fluxnet, mysitename==sitename ) %>% 
+            select( date, temp, ppfd, vpd, prec, fpar, gpp_obs=GPP_NT_VUT_REF, starts_with("SWC_F_MDS"), soilm_splash220, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
 
+    ##------------------------------------------------
+    ## Get NN-derived data (flue, is_drought_byvar) from separate file
+    ##------------------------------------------------
+    infil <- paste( myhome, "data/nn_fluxnet/fvar/nn_fluxnet2015_", sitename, "_lue_obs_evi.Rdata", sep="" ) 
     load( infil ) ## gets list 'nn_fluxnet'
-    nice <- as_tibble( nn_fluxnet[[ sitename ]]$nice )            
+    nn_nice <-  as_tibble( nn_fluxnet[[ sitename ]]$nice ) %>%
+                mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days(doy - 1) ) %>%
+                select( -gpp_pmodel, -temp, -ppfd, -vpd, -prec, -evi, -fpar, -lue_obs_evi, -lue_obs_fpar, -aet_pmodel, -pet_pmodel, -soilm_splash150, -soilm_splash220, -soilm_swbm, -soilm_etobs, -soilm_etobs_ob, -gpp_obs )
 
+    ##------------------------------------------------
+    ## nice and nn_nice have common dates. merge them.
+    ## Make sure to keep variables that are now already in 'nice'.
+    ##------------------------------------------------
+    nice <- nn_nice %>% left_join( nice, by="date")
+    
     ##------------------------------------------------
     ## get LUE and remove outliers
     ##------------------------------------------------
@@ -196,20 +184,6 @@ for (sitename in do.sites){
     ## fLUE estimate based on current soil moisture and average AET/PET
     meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
     nice <- nice %>%  mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
-
-    if (nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar"){
-      nice <- nice %>% mutate( gpp_nn_act = var_nn_act * evi * ppfd, gpp_nn_pot = var_nn_pot * evi * ppfd, gpp_nn_vpd = var_nn_vpd * evi * ppfd )
-    } else {
-      nice <- nice %>% mutate( gpp_nn_act = var_nn_act, gpp_nn_pot = var_nn_pot, gpp_nn_vpd = var_nn_vpd )
-    }
-
-    ## fill with NA if respective soil moisture data was not used
-    for (isoilm in varnams_swc_full){
-      if ( !is.element( paste( "var_nn_act_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_act_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "var_nn_pot_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_pot_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "var_nn_vpd_", isoilm, sep="" ), names(nice) ) ) nice[[ paste( "var_nn_vpd_", isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-      if ( !is.element( paste( "moist_",      isoilm, sep="" ), names(nice) ) ) nice[[ paste( "moist_",      isoilm, sep="" ) ]] <- rep( NA, nrow(nice) )
-    }
 
     ## date as ymd from the lubridate package
     nice <- nice %>%  mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days( doy - 1 ) )
@@ -284,10 +258,6 @@ for (sitename in do.sites){
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry",
-                paste( "var_nn_act_", varnams_swc_full, sep="" ),
-                paste( "var_nn_pot_", varnams_swc_full, sep="" ),
-                paste( "var_nn_vpd_", varnams_swc_full, sep="" ),
-                paste( "moist_", varnams_swc_full, sep="" ),
                 "gpp_bess_v1", "gpp_bess_v2",
                 "bias_bess_v1", "bias_bess_v2",
                 "ratio_obs_mod_bess_v1", "ratio_obs_mod_bess_v2"
@@ -332,7 +302,7 @@ for (sitename in do.sites){
       tmp     <- nice %>% select( in8dbin, date ) %>% group_by( in8dbin ) %>% summarise( date_start=min( date ), date_end=max( date ) )
       nice_8d <- bind_cols( nice_8d, select( tmp, date_start, date_end ) )
 
-      print( modis$date_start %in% nice_8d$date_start )  
+      # print( modis$date_start %in% nice_8d$date_start )  
       
       ## merge modis data into 8-day dataframe (averaged nice and modis)
       nice_8d <- nice_8d %>% select( date_start, one_of( usecols ) ) %>% left_join( select( modis, -date_end ), by=c( "date_start" ) )
@@ -361,8 +331,8 @@ for (sitename in do.sites){
                         date_end   = ymd( paste0( as.character(year_end  ), "-01-01" ) ) + days( doy_end   - 1 ) ) %>%
                 select( -ID, -year_start, -doy_start, -year_end, -doy_end )
 
-        ## check if the bins in the MTE data are identical to the ones in the MODIS data
-        print( mte$date_start %in% nice_8d$date_start )  
+        # ## check if the bins in the MTE data are identical to the ones in the MODIS data
+        # print( mte$date_start %in% nice_8d$date_start )  
 
         ## merge to MTE data to nice_8d
         nice_8d <- nice_8d %>% left_join( select( mte, -date_end ), by = c("date_start", "mysitename") ) %>%
@@ -394,8 +364,8 @@ for (sitename in do.sites){
         vpm <- vpm %>%  select( -GPP ) %>% rename( gpp_vpm = VPM ) %>% 
                         mutate( date_start = date, date_end = lead( date ) - days(1) )
 
-        ## check if the bins in the MTE data are identical to the ones in the MODIS data
-        print( is.element( vpm$date_start, nice_8d$date_start ) )
+        # ## check if the bins in the MTE data are identical to the ones in the MODIS data
+        # print( is.element( vpm$date_start, nice_8d$date_start ) )
 
         ## merge to MTE data to nice_8d
         nice_8d <- nice_8d %>% left_join( select( vpm, -date, -date_end, -year, -doy ), by = c("date_start", "mysitename") ) %>%
