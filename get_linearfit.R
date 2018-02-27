@@ -1,5 +1,8 @@
 get_linearfit <- function( df, monthly=FALSE ){
-  
+  ##------------------------------------------------------------------------
+  ## This gets the "y-axis intersect" as the flue (fvar) value in the lowest soil moisture bin (0-10%) -> y0
+  ## and fits a linear model between mean site alpha value and y0.
+  ##------------------------------------------------------------------------
   require(dplyr)
   require(tidyr)
 

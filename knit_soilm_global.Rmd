@@ -31,181 +31,237 @@ This RMarkdown file is compiled with code from the publicly accessible github re
 
 The starting point of this analysis is that we found that all the remote sensing-driven GPP models that we looked at have a tendency to overestimate GPP during conditions when soils are dry. Apparently, the apparent fractional reduction in light use efficiency, fLUE, which I derived in the previous paper using artificial neural networks, is strongly related - both in magnitude and timing - to the model biases. Below, I'm showing this, derive an empirical correction factor to account for soil moisture limitation on GPP, and assess implications of this mechanism for global GPP variability. 
 
-## **The problem**: high bias in simulated GPP under dry conditions
+<!-- ## **The problem**: high bias in simulated GPP under dry conditions -->
 
-### Pooled data from all available sites
+<!-- ### Pooled data from all available sites -->
 
-First, collect FLUXNET 2015 data, environmental forcing data and P-model output into a common dataframe. This performs a data "cleaning" of FLUXNET 2015 data (see `clean_fluxnet.R`), calculates additional variables (e.g. soilm_obs_mean) and writes all data as an R data frame (tibble, `data/df_modobs_<simsuite>_*.Rdata`).
-```{r get_modobs, echo=FALSE}
-source("get_modobs.R")
-simsuite <- "fluxnet2015"
-outputset <- c( "s15" )
-if (!file.exists( paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v4.Rdata" ) ) ) get_modobs( simsuite = simsuite, outputset = outputset )
-```
-
-Then, combine this with GPP data from BESS, VPM, MODIS and MTE, and aggregate all site data into a single dataframe (tibble, `data/nice_all_agg.Rdata` for daily data, and `data/nice_all_8d_agg_.Rdata` for data aggregated to 8 days).
-```{r aggregate_all, warning=FALSE, eval=FALSE}
-source("aggregate_all_fluxnet2015.R")
-```
-
-After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS MOD17A2H GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI.
-```{r plot_all, fig.width=5, fig.height=4, eval=TRUE, message=FALSE, warning=FALSE}
-source("plot_bias_all.R")
-```
-
-### Pooled data from soil moisture focus sites
-
-For a subset of the FLUXNET Tier 1 sites, a clear soil moisture control on light use efficiency is evident from the parallel CO2 flux, VPD, and and soil moisture data. These sites were used in the paper we have submitted and allow us here to investigate the bias in GPP model predictions to be related to the degree of soil moisture limitation. The latter is quantified by fLUE, the fractional of light use efficiency reduction due to soil moisture.
-
-First, aggregate data for the subset of these 71 sites only. This also reads originally downloaded MODIS GPP files and saves data for each site as Rdata files.
-```{r aggregate_nn, warning=FALSE, eval=FALSE}
-source("aggregate_nn_fluxnet2015.R")
-```
-
-Then align data along the start of "fLUE droughts". This also aggregates across drought events for each site and thereby quantifies the mean course of variables through drought events (not shown). Furthermore, this retains only datapoints that are either 20 days before the onset of a drought or during droughts and thereby allows us to focus on model bias associated with soil dryness. This uses only data with successcode 1, i.e. where a certain minimum number of days in the data were classified as *fLUE drought* in Stocker et al. (subm.).
-```{r align, warning=FALSE, eval=FALSE}
-source("execute_reshape_align_nn_fluxnet2015.R")
-```
-For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset.
-
-```{r plot_bias, eval=TRUE, message=FALSE, warning=FALSE}
-source("plot_bias_nn.R")
-```
-
-
-<!-- ## **The solution**: Fitting an empirical soil moisture stress function -->
-<!-- As documented above, there is a systematic bias of several remote-sensing based GPP models during droughts and this bias is strongly related, both in magnitude and timing, to the apparent effects of soil moisture on light use efficiency. These apparents effects are quantified by 'fLUE', derived with artificial neural networks as described in Stocker et al. (subm.). In addition, we found in Stocker et al. (subm.) that the sensitivity of LUE to progressive soil dryness is related to the mean aridity at the site. I.e., the dryness-related decline in LUE is particularly strong at the driest sites (mostly deserts, grasslands, savannahs), whereas sites at intermediate aridity (mostly mediterranean) exhibit a smaller maximum reduction in LUE. -->
-
-<!-- The functional form of fLUE (here termed $\varphi$) versus soil moisture ($\theta$) is suggestive of a quadratic function that attains 1 for soil moisture above a certain threshold $\theta_0$ and held at 1 for soil moisture values above that (see Fig. 7 in Stocker et al., subm.), and has a y-axis intersect ($\varphi_0$) related to mean annual AET/PET, (see Fig. 9 in Stocker et al., subm.). The latter reflects the relationship between soil dryness sensitivity of LUE and mean aridity of the site. This soil moisture stress function ($\varphi(\theta)$) is described by: -->
-<!-- $$ -->
-<!--     \varphi =  -->
-<!-- \begin{cases} -->
-<!--     \beta(\theta - \theta_0)^2 + 1,& \theta \leq \theta_0\\ -->
-<!--     1,              & \theta > \theta_0 -->
-<!-- \end{cases} -->
-<!-- $$ -->
-<!-- where the "curvature coefficient" $\beta$ is defined by the maximum LUE reduction ($\varphi_0$) at low soil moisture ($\theta$=0), leading to $\beta=(\varphi_0-1)/\theta_0^2$. $\varphi_0$ is a linear function of the mean annual AET/PET, termed $\alpha$: -->
-<!-- $$ -->
-<!-- \varphi_0 = a + b \alpha -->
-<!-- $$ -->
-
-
-<!-- Here, I'm using these relationships to fit an empirical function that represents direct soil moisture effects on LUE.  -->
-
-<!-- I tested several approaches to fit parameters $a$ and $b$. Best results were obtained by prescribing $\theta_0$ to 0.9 based on visual inspection of the functional form $\varphi(\theta)$ in Fig. 7 of Stocker et al. (subm.). To illustrate this, I document two approaches below. -->
-
-<!-- ### Approach I: Fitting to fLUE -->
-
-<!-- In the first step, a linear fit is derived between $\alpha$ at the respective site and $\varphi_0$, where $\varphi_0$ is derived from the data using the neural network method by Stocker et al. (subm.). This defines parameters $a$ and $b$, and hence $\beta$ in above equations. $\varphi_0$ is the mean fLUE in the lowest soil moisture quartile. This is identical to the linear regression of fLUE$_0$ to soil moisture shown in Stocker et al. (subm.) Fig. 9. -->
-<!-- ```{r linearfit, message=FALSE, warning=FALSE, echo=FALSE} -->
-<!-- library(dplyr) -->
-<!-- load( "data/nice_nn_agg_lue_obs_evi.Rdata" )       # loads 'nice_agg' -->
-<!-- ddf <- nice_agg -->
-<!-- rm("nice_agg")  # rename to be a bit more concise -->
-
-<!-- ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation) -->
-<!-- successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE ) -->
-<!-- do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename -->
-<!-- ddf <- ddf %>% filter( mysitename %in% do.sites ) -->
-
-<!-- ## Merge mean annual alpha (AET/PET) values into this dataframe -->
-<!-- load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha' -->
-<!-- ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" ) -->
-<!-- source("get_linearfit.R") -->
-<!-- source("plot_linearfit.R") -->
-
-<!-- # usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) ) -->
-<!-- linearfit  <- get_linearfit( filter( ddf, ratio_obs_mod_pmodel < 5 ), monthly=FALSE ) -->
-<!-- plot_linearfit( linearfit ) -->
-<!-- save( linearfit,  file="data/linearfit.Rdata" ) -->
+<!-- First, collect FLUXNET 2015 data, environmental forcing data and P-model output into a common dataframe. This performs a data "cleaning" of FLUXNET 2015 data (see `clean_fluxnet.R`), calculates additional variables (e.g. soilm_obs_mean) and writes all data as an R data frame (tibble, `data/df_modobs_<simsuite>_*.Rdata`). -->
+<!-- ```{r get_modobs, echo=FALSE} -->
+<!-- source("get_modobs.R") -->
+<!-- simsuite <- "fluxnet2015" -->
+<!-- outputset <- c( "s15" ) -->
+<!-- if (!file.exists( paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v4.Rdata" ) ) ) get_modobs( simsuite = simsuite, outputset = outputset ) -->
 <!-- ``` -->
 
-<!-- In summary, this method derives the following fitting parameters: $a=$ `r round( coef( linearfit$linmod ), 2 )[1]` and $b=$ `r round( coef( linearfit$linmod ), 2 )[2]`. -->
-
-<!-- Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, I'm assessing this with GPP predictions from the P-model. -->
-<!-- ```{r correct_linearfit, message=FALSE, warning=FALSE, echo=FALSE} -->
-<!-- calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){ -->
-<!--   flue0 <- apar + bpar * alpha -->
-<!--   beta  <- (flue0 - 1.0) / (cpar - dpar)^2 -->
-<!--   flue_est <- beta * (x - dpar)^2 + 1 -->
-<!--   return( flue_est ) -->
-<!-- } -->
-
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit$linmod)[1], bpar=coef(linearfit$linmod)[2], cpar=0.125, dpar=0.75 ) ) -->
-
-<!-- ## evaluate bias~soil moisture -->
-<!-- nbins <- 5 -->
-<!-- binwidth <- 1/nbins -->
-<!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) -->
-
-<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins" ) -->
-<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") ) -->
+<!-- Then, combine this with GPP data from BESS, VPM, MODIS and MTE, and aggregate all site data into a single dataframe (tibble, `data/nice_all_agg.Rdata` for daily data, and `data/nice_all_8d_agg_.Rdata` for data aggregated to 8 days). -->
+<!-- ```{r aggregate_all, warning=FALSE, eval=FALSE} -->
+<!-- source("aggregate_all_fluxnet2015.R") -->
 <!-- ``` -->
 
-<!-- Above boxplot shows that the bias in predicted GPP is reduced but not resolved. Apparently, the predicted LUE reduction at low soil moisture is generally not strong enough. Therefore, I tried another method. -->
-
-<!-- ### Approach II: Fitting to the model bias -->
-
-<!-- In contrast to the method above, I'm fitting parameters $a$ and $b$ not to the maximum fLUE reduction, but directly to the bias in modelled versus observed GPP (for the P-model), i.e. to the ratio of observed over modelled GPP as a function of soil moisture. First, a quadratic function of the form described above (Eq. XXX) is fitted to the ratio of observed versus modelled GPP for each site individually. This yields a site-specific relationship of model bias with soil moisture and defines the maximum LUE reduction (or LUE correction) at low soil moisture ($\varphi_0$) for each site. Second, $\varphi_0$ is regressed to $\alpha$ as above. -->
-
-<!-- ```{r get_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
-<!-- ## load additional functions -->
-<!-- source("get_linearfit2.R") -->
-<!-- source("stress_quad_1sided.R") -->
-
-<!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
-<!-- x0_fix <- 0.9 -->
-<!-- linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix ) -->
-<!-- save( linearfit2, file="data/linearfit2_ratio.Rdata" ) -->
+<!-- After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS MOD17A2H GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI. -->
+<!-- ```{r plot_all, fig.width=5, fig.height=4, eval=TRUE, message=FALSE, warning=FALSE} -->
+<!-- source("plot_bias_all.R") -->
 <!-- ``` -->
 
-<!-- This generally leads to a stronger sensitivity to soil moisture across the whole aridity spectrum. Compare to the solid line to dashed line, where the solid line represents the regression from approach II and the dashed line from approach I. -->
-<!-- ```{r plot_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
-<!-- source("plot_linearfit2.R") -->
+<!-- ### Pooled data from soil moisture focus sites -->
 
-<!-- ## plot fLUE0 vs. mean alpha -->
-<!-- plot_linearfit2( linearfit2, linearfit, df=ddf ) -->
+<!-- For a subset of the FLUXNET Tier 1 sites, a clear soil moisture control on light use efficiency is evident from the parallel CO2 flux, VPD, and and soil moisture data. These sites were used in the paper we have submitted and allow us here to investigate the bias in GPP model predictions to be related to the degree of soil moisture limitation. The latter is quantified by fLUE, the fractional of light use efficiency reduction due to soil moisture. -->
+
+<!-- First, aggregate data for the subset of these 71 sites only. This also reads originally downloaded MODIS GPP files and saves data for each site as Rdata files. -->
+<!-- ```{r aggregate_nn, warning=FALSE, eval=FALSE} -->
+<!-- source("aggregate_nn_fluxnet2015.R") -->
 <!-- ``` -->
 
-<!-- This approach (II) effectively resolves the bias in P-model GPP predictions across even at very low soil moisture, as shown by the boxplots below (logarithm of observed over modelled in soil moisture bins). -->
-<!-- ```{r correct_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
-<!-- ## add estimated fLUE to ddf -->
-<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) ) -->
-
-<!-- ## re-define bins for evaluation -->
-<!-- nbins <- 5 -->
-<!-- binwidth <- 1/nbins -->
-<!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) -->
-
-<!-- ## plot boxplot: bias by soil moisture bin -->
-<!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins"  ) -->
-<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
-<!-- abline( h=0.0, lty=3 ) -->
-<!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") ) -->
+<!-- Then align data along the start of "fLUE droughts". This also aggregates across drought events for each site and thereby quantifies the mean course of variables through drought events (not shown). Furthermore, this retains only datapoints that are either 20 days before the onset of a drought or during droughts and thereby allows us to focus on model bias associated with soil dryness. This uses only data with successcode 1, i.e. where a certain minimum number of days in the data were classified as *fLUE drought* in Stocker et al. (subm.). -->
+<!-- ```{r align, warning=FALSE, eval=FALSE} -->
+<!-- source("execute_reshape_align_nn_fluxnet2015.R") -->
 <!-- ``` -->
+<!-- For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset. -->
 
-<!-- <!-- The following figures illustrate the empirical soil moisture stress function (red) and fLUE values at each site. Note that fLUE values themselves are not used for this fitting and that the y-axis intersect of the red curve is is a function of $\alpha$ at the site. --> -->
-
-<!-- <!-- ![](fig/fit_to_bias_plot_per_site.pdf) --> -->
-
-<!-- In summary, this method derives the following fitting parameters: $a=$ `r round( coef( linearfit2$linmod ), 2 )[1]` and $b=$ `r round( coef( linearfit2$linmod ), 2 )[2]` (`apar` and `bpar` in code below). This is the R code that implements this soil moisture stress function: -->
-<!-- ```{r empirical_function, eval=FALSE} -->
-<!-- stress_quad_1sided_alpha <- function( x, alpha, x0, apar, bpar ){ -->
-<!-- 	y0 <- apar + bpar * alpha -->
-<!-- 	beta <- (1 - y0) / x0^2 -->
-<!--   outstress <- 1.0 - beta * ( x - x0 ) ^ 2 -->
-<!--   outstress <- ifelse( x>x0, 1, outstress ) -->
-<!--   return( outstress ) -->
-<!-- } -->
+<!-- ```{r plot_bias, eval=TRUE, message=FALSE, warning=FALSE} -->
+<!-- source("plot_bias_nn.R") -->
 <!-- ``` -->
-<!-- Here, `x0` is set to 0.9. `alpha` is $\alpha$ (AET/PET, mean over daily values per site), and `x` is soil moisture. -->
+<!-- ![*Bias vs. fLUE*](./fig/bias_vs_fvar_uncorrected.pdf) -->
+
+
+
+## **The solution**: Fitting an empirical soil moisture stress function
+As documented above, there is a systematic bias of several remote-sensing based GPP models during droughts and this bias is strongly related, both in magnitude and timing, to the apparent effects of soil moisture on light use efficiency. These apparent effects are quantified by 'fLUE', derived with artificial neural networks as described in Stocker et al. (2018). In addition, we found in Stocker et al. (2018) that the sensitivity of LUE to progressive soil dryness is related to the mean aridity at the site. I.e., the dryness-related decline in LUE is particularly strong at the driest sites (mostly deserts, grasslands, savannahs), whereas sites at intermediate aridity (mostly mediterranean) exhibit a smaller maximum reduction in LUE.
+
+The functional form of fLUE (here termed $\varphi$) versus soil moisture ($\theta$) is suggestive of a quadratic function that attains 1 for soil moisture above a certain threshold $\theta_0$ and held at 1 for soil moisture values above that (see Fig. 7 in Stocker et al., 2018), and has a y-axis intersect ($\varphi_0$) related to mean annual AET/PET, (see Fig. 7 in Stocker et al., 2018). The latter reflects the relationship between soil dryness sensitivity of LUE and mean aridity of the site. This soil moisture stress function ($\varphi(\theta)$) is described by:
+$$
+    \varphi =
+\begin{cases}
+    \beta(\theta - \theta_0)^2 + 1,& \theta \leq \theta_0\\
+    1,              & \theta > \theta_0
+\end{cases}
+$$
+where the "curvature coefficient" $\beta$ is defined by the maximum LUE reduction ($\varphi_0$) at low soil moisture ($\theta$=0), leading to $\beta=(\varphi_0-1)/\theta_0^2$. $\varphi_0$ is a linear function of the mean annual AET/PET, termed $\alpha$:
+$$
+\varphi_0 = a + b \alpha
+$$
+
+Here, I'm using these relationships to fit an empirical function that represents direct soil moisture effects on LUE.
+
+I tested several approaches to fit parameters $a$ and $b$. Best results were obtained by prescribing $\theta_0$ to 0.9 based on visual inspection of the functional form $\varphi(\theta)$ in Fig. 7 of Stocker et al. (2018). To illustrate this, I document two approaches below.
+
+### Approach Ia: Fitting to fLUE using all data
+
+In the first step, a linear fit is derived between $\alpha$ at the respective site and $\varphi_0$, where $\varphi_0$ is derived from the data using the neural network method by Stocker et al. (subm.). This defines parameters $a$ and $b$, and hence $\beta$ in above equations. $\varphi_0$ is the mean fLUE in the lowest soil moisture quartile. This is identical to the linear regression of fLUE$_0$ to soil moisture shown in Stocker et al. (subm.) Fig. 9.
+```{r linearfit1a, message=FALSE, warning=FALSE, echo=FALSE}
+library(dplyr)
+load( "data/nice_nn_agg_lue_obs_evi.Rdata" )       # loads 'nice_agg'
+ddf <- nice_agg
+rm("nice_agg")  # rename to be a bit more concise
+
+## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
+successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
+ddf <- ddf %>% filter( mysitename %in% do.sites )
+
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+source("get_linearfit.R")
+source("plot_linearfit.R")
+
+# usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) )
+linearfit_1a  <- get_linearfit( filter( ddf, ratio_obs_mod_pmodel < 5 ), monthly=FALSE )
+save( linearfit_1a,  file="data/linearfit_1a.Rdata" )
+plot_linearfit( linearfit_1a )
+```
+
+In summary, this method derives the following fitting parameters: $a=$ `r round( coef( linearfit_1a$linmod ), 2 )[1]` and $b=$ `r round( coef( linearfit_1a$linmod ), 2 )[2]`.
+
+Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, I'm assessing this with GPP predictions from the P-model.
+```{r correct_linearfit1a, message=FALSE, warning=FALSE, echo=FALSE}
+calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
+  flue0 <- apar + bpar * alpha
+  beta  <- (flue0 - 1.0) / (cpar - dpar)^2
+  flue_est <- beta * (x - dpar)^2 + 1
+  return( flue_est )
+}
+
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1a$linmod)[1], bpar=coef(linearfit_1a$linmod)[2], cpar=0.125, dpar=0.75 ) )
+
+## evaluate bias~soil moisture
+nbins <- 5
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins" )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") )
+```
+
+Above boxplot shows that the bias in predicted GPP is reduced but not resolved. Apparently, the predicted LUE reduction at low soil moisture is generally not strong enough. Therefore, I tried another method.
+
+### Approach Ib: Fitting to fLUE using drought data only
+
+All is done identically as above, but now loading a the dataset `df_dday_agg` from file `data/data_aligned_agg.Rdata`.
+```{r linearfit1b, message=FALSE, warning=FALSE, echo=FALSE}
+load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
+ddf <- df_dday_agg
+rm("df_dday_agg")  # rename to be a bit more concise
+
+## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
+successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
+ddf <- ddf %>% filter( mysitename %in% do.sites )
+
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+source("get_linearfit.R")
+source("plot_linearfit.R")
+
+# usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) )
+linearfit_1b  <- get_linearfit( filter( ddf, ratio_obs_mod_pmodel < 5 ), monthly=FALSE )
+save( linearfit_1b,  file="data/linearfit_1b.Rdata" )
+plot_linearfit( linearfit_1b )
+```
+
+In summary, this method derives the following fitting parameters: $a=$ `r round( coef( linearfit_1b$linmod ), 2 )[1]` and $b=$ `r round( coef( linearfit_1b$linmod ), 2 )[2]`.
+
+Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, I'm assessing this with GPP predictions from the P-model.
+```{r correct_linearfit1b, message=FALSE, warning=FALSE, echo=FALSE}
+calc_flue_est_alpha <- function( x, alpha, apar, bpar, cpar, dpar ){
+  flue0 <- apar + bpar * alpha
+  beta  <- (flue0 - 1.0) / (cpar - dpar)^2
+  flue_est <- beta * (x - dpar)^2 + 1
+  return( flue_est )
+}
+
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1b$linmod)[1], bpar=coef(linearfit_1b$linmod)[2], cpar=0.125, dpar=0.75 ) )
+
+## evaluate bias~soil moisture
+nbins <- 5
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins" )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") )
+```
+
+Above boxplot shows that the bias in predicted GPP is reduced but not resolved. Apparently, the predicted LUE reduction at low soil moisture is generally not strong enough. Therefore, I tried another method.
+
+
+### Approach II: Fitting to the model bias
+
+In contrast to the method above, I'm fitting parameters $a$ and $b$ not to the maximum fLUE reduction, but directly to the bias in modelled versus observed GPP (for the P-model), i.e. to the ratio of observed over modelled GPP as a function of soil moisture. First, a quadratic function of the form described above (Eq. XXX) is fitted to the ratio of observed versus modelled GPP for each site individually. This yields a site-specific relationship of model bias with soil moisture and defines the maximum LUE reduction (or LUE correction) at low soil moisture ($\varphi_0$) for each site. Second, $\varphi_0$ is regressed to $\alpha$ as above.
+
+```{r get_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+## load additional functions
+source("get_linearfit2.R")
+source("stress_quad_1sided.R")
+
+## Use fixed point (soil moisture) above which stress function is 1 (no stress)
+x0_fix <- 0.9
+linearfit2 <- get_linearfit2( ddf, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix )
+save( linearfit2, file="data/linearfit2_ratio.Rdata" )
+```
+
+This generally leads to a stronger sensitivity to soil moisture across the whole aridity spectrum. Compare to the solid line to dashed line, where the solid line represents the regression from approach II and the dashed line from approach I.
+```{r plot_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+source("plot_linearfit2.R")
+
+## plot fLUE0 vs. mean alpha
+plot_linearfit2( linearfit2, linearfit_1a, df=ddf )
+```
+
+This approach (II) effectively resolves the bias in P-model GPP predictions across even at very low soil moisture, as shown by the boxplots below (logarithm of observed over modelled in soil moisture bins).
+```{r correct_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
+
+## re-define bins for evaluation
+nbins <- 5
+binwidth <- 1/nbins
+alphabins <- seq( from=0, to=1, by=binwidth )
+soilmbins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+
+## plot boxplot: bias by soil moisture bin
+bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins"  )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+```
+
+<!-- The following figures illustrate the empirical soil moisture stress function (red) and fLUE values at each site. Note that fLUE values themselves are not used for this fitting and that the y-axis intersect of the red curve is is a function of $\alpha$ at the site. -->
+
+<!-- ![](fig/fit_to_bias_plot_per_site.pdf) -->
+
+In summary, this method derives the following fitting parameters: $a=$ `r round( coef( linearfit2$linmod ), 2 )[1]` and $b=$ `r round( coef( linearfit2$linmod ), 2 )[2]` (`apar` and `bpar` in code below). This is the R code that implements this soil moisture stress function:
+```{r empirical_function, eval=FALSE}
+stress_quad_1sided_alpha <- function( x, alpha, x0, apar, bpar ){
+	y0 <- apar + bpar * alpha
+	beta <- (1 - y0) / x0^2
+  outstress <- 1.0 - beta * ( x - x0 ) ^ 2
+  outstress <- ifelse( x>x0, 1, outstress )
+  return( outstress )
+}
+```
+Here, `x0` is set to 0.9. `alpha` is $\alpha$ (AET/PET, mean over daily values per site), and `x` is soil moisture.
 
 <!-- ## **Implications** -->
 

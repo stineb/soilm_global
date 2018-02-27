@@ -64,6 +64,10 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
 
 
 get_linearfit2 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA ){
+  ##------------------------------------------------------------------------
+  ## This first fits the y-axis intersect using a stress function ('stress_quad_1sided()'),
+  ## and then fits a linear model between between this y-axis intersect and the site-level mean alpha.
+  ##------------------------------------------------------------------------
   
   require(dplyr)
   require(tidyr)
@@ -92,7 +96,7 @@ get_linearfit2 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   out <- c()
   for (sitename in df_flue0$mysitename){
     out <- rbind( out, get_yintersect( 
-                                      dplyr::select( dplyr::filter( df, mysitename==sitename ), year, doy, soilm_mean, ratio_obs_mod_pmodel, fvar ), 
+                                      dplyr::select( dplyr::filter( df, mysitename==sitename ), date, soilm_mean, ratio_obs_mod_pmodel, fvar ), 
                                       target=target, bin=bin, beta_min=beta_min, x0_fix=x0_fix, agg=agg 
                                       ) 
                 )
