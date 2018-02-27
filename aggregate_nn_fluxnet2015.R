@@ -24,7 +24,7 @@ successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = "AR-SLu" # uncomment to run for single site
+do.sites   = "FR-Pue" # uncomment to run for single site
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -321,8 +321,8 @@ for (sitename in do.sites){
       ## make modis a bit nicer
       modis <- modis %>%  rename( gpp_modis = modisvar ) %>% 
                           mutate( gpp_modis = ifelse( !is.na(gpp_modis), gpp_modis * 1e3 / 8.0, NA ),
-                                  date_start = ymd( date ), date_end = ymd( lead( date ) ) - days(1) ) %>%
-                          select( -date, -doy, -year_dec )
+                                  date_end = ymd( lead( date_start ) ) - days(1) ) %>%
+                          select( date_start, date_end, gpp_modis )
 
       ## group nice by 8d bins from MODIS data
       nice <- nice %>%  mutate( in8dbin = cut( date, breaks = modis$date_start, right = FALSE ) )
@@ -332,12 +332,14 @@ for (sitename in do.sites){
       tmp     <- nice %>% select( in8dbin, date ) %>% group_by( in8dbin ) %>% summarise( date_start=min( date ), date_end=max( date ) )
       nice_8d <- bind_cols( nice_8d, select( tmp, date_start, date_end ) )
 
+      print( modis$date_start %in% nice_8d$date_start )  
+      
       ## merge modis data into 8-day dataframe (averaged nice and modis)
-      nice_8d <- nice_8d %>% select( date_start, one_of( usecols ), -mysitename ) %>% left_join( modis, by=c( "date_start" ) )
+      nice_8d <- nice_8d %>% select( date_start, one_of( usecols ) ) %>% left_join( select( modis, -date_end ), by=c( "date_start" ) )
       
       ## get additional variables
       nice_8d <- nice_8d %>% mutate( bias_modis = gpp_modis / gpp_obs ) %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
-                             mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( bias_modis ), NA, ratio_obs_mod_modis ) ) %>%
+                             mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( ratio_obs_mod_modis ), NA, ratio_obs_mod_modis ) ) %>%
                              mutate( mysitename = sitename )
 
 
@@ -359,11 +361,11 @@ for (sitename in do.sites){
                         date_end   = ymd( paste0( as.character(year_end  ), "-01-01" ) ) + days( doy_end   - 1 ) ) %>%
                 select( -ID, -year_start, -doy_start, -year_end, -doy_end )
 
-        # ## check if the bins in the MTE data are identical to the ones in the MODIS data
-        # print( is.element( mte$date_start, nice_8d$date_start ) )
+        ## check if the bins in the MTE data are identical to the ones in the MODIS data
+        print( mte$date_start %in% nice_8d$date_start )  
 
         ## merge to MTE data to nice_8d
-        nice_8d <- nice_8d %>% left_join( mte, by = "date_start" ) %>%
+        nice_8d <- nice_8d %>% left_join( select( mte, -date_end ), by = c("date_start", "mysitename") ) %>%
 
           ## get additional variables
           mutate( bias_mte = gpp_mte / gpp_obs )          %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
@@ -390,13 +392,13 @@ for (sitename in do.sites){
 
         ## make vpm a bit nicer
         vpm <- vpm %>%  select( -GPP ) %>% rename( gpp_vpm = VPM ) %>% 
-                        mutate( date_start = date , date_end = lead( date ) - days(1) )
+                        mutate( date_start = date, date_end = lead( date ) - days(1) )
 
-        # ## check if the bins in the MTE data are identical to the ones in the MODIS data
-        # print( is.element( vpm$date_start, nice_8d$date_start ) )
+        ## check if the bins in the MTE data are identical to the ones in the MODIS data
+        print( is.element( vpm$date_start, nice_8d$date_start ) )
 
         ## merge to MTE data to nice_8d
-        nice_8d <- nice_8d %>% left_join( vpm, by = "date_start" ) %>%
+        nice_8d <- nice_8d %>% left_join( select( vpm, -date, -date_end, -year, -doy ), by = c("date_start", "mysitename") ) %>%
 
           ## get additional variables
           mutate( bias_vpm = gpp_vpm / gpp_obs )          %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
@@ -437,12 +439,12 @@ if ( length( dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysi
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
-  filn <- paste0("data/nice_nn_agg_", nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_nn_agg_lue_obs_evi.Rdata")
   print( paste( "saving dataframe nice_agg in file", filn) )
   save( nice_agg,  file=filn )
 
   ## save aggregated NN mte
-  filn <- paste0("data/nice_nn_8d_agg_", nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_nn_8d_agg_lue_obs_evi.Rdata")
   print( paste( "saving dataframe mte_agg in file", filn) )
   save( nice_8d_agg, file=filn )
 
