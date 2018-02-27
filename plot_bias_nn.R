@@ -70,8 +70,8 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
 magn <- 3
 ncols <- 4
 nrows <- 3
-widths <- 0.9*c(magn, 0.2*magn, 0.9*magn, 0.2*magn )
-heights <- 1.2*c(0.6*magn,0.6*magn,0.7*magn)
+widths <- 0.9*c(magn, 0.2*magn, 0.85*magn, 0.2*magn )
+heights <- 1.2*c(0.6*magn,0.6*magn,0.68*magn)
 order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
 
 pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) )
@@ -106,7 +106,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "P-model", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## get distribution of bias within bins
@@ -181,7 +181,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "MOD17A2H", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## add boxes for distribution within bins
@@ -237,7 +237,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "BESS v1", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## add boxes for distribution within bins
@@ -295,7 +295,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "BESS v2", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## add boxes for distribution within bins
@@ -354,7 +354,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "VPM", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## add boxes for distribution within bins
@@ -411,7 +411,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
         )
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "FLUXCOM MTE", line=0.5, adj=0, font=2, cex=0.8 )
 
     ## add boxes for distribution within bins
@@ -469,7 +469,7 @@ pdf( "fig/bias_vs_fvar_uncorrected.pdf", width=sum(widths), height=sum(heights) 
   #       )
   #   abline( h=1.0, lwd=0.5, lty=2 )
   #   abline( v=1.0, lwd=0.5, lty=2 )
-  #   lines( c(-99,99), c(-99,99), col='red' )
+  #   lines( c(-99,99), c(-99,99), col='black' )
   #   mtext( "FLUXCOM MTE-RF", line=1, adj=0.5 )
 
   #   df_dday_8d_agg <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
@@ -522,7 +522,7 @@ dev.off()
 #     )
 #     abline( h=1.0, lwd=0.5, lty=2 )
 #     abline( v=1.0, lwd=0.5, lty=2 )
-#     lines( c(-99,99), c(-99,99), col='red' )
+#     lines( c(-99,99), c(-99,99), col='black' )
 #     mtext( sitename, line=1, adj=0.5 )
 #     
 #     sub <- sub %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )

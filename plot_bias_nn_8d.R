@@ -107,7 +107,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "P-model", line=0.5, adj=0, font=2, cex=0.8 )
     
     ## draw the legend
@@ -135,7 +135,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "MOD17A2H", line=0.5, adj=0, font=2, cex=0.8 )
 
   #---------------------------------------------------------
@@ -160,7 +160,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "BESS v1", line=0.5, adj=0, font=2, cex=0.8 )
     
 
@@ -186,7 +186,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "BESS v2", line=0.5, adj=0, font=2, cex=0.8 )
 
   #---------------------------------------------------------
@@ -211,7 +211,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
 
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "VPM", line=0.5, adj=0, font=2, cex=0.8 )
 
   #---------------------------------------------------------
@@ -234,7 +234,7 @@ pdf( "fig/bias_vs_fvar_uncorrected_8d.pdf", width=sum(widths), height=sum(height
         )
     abline( h=1.0, lwd=0.5, lty=2 )
     abline( v=1.0, lwd=0.5, lty=2 )
-    lines( c(-99,99), c(-99,99), col='red' )
+    lines( c(-99,99), c(-99,99), col='black' )
     mtext( "FLUXCOM MTE", line=0.5, adj=0, font=2, cex=0.8 )
 
 
