@@ -1,5 +1,3 @@
-.libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
 library(dplyr)
 library(R.matlab)
 library(readr)
@@ -18,9 +16,6 @@ load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
 siteinfo <- read_csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/soilm_data_usability_fluxnet2015.csv", sep="" ) )
-nam_target  = "lue_obs_evi"
-use_weights = FALSE
-use_fapar   = FALSE
 
 ## Exclude sites for which no fapar data is available and hence no model results
 df_error_fapar <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/error_missing_forcingdata_MODIS_FPAR_MCD15A3H_fluxnet2015.csv" ) ) 
@@ -29,12 +24,10 @@ siteinfo <- siteinfo %>% left_join( df_error_fapar, by="mysitename" ) %>% rename
 do.sites <- filter( siteinfo, code!=0 )$mysitename
 
 ## Manual settings ----------------
-# do.sites   = "FR-Pue" # uncomment to run for single site
-nam_target = "lue_obs_evi"
-use_weights= FALSE    
-use_fapar  = FALSE
-package    = "nnet"
-overwrite_nice = TRUE
+# do.sites   = "AR-Vir" # uncomment to run for single site
+simsuite = "fluxnet2015"
+outputset = "s15"
+overwrite_nice  = TRUE
 overwrite_8d    = TRUE
 verbose         = FALSE
 ##---------------------------------
@@ -43,6 +36,15 @@ norm_to_max <- function( vec ){
   vec <- ( vec - min( vec, na.rm=TRUE ) ) / ( max( vec, na.rm=TRUE ) - min( vec, na.rm=TRUE ) )
   return( vec )
 }
+
+
+##------------------------------------------------
+## Get FLUXNET 2015 data and SOFUN outputs from site-scale simulations
+## The file loaded here is created by 'get_modobs.R'
+##------------------------------------------------
+datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v4.Rdata" )
+load( datafilnam_flat )  # loads 'df_fluxnet'
+
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
@@ -114,39 +116,6 @@ if ( file.exists( filn ) ){
 
 }
 
-## check and override if necessary
-if ( nam_target=="lue_obs_evi" || nam_target=="lue_obs_fpar" ){
-  plotlue <- TRUE
-  if (nam_target=="lue_obs_evi"){
-    fapar_data <- "evi"
-  } else if (nam_target=="lue_obs_fpar"){
-    fapar_data <- "fpar"
-  }
-  if (use_fapar){
-    print("WARNING: setting use_fapar to FALSE")
-    use_fapar <- FALSE
-  }
-}
-
-## identifier for output files
-if (use_fapar){
-  if (nam_target=="lue_obs_evi"){
-    char_fapar <- "_withEVI"
-  } else if (nam_target=="lue_obs_fpar"){
-    char_fapar <- "_withFPAR"
-  } else {
-    print("ERROR: PROVIDE VALID FAPAR DATA!")
-  }
-} else {
-  char_fapar <- ""
-}
-
-if (use_weights){
-  char_wgt <- "_wgt"
-} else {
-  char_wgt <- ""
-}
-
 print( paste( "Aggregating and complementing data for ", length(do.sites)," sites ..." ) )
 
 ##------------------------------------------------
@@ -156,9 +125,6 @@ print( paste( "Aggregating and complementing data for ", length(do.sites)," site
 nice_agg  <- data.frame()
 nice_8d_agg <- data.frame()
 
-## all possible soil moisture datasets
-varnams_swc_full <- c( "soilm_splash150", "soilm_splash220", "soilm_swbm", "soilm_etobs", "soilm_etobs_ob", "soilm_obs" )
-
 for (sitename in do.sites){
 
   print( paste( sitename, "..."))
@@ -167,77 +133,31 @@ for (sitename in do.sites){
 
   nicefiln <- paste0( "data/nice_all/nice_all_", sitename, ".Rdata" )
 
-  if (file.exists(nicefiln)&&!overwrite_nice){
-
-    load( nicefiln )
-
-  } else {
-
+  if (!file.exists(nicefiln)||overwrite_nice){
     ##------------------------------------------------
     ## load site data and "detatch"
     ##------------------------------------------------
-    nice <- as_tibble( fluxnet[[ sitename ]]$ddf$s13 )
+    nice <- filter( df_fluxnet, mysitename==sitename )
 
-    nice <- nice %>% select( year, doy, moy, dom, soilm_splash150=wcont, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
-
-    ##------------------------------------------------
-    ## Get alternative soil moisture data
-    ##------------------------------------------------
-    nice$soilm_splash220 <- fluxnet[[ sitename ]]$ddf$s11$wcont
-    nice$soilm_swbm      <- fluxnet[[ sitename ]]$ddf$s12$wcont
-    nice$soilm_etobs     <- fluxnet[[ sitename ]]$ddf$swc_by_etobs$soilm_from_et
-    nice$soilm_etobs_ob  <- fluxnet[[ sitename ]]$ddf$swc_by_etobs$soilm_from_et_orthbucket
-
-    varnams_swc <- c( "soilm_splash150", "soilm_splash220", "soilm_swbm", "soilm_etobs", "soilm_etobs_ob" )
-
-    ##------------------------------------------------
-    ## normalise soil moisture
-    ##------------------------------------------------
-    nice <- nice %>% mutate( soilm_splash150 = soilm_splash150 / max( soilm_splash150, na.rm=TRUE ),
-                             soilm_splash220 = soilm_splash220 / max( soilm_splash220, na.rm=TRUE ),
-                             soilm_swbm      = soilm_swbm      / max( soilm_swbm     , na.rm=TRUE ),
-                             soilm_etobs     = soilm_etobs     / max( soilm_etobs    , na.rm=TRUE ),
-                             soilm_etobs_ob  = soilm_etobs_ob  / max( soilm_etobs_ob , na.rm=TRUE ) 
-                             )
+    nice <- nice %>% select( date, temp, ppfd, vpd, prec, fpar, gpp_obs=GPP_NT_VUT_REF, starts_with("SWC_F_MDS"), soilm_splash220, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
 
     ##------------------------------------------------
     ## Get observational soil moisture data (variable availability!)
     ##------------------------------------------------
-    ## add mean of soil moisture across observational and model data ('soilm_mean')
-    nice <- nice %>%  left_join( fluxnet[[ sitename ]]$ddf$swc_obs, by=c( "year", "moy", "dom" ) ) %>%
-
-                      ## normalise to within zero and one
-                      mutate_at( vars(starts_with("SWC_F_MDS")), funs(norm_to_max(.)) ) %>%
+    ## normalise to within zero and one
+    nice <- nice %>%  mutate_at( vars( soilm_splash220, starts_with("SWC_F_MDS")), funs(norm_to_max(.)) ) %>%
     
-                      ## get mean soil observational moisture across different depths (if available)
-                      mutate( soilm_obs_mean = apply( select( ., starts_with("SWC_F_MDS") ), 1, FUN=mean, na.rm=TRUE ) ) %>%
+                      ## get mean observational soil moisture across different depths (if available)
+                      mutate( soilm_obs_mean = apply( select( ., starts_with("SWC_F_MDS") ), 1, FUN = mean, na.rm = TRUE ) ) %>%
                       mutate( soilm_obs_mean = ifelse( is.nan(soilm_obs_mean), NA, soilm_obs_mean ) ) %>%
 
-                      ## get mean soil moisture across all datasets (observational and modeled)
-                      mutate( soilm_mean = apply( select( ., starts_with("SWC_F_MDS"), soilm_splash150, soilm_splash220, soilm_swbm, soilm_etobs, soilm_etobs_ob ), 1, FUN = mean, na.rm = TRUE ) ) %>%
-                      mutate( soilm_mean = ifelse( is.nan(soilm_mean), NA, soilm_mean ) )
-
-
-    ##------------------------------------------------
-    ## Get observational data and add to 'data'
-    ##------------------------------------------------
-    obs <- select( fluxnet[[ sitename ]]$ddf$obs, year, moy, dom, gpp_obs2015_GPP_NT_VUT_REF, gpp_obs2015_GPP_NT_VUT_REF_gfd, le_f_mds )
-
-    nice <- nice  %>% left_join( obs, by=c( "year", "moy", "dom" ) ) %>%
-                      rename( gpp_obs=gpp_obs2015_GPP_NT_VUT_REF, gpp_obs_gfd=gpp_obs2015_GPP_NT_VUT_REF_gfd, et_obs=le_f_mds ) %>%
-                      mutate( wue_obs=gpp_obs/(et_obs*1e-6) )
-
-    ##------------------------------------------------
-    ## Get input data
-    ##------------------------------------------------
-    inp <- fluxnet[[ sitename ]]$ddf$inp %>% select( year, moy, dom, temp, ppfd, vpd, prec, evi, fpar )
-
-    nice <- nice %>% left_join( inp, by=c( "year", "moy", "dom" ) )
-
+                      ## get mean of observational and modelled soil moisture
+                      mutate( soilm_mean = apply( select( ., soilm_splash220, soilm_obs_mean ), 1, FUN = mean, na.rm = TRUE ) ) 
+                              
     ##------------------------------------------------
     ## get LUE and remove outliers
     ##------------------------------------------------
-    nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
+    # nice <- nice %>% mutate( lue_obs_evi  = remove_outliers( gpp_obs / ( ppfd * evi  ), coef=3.0 ) )
     nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
 
     ##------------------------------------------------
@@ -254,12 +174,9 @@ for (sitename in do.sites){
     ## add site name as column
     nice <- nice %>% mutate( mysitename=sitename )
 
-    ## fLUE estimate based on current soil moisture and average AET/PET
+    ## alpha
     meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
     nice <- nice %>%  mutate( dry=ifelse(alpha<0.95, TRUE, FALSE))
-
-    ## date as ymd from the lubridate package
-    nice <- nice %>%  mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days( doy - 1 ) )
 
 
     ##------------------------------------------------
@@ -296,6 +213,10 @@ for (sitename in do.sites){
     ##------------------------------------------------
     if (verbose) print( paste( "saving to file", nicefiln ) )
     save( nice, file=nicefiln )
+
+  } else {
+
+    load( nicefiln )
 
   }
 
@@ -473,12 +394,12 @@ if ( length( filter( siteinfo, code!=0 )$mysitename ) == length( do.sites ) ){
   ##------------------------------------------------
   ## save collected data
   ##------------------------------------------------
-  filn <- paste0("data/nice_all_agg_",  nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_all_agg_lue_obs_evi.Rdata")
   print( paste( "saving dataframe nice_agg in file", filn) )
   save( nice_agg,  file=filn )
 
   ## save 8d dataframe
-  filn <- paste0("data/nice_all_8d_agg_", nam_target, char_fapar, ".Rdata")
+  filn <- paste0("data/nice_all_8d_agg_lue_obs_evi.Rdata")
   print( paste( "saving dataframe nice_8d_agg in file", filn) )
   save( nice_8d_agg, file=filn )
 
