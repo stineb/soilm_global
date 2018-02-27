@@ -50,7 +50,7 @@ abline( h=0, lty=3 )
 boxplot( log( bias_bess_v1 ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
 abline( h=0, lty=3 )
 
-boxplot( log( bias_bess_v2 ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
+boxplot( log( bias_bess_v2 ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v2" ) #, xlim=c(0.5,4.5), at=c(1,3))       
 abline( h=0, lty=3 )
 
 boxplot( log( bias_vpm ) ~ dry, data=nice_8d_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="VPM" ) #, xlim=c(0.5,4.5), at=c(1,3))       
@@ -101,3 +101,4 @@ abline( h=0, lty=3 )
 # abline( h=1.0, lwd=0.5, lty=2 )
 # abline( v=1.0, lwd=0.5, lty=2 )
 # lines( c(-99,99), c(-99,99), col='red' )
+

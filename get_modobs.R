@@ -108,9 +108,8 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
         left_join( fluxnet[[ sitename ]]$ddf$swc_obs, by = "date" ) %>%
         left_join( fluxnet[[ sitename ]]$ddf[[ outputset ]], by = "date" )
 
-      ## add mean of soil moisture across observational and model data ('soilm_mean')
-      df_site <- df_site %>%  mutate( soilm_obs_mean = apply( select( ., starts_with("SWC_F_MDS") ), 1, FUN = mean, na.rm = TRUE ) ) %>%
-                              rename( soilm_splash220 = wcont )
+      ## rename 
+      df_site <- df_site %>% rename( soilm_splash220 = wcont )
 
       df_fluxnet <- df_fluxnet %>% bind_rows( df_site )
     

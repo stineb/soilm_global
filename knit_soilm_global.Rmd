@@ -48,10 +48,10 @@ Then, combine this with GPP data from BESS, VPM, MODIS and MTE, and aggregate al
 source("aggregate_all_fluxnet2015.R")
 ```
 
-<!-- After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS MOD17A2H GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI. -->
-<!-- ```{r plot_all, fig.width=5, fig.height=4, eval=TRUE, message=FALSE, warning=FALSE} -->
-<!-- source("plot_bias_all.R") -->
-<!-- ``` -->
+After pooling all data and calculating the bias of simulated GPP from different products (P-model, MODIS MOD17A2H GPP, FLUXCOM MTE) as the ratio of modelled over observed, the problem becomes evident (see boxplots below). There is a systematic relationship between the bias and soil dryness. This ratio is always higher under dry conditions (daily AET/PET>0.5) than under well-watered. It's a bit weird for FLUXCOM MTE and MODIS, where there is a substantial negative bias under well-watered conditions, but no bias under dry conditions - just all shifted to too low simulated GPP. The P-model is better behaved, having no bias under well-watered conditions, but a tendency to an increasingly high positive bias with declining daily AET/PET and soil moisture values (calculated using the SPLASH model).  The same is true for MTE and MODIS GPP, although the pattern is not as clear (not shown). Here the P-model is driven using EVI for quantifying fAPAR. This is arguably implausible. We are working on a re-calibration of the light utilisation parameter in the P-model in combination with actual fAPAR data which has generally higher values than EVI.
+```{r plot_all, fig.width=5, fig.height=4, eval=TRUE, message=FALSE, warning=FALSE}
+source("plot_bias_all.R")
+```
 
 <!-- ### Pooled data from soil moisture focus sites -->
 
