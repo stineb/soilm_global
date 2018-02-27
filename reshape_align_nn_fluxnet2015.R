@@ -62,7 +62,13 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                     "ratio_obs_mod_vpm", 
                     "gpp_mte", 
                     "bias_mte", 
-                    "ratio_obs_mod_mte"
+                    "ratio_obs_mod_mte",
+                    "gpp_pmodel", 
+                    "bias_pmodel", 
+                    "ratio_obs_mod_pmodel",
+                    "gpp_bess_v1", "gpp_bess_v2",
+                    "bias_bess_v1", "bias_bess_v2",
+                    "ratio_obs_mod_bess_v1", "ratio_obs_mod_bess_v2"
                   )
 
   ##------------------------------------------------
