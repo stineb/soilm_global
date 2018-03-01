@@ -118,31 +118,43 @@ proc_10y () {
 here=`pwd`
 myhome=/alphadata01/bstocker/
 
-# ##----------------------------------------------------
-# ## P-model S0
-# ##----------------------------------------------------
-# cd $myhome/data/pmodel_fortran_output/
+##----------------------------------------------------
+## P-model S0
+##----------------------------------------------------
+cd $myhome/data/pmodel_fortran_output/
 
-# ln -s s0_fapar3g_global.a.gpp.nc gpp_pmodel_s0_ANN.nc
+ln -s s0_fapar3g_global.a.gpp.nc gpp_pmodel_s0_ANN.nc
 
-# ## process fully
-# proc_30y gpp_pmodel_s0
+## process fully
+proc_30y gpp_pmodel_s0
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## P-model S1
-# ##----------------------------------------------------
-# cd $myhome/data/pmodel_fortran_output/
+##----------------------------------------------------
+## P-model S1a, S1b, S1c
+##----------------------------------------------------
+cd $myhome/data/pmodel_fortran_output/
 
-# ln -s s1_fapar3g_global.a.gpp.nc gpp_pmodel_s1_ANN.nc
+ln -s s1a_fapar3g_global.a.gpp.nc gpp_pmodel_s1a_ANN.nc
+ln -s s1b_fapar3g_global.a.gpp.nc gpp_pmodel_s1b_ANN.nc
+ln -s s1c_fapar3g_global.a.gpp.nc gpp_pmodel_s1c_ANN.nc
 
-# ## process fully
-# proc_30y gpp_pmodel_s1
+## process fully
+proc_30y gpp_pmodel_s1a
+proc_30y gpp_pmodel_s1b
+proc_30y gpp_pmodel_s1c
 
-# cd $here
+cd $here
 
+## get daily soil moisture limitation factor from comparing GPP to s0
+cd $myhome/sofun/output_nc_global_sofun/
+# cdo mergetime s1a_fapar3g_v2_global.*.d.gpp.nc s1a_fapar3g_v2_global.d.gpp.nc
+# cdo mergetime s1b_fapar3g_v2_global.*.d.gpp.nc s1b_fapar3g_v2_global.d.gpp.nc
+# cdo mergetime s1c_fapar3g_v2_global.*.d.gpp.nc s1c_fapar3g_v2_global.d.gpp.nc
+cdo div s1a_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1a_fapar3g_v2_global.d.soilmstress.nc
+cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
+cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
 
 # ##----------------------------------------------------
 # ## MTE

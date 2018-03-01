@@ -62,6 +62,7 @@ plot_linearfit2 <- function( linearfit2, linearfit, target="fvar", df=NULL ){
       par(las=1)
       plot( df_tmp$soilm_mean, df_tmp[[ target ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("royalblue3", 0.2) )
       abline( h=1.0, lwd=0.5 )
+      title( sitename )
 
       if (!is.na(dplyr::select( data_tmp, meanalpha))){ 
   

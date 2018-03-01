@@ -8,6 +8,8 @@ source( paste( syshome, "/.Rprofile", sep="" ) )
 
 source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
 source( "../utilities/init_dates_dataframe.R" )
+source("calc_flue_est_alpha.R")
+source("stress_quad_1sided.R")
 
 # IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
 load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
@@ -163,11 +165,6 @@ for (sitename in do.sites){
     nice <- nn_nice %>% left_join( nice, by="date")
     
     ##------------------------------------------------
-    ## get LUE and remove outliers
-    ##------------------------------------------------
-    nice <- nice %>% mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )      
-
-    ##------------------------------------------------
     ## additional variables
     ##------------------------------------------------
     nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs, 
@@ -176,17 +173,36 @@ for (sitename in do.sites){
                       mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), 
                               ratio_obs_mod_pmodel = ifelse( is.infinite(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ),
                               alpha = ifelse( is.infinite(alpha), NA, alpha )
-                              )
+                              ) %>%
 
-    ## add site name as column
-    nice <- nice %>% mutate( mysitename=sitename )
+                      ## add site name as column
+                      mutate( mysitename=sitename ) %>%
+
+                      ## date as ymd from the lubridate package
+                      mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days( doy - 1 ) ) %>%
+
+                      ## dry
+                      mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) ) %>%
+
+                      ## get LUE and remove outliers
+                      mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )
+
 
     ## fLUE estimate based on current soil moisture and average AET/PET
-    meanalpha <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
-    nice <- nice %>%  mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) )
+    meanalphaval <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
 
-    ## date as ymd from the lubridate package
-    nice <- nice %>%  mutate( date = ymd( paste0( as.character(year), "-01-01" ) ) + days( doy - 1 ) )
+    ##------------------------------------------------
+    ## Calculate soil moiture stress based on two alternative functions
+    ##------------------------------------------------
+    ## soil moisture stress factor (derived from two different fitting methods, see knit...Rmd)
+    nice <- nice %>%  mutate( meanalpha=meanalphaval ) %>%
+                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.1214, bpar=0.8855, cpar=0.125, dpar=0.75 ),
+                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.09242, bpar = 0.79194 ),  ## when fitting to ratio_obs_mod_pmodel
+                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.1366, bpar = 0.4850 ),  ## when fitting to fLUE
+                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.09534, bpar = 0.49812 ),  ## when fitting to fLUE, weighted by 1-fLUE
+                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.06289, bpar = 0.50539 ),  ## when fitting to fLUE, weighted by (1-fLUE)^2
+                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel
+                              )
 
 
     ##------------------------------------------------
@@ -239,7 +255,10 @@ for (sitename in do.sites){
                 "var_nn_vpd",
                 "gpp_nn_act", 
                 "gpp_nn_pot",
-                "fvar", 
+                "fvar",
+                "flue_est_1",
+                "flue_est_2",
+                "flue_est_3",
                 "is_drought_byvar", 
                 "gpp_pmodel",
                 "aet_pmodel",
@@ -250,7 +269,6 @@ for (sitename in do.sites){
                 "evi", 
                 "fpar", 
                 "soilm_splash220",
-                "soilm_splash150",
                 "soilm_swbm",
                 "soilm_mean",
                 "bias_pmodel", 
