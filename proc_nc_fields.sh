@@ -1,5 +1,29 @@
 #!/bin/bash
 
+proc_daily () {
+
+	##-----------------------------
+	## argument 1: base file name
+	##-----------------------------
+	echo "----------------------------"
+	echo "processing $1 ..."
+	echo "----------------------------"
+
+	## detrend and remove mean	
+	echo "detrending $1_DAY.nc..."
+	cdo detrend -selyear,1982/2011 -selname,gpp $1_DAY.nc $1_DETR_DAY_0mean.nc
+
+	## get daily anomalies, warning: this doesn't remove the linear trend
+	echo "get anomalies..."
+	cdo -ydaysub $1_DETR_DAY_0mean.nc -ydaymean $1_DETR_DAY_0mean.nc $1_DAY_ANOM.nc
+
+	rm $1_DETR_DAY_0mean.nc
+
+	return 0
+
+}
+
+
 proc_30y () {
 	##-----------------------------
 	## argument 1: base file name
@@ -118,26 +142,31 @@ proc_10y () {
 here=`pwd`
 myhome=~
 
-# ##----------------------------------------------------
-# ## P-model S0
-# ##----------------------------------------------------
-# cd $myhome/data/pmodel_fortran_output/
+
+##----------------------------------------------------
+## P-model S0
+##----------------------------------------------------
+cd $myhome/data/pmodel_fortran_output/
 
 # ## reduce to 30 years and get annual total
 # echo "get annual totals..."
 # cdo yearsum -selyear,1982/2011 s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_ANN.nc
 
-# ## process fully
-# echo "process fully..."
+# ## process annual files
+# echo "process annual files..."
 # proc_30y gpp_pmodel_s0
 
-# cd $here
+## process daily files to get daily anomalies
+ln -svf s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_DAY.nc
+proc_daily gpp_pmodel_s0
+
+cd $here
 
 
-# ##----------------------------------------------------
-# ## P-model S1a, S1b, S1c
-# ##----------------------------------------------------
-# cd $myhome/data/pmodel_fortran_output/
+##----------------------------------------------------
+## P-model S1a, S1b, S1c
+##----------------------------------------------------
+cd $myhome/data/pmodel_fortran_output/
 
 # ## reduce to 30 years and get annual total
 # echo "get annual totals..."
@@ -168,7 +197,16 @@ myhome=~
 # cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
 # cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
 
-# cd $here
+## process daily files to get daily anomalies
+ln -svf s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_DAY.nc
+ln -svf s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_DAY.nc
+ln -svf s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_DAY.nc
+
+proc_daily gpp_pmodel_s1a
+proc_daily gpp_pmodel_s1b
+proc_daily gpp_pmodel_s1c
+
+cd $here
 
 
 # ##----------------------------------------------------

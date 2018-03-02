@@ -3,29 +3,30 @@ library(raster)
 library(neuroim)
 library(igraph)
 
-rasterOptions(tmpdir="/net/exo/landclim/zjakob/tmp",tmptime = 240)
-fdir <- "/net/firebolt/data/zjakob/Stocker/"
-setwd(fdir)
+# rasterOptions( tmpdir="/net/exo/landclim/zjakob/tmp", tmptime = 240 )
+# fdir <- "/net/firebolt/data/zjakob/Stocker/"
+# setwd(fdir)
 
-gpp_s0 <- brick("s0_gpp_all_detrended.m.nc")
-MSC_s0 <- calc(gpp_s0, function(x) {if (is.na(x[1])) return(rep(NA,12)) else return(rowMeans(matrix(x,12,30)))})
+# gpp_s0 <- brick("s0_gpp_all_detrended.m.nc")
+# MSC_s0 <- calc(gpp_s0, function(x) {if (is.na(x[1])) return(rep(NA,12)) else return(rowMeans(matrix(x,12,30)))})
 
-gpp_s1 <- brick("s1_gpp_all_detrended.m.nc")
-MSC_s1 <- calc(gpp_s1, function(x) {if (is.na(x[1])) return(rep(NA,12)) else return(rowMeans(matrix(x,12,30)))})
+# gpp_s1 <- brick("s1_gpp_all_detrended.m.nc")
+# MSC_s1 <- calc(gpp_s1, function(x) {if (is.na(x[1])) return(rep(NA,12)) else return(rowMeans(matrix(x,12,30)))})
 
-gpp_s1.tmp <- brick("s1_gpp_all.m.nc")
+# gpp_s1.tmp <- brick("s1_gpp_all.m.nc")
 
-# compute anomalies
-ANOM_s0 <- gpp_s0 - MSC_s0
-ANOM_s1 <- gpp_s1 - MSC_s1
+# # compute anomalies
+# ANOM_s0 <- gpp_s0 - MSC_s0
+# ANOM_s1 <- gpp_s1 - MSC_s1
 
-# save anomalies
-# writeRaster(ANOM_s0, "/net/firebolt/data/zjakob/Stocker/s0_gpp_anomalies.m.nc", format="CDF", varname="GPP anomalies", overwrite=TRUE)
-# writeRaster(ANOM_s1, "/net/firebolt/data/zjakob/Stocker/s1_gpp_anomalies.m.nc", format="CDF", varname="GPP anomalies", overwrite=TRUE)
+# # save anomalies
+# # writeRaster(ANOM_s0, "/net/firebolt/data/zjakob/Stocker/s0_gpp_anomalies.m.nc", format="CDF", varname="GPP anomalies", overwrite=TRUE)
+# # writeRaster(ANOM_s1, "/net/firebolt/data/zjakob/Stocker/s1_gpp_anomalies.m.nc", format="CDF", varname="GPP anomalies", overwrite=TRUE)
 
 ##########################################################################################################################
 # start from here
-SREX <- raster("/net/exo/landclim/data/dataset/SREX-Region-Masks/20120709/0.5deg_lat-lon_time-invariant/processed/netcdf/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
+# SREX <- raster("/net/exo/landclim/data/dataset/SREX-Region-Masks/20120709/0.5deg_lat-lon_time-invariant/processed/netcdf/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
+SREX <- raster("~/data/landmasks/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
 subsets <- list()
 subsets[[1]] <- 1:6
 subsets[[2]] <- 7:10
@@ -39,22 +40,25 @@ alpha_s1 <- c()
 IMPACT_s0 <- list()
 IMPACT_s1 <- list()
 
-ANOM_s0_all <- brick("/net/firebolt/data/zjakob/Stocker/s0_gpp_anomalies.m.nc")
-ANOM_s1_all <- brick("/net/firebolt/data/zjakob/Stocker/s1_gpp_anomalies.m.nc")
+ANOM_s0_all <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s0_DAY_ANOM.nc")
+ANOM_s1_all <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s1b_DAY_ANOM.nc")
 
-ANOM_s0.a <- aperm(as.array(ANOM_s0_all * area(ANOM_s0_all)),c(2,1,3))[,360:1,]
-ANOM_s1.a <- aperm(as.array(ANOM_s1_all * area(ANOM_s1_all)),c(2,1,3))[,360:1,]
+# ANOM_s0.a <- aperm(as.array(ANOM_s0_all * area(ANOM_s0_all)),c(2,1,3))[,360:1,]
+# ANOM_s1.a <- aperm(as.array(ANOM_s1_all * area(ANOM_s1_all)),c(2,1,3))[,360:1,]
 
 latx <- 360
 for (j in 1:6) {
+  
   print(j)
+  
   # only 1 continent
   Na <- SREX %in% subsets[[j]]
+
   # ANOM_s0 <- mask(ANOM_s0_all, Na, maskvalue=0)
   ANOM_s1 <- mask(ANOM_s1_all, Na, maskvalue=0)
   
   # q_all <- quantile(c(as.vector(ANOM_s1), as.vector(ANOM_s0)), c(0.05,0.1,0.9,0.95), na.rm = TRUE)
-  q_all <- quantile(as.vector(ANOM_s1), c(0.05,0.1,0.9,0.95), na.rm = TRUE)
+  q_all <- quantile( as.vector(ANOM_s1), c(0.05,0.1,0.9,0.95), na.rm = TRUE )
   
   # same quantiles (computed over the combined dataset)
   # only for s1
@@ -63,20 +67,20 @@ for (j in 1:6) {
   
   # EXT05_s0.a <- aperm(as.array(EXT05_s0),c(2,1,3))[,latx:1,] == TRUE
   # CC_s0 <- connComp3D(EXT05_s0.a)
-  EXT05_s1.a <- aperm(as.array(EXT05_s1),c(2,1,3))[,latx:1,] == TRUE
-  CC_s1 <- connComp3D(EXT05_s1.a)
+  EXT05_s1.a <- aperm( as.array(EXT05_s1), c(2,1,3) )[,latx:1,] == TRUE
+  CC_s1 <- connComp3D( EXT05_s1.a )
   
   # CC_s0$index[CC_s0$size<200] <- 0
   CC_s1$index[CC_s1$size < 200] <- 0
   
   # make list with indices pointing to equal index
   # CC_s0$list <- sapply(1:max(CC_s0$index), function(x) which(CC_s0$index == x))
-  CC_s1$list <- sapply(1:max(CC_s1$index), function(x) which(CC_s1$index == x))
+  CC_s1$list <- sapply( 1:max(CC_s1$index), function(x) which(CC_s1$index == x) )
   
   # find largest extremes defined by impact
   # impact_s0 <- unlist(lapply(CC_s0$list, function(x) sum(ANOM_s0.a[x])))
-  impact_s1 <- unlist(lapply(CC_s1$list, function(x) sum(ANOM_s1.a[x])))
-  impact_s0 <- unlist(lapply(CC_s1$list, function(x) sum(ANOM_s0.a[x])))
+  impact_s1 <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1.a[x])) )
+  impact_s0 <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s0.a[x])) )
   
   
   # pdf("/net/firebolt/data/zjakob/Stocker/extremes.pdf")

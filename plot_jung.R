@@ -3,7 +3,7 @@ library(dplyr)
 library(abind)
 source("~/.Rprofile")
 
-overwrite <- TRUE
+overwrite <- FALSE
 outfiln <- "data/ampl_jung.Rdata"
 
 vec_res <- c( 0.5, 1.0, 1.5, 2.5, 3, 4, 4.5, 5, 6, 7.5, 9, 10, 12, 15, 18, 20, 22.5, 30, 36, 45, 60, 90, 180, 360 )
