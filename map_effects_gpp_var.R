@@ -11,6 +11,7 @@ fil_s1 <- "gpp_pmodel_s1_VAR.nc"
 
 dir <- paste0( myhome, "/data/pmodel_fortran_output/")
 
+## S0
 nc <- nc_open( paste0( dir, fil_s0 ) )
 gpp_s0 <- ncvar_get( nc, varid="gpp" )
 lon <- nc$dim$lon$vals
@@ -18,11 +19,9 @@ lat <- nc$dim$lat$vals
 time <- nc$dim$time$vals
 nc_close(nc)
 
+## S1
 nc <- nc_open( paste0( dir, fil_s1 ) )
 gpp_s1 <- ncvar_get( nc, varid="gpp" )
-lon <- nc$dim$lon$vals
-lat <- nc$dim$lat$vals
-time <- nc$dim$time$vals
 nc_close(nc)
 
 ##-----------------------------------------------------

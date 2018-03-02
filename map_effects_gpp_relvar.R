@@ -6,11 +6,15 @@ source("~/.Rprofile")
 ##------------------------------------------------------------------------
 ## GPP interannual relative variance change
 ##------------------------------------------------------------------------
-fil_s0 <- "gpp_pmodel_s0_RELVAR.nc"
-fil_s1 <- "gpp_pmodel_s1_RELVAR.nc"
+fil_s0  <- "gpp_pmodel_s0_RELVAR.nc"
+fil_s1  <- "gpp_pmodel_s1_RELVAR.nc"
+fil_s1a <- "gpp_pmodel_s1a_RELVAR.nc"
+fil_s1b <- "gpp_pmodel_s1b_RELVAR.nc"
+fil_s1c <- "gpp_pmodel_s1c_RELVAR.nc"
 
 dir <- paste0( myhome, "/data/pmodel_fortran_output/")
 
+## S0
 nc <- nc_open( paste0( dir, fil_s0 ) )
 gpp_s0 <- ncvar_get( nc, varid="gpp" )
 lon <- nc$dim$lon$vals
@@ -18,12 +22,26 @@ lat <- nc$dim$lat$vals
 time <- nc$dim$time$vals
 nc_close(nc)
 
+## S1
 nc <- nc_open( paste0( dir, fil_s1 ) )
 gpp_s1 <- ncvar_get( nc, varid="gpp" )
-lon <- nc$dim$lon$vals
-lat <- nc$dim$lat$vals
-time <- nc$dim$time$vals
 nc_close(nc)
+
+## S1a
+nc <- nc_open( paste0( dir, fil_s1a ) )
+gpp_s1a <- ncvar_get( nc, varid="gpp" )
+nc_close(nc)
+
+## S1b
+nc <- nc_open( paste0( dir, fil_s1b ) )
+gpp_s1b <- ncvar_get( nc, varid="gpp" )
+nc_close(nc)
+
+## S1c
+nc <- nc_open( paste0( dir, fil_s1c ) )
+gpp_s1c <- ncvar_get( nc, varid="gpp" )
+nc_close(nc)
+
 
 ##-----------------------------------------------------
 ## Plot relative variance in S1
@@ -37,10 +55,10 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
 ##-----------------------------------------------------
 ## Change in relative variance
 ##-----------------------------------------------------
-  arr=gpp_s1 / gpp_s0
-  toplefttext=expression(paste("GPP amplification of relative variance"))
-  toprighttext=expression(paste("fraction"))
-  minval=NA
+  arr = gpp_s1 / gpp_s0
+  toplefttext = expression(paste("GPP amplification of relative variance"))
+  toprighttext = expression(paste("fraction"))
+  minval = NA
   maxval = 35
   color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
   lev=c( 0, 4, 10 )
@@ -82,10 +100,10 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
     lev <- c( 0, 4, 10 )
     maxval = 35
     minval = NA
-    par( mar=c(2.5,3,1,1),xaxs="i", yaxs="i",las=1)
+    par( mar=c(2.5,3,1,1),xaxs="i", yaxs="i",las=1, mgp=c(3,1,0))
     out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=maxval, minval=minval )
 
-    par( mar=c(2.5,2.5,1,1),xaxs="i", yaxs="i",las=1)
+    par( mar=c(2.5,2.5,1,1),xaxs="i", yaxs="i",las=1, mgp=c(3,1,0))
     image(
             lon, lat, 
             arr,
@@ -121,6 +139,17 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
     vec <- vec[!is.na(vec)]
     ecdf_ampl <- ecdf( vec )
 
+    vec <- c( gpp_s1a / gpp_s0 )
+    vec <- vec[!is.na(vec)]
+    ecdf_ampl_a <- ecdf( vec )
+
+    vec <- c( gpp_s1b / gpp_s0 )
+    vec <- vec[!is.na(vec)]
+    ecdf_ampl_b <- ecdf( vec )
+
+    vec <- c( gpp_s1c / gpp_s0 )
+    vec <- vec[!is.na(vec)]
+    ecdf_ampl_c <- ecdf( vec )
 
     ## Inset 1
     u <- par("usr")
@@ -131,13 +160,14 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
     v_orig <- v
     v <- c( v[1]+0.07, v[1]+0.2*v[2], v[3]+0.10*v[4], v[3]+0.32*v[4] )
     par( fig=v, new=TRUE, mar=c(0,0,0,0), mgp=c(3,0.2,0) )
-    xlim <- c(0.75,10)
+    xlim <- c(0.75,20)
     ylim <- c(0.001, 1)
     plot( xlim, ylim, type="n", xlim=xlim, log="xy", ylim=ylim, xlab = "", ylab = "", bg="white", cex.axis=0.7, tck=-0.03 )
     mtext( "amplification", side=1, line=1, adj=0.5, cex = 0.7 )
     mtext( "ECDF", side=2, line=1.7, adj=0.5, cex = 0.7, las=0 )
     rect( xlim[1], ylim[1], xlim[2], ylim[2], border = NA, col="white" )
     curve( 1.0 - ecdf_ampl(x), from=xlim[1], to=xlim[2], col="red", add=TRUE  )
+    polygon( c( seq(xlim[1], xlim[2], by=0.1 ), rev( seq(xlim[1], xlim[2], by=0.1 ) ) ),  c( 1 - ecdf_ampl_a( seq(xlim[1], xlim[2], by=0.1 ) ), rev( 1- ecdf_ampl_c( seq(xlim[1], xlim[2], by=0.1 ) ) ) ), border = NA, col = rgb(1,0,0,0.4) )
     abline( v=1, lty=3 )
     box()
 

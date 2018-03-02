@@ -116,45 +116,60 @@ proc_10y () {
 }
 
 here=`pwd`
-myhome=/alphadata01/bstocker/
+myhome=~
 
-##----------------------------------------------------
-## P-model S0
-##----------------------------------------------------
-cd $myhome/data/pmodel_fortran_output/
+# ##----------------------------------------------------
+# ## P-model S0
+# ##----------------------------------------------------
+# cd $myhome/data/pmodel_fortran_output/
 
-ln -s s0_fapar3g_global.a.gpp.nc gpp_pmodel_s0_ANN.nc
+# ## reduce to 30 years and get annual total
+# echo "get annual totals..."
+# cdo yearsum -selyear,1982/2011 s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_ANN.nc
 
-## process fully
-proc_30y gpp_pmodel_s0
+# ## process fully
+# echo "process fully..."
+# proc_30y gpp_pmodel_s0
 
-cd $here
+# cd $here
 
 
-##----------------------------------------------------
-## P-model S1a, S1b, S1c
-##----------------------------------------------------
-cd $myhome/data/pmodel_fortran_output/
+# ##----------------------------------------------------
+# ## P-model S1a, S1b, S1c
+# ##----------------------------------------------------
+# cd $myhome/data/pmodel_fortran_output/
 
-ln -s s1a_fapar3g_global.a.gpp.nc gpp_pmodel_s1a_ANN.nc
-ln -s s1b_fapar3g_global.a.gpp.nc gpp_pmodel_s1b_ANN.nc
-ln -s s1c_fapar3g_global.a.gpp.nc gpp_pmodel_s1c_ANN.nc
+# ## reduce to 30 years and get annual total
+# echo "get annual totals..."
+# cdo yearsum -selyear,1982/2011 s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_ANN.nc
+# cdo yearsum -selyear,1982/2011 s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_ANN.nc
+# cdo yearsum -selyear,1982/2011 s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_ANN.nc
 
-## process fully
-proc_30y gpp_pmodel_s1a
-proc_30y gpp_pmodel_s1b
-proc_30y gpp_pmodel_s1c
+# ## process fully
+# echo "process fully..."
+# proc_30y gpp_pmodel_s1a
+# proc_30y gpp_pmodel_s1b
+# proc_30y gpp_pmodel_s1c
 
-cd $here
+# echo "get ensemble means..."
 
-## get daily soil moisture limitation factor from comparing GPP to s0
-cd $myhome/sofun/output_nc_global_sofun/
-# cdo mergetime s1a_fapar3g_v2_global.*.d.gpp.nc s1a_fapar3g_v2_global.d.gpp.nc
-# cdo mergetime s1b_fapar3g_v2_global.*.d.gpp.nc s1b_fapar3g_v2_global.d.gpp.nc
-# cdo mergetime s1c_fapar3g_v2_global.*.d.gpp.nc s1c_fapar3g_v2_global.d.gpp.nc
-cdo div s1a_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1a_fapar3g_v2_global.d.soilmstress.nc
-cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
-cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
+# ## get mean annual GPP across S1a, S1b, S1c
+# cdo ensmean gpp_pmodel_s1a_MEAN.nc gpp_pmodel_s1b_MEAN.nc gpp_pmodel_s1c_MEAN.nc gpp_pmodel_s1_MEAN.nc 
+
+# ## get mean variance S1a, S1b, S1c
+# cdo ensmean gpp_pmodel_s1a_VAR.nc gpp_pmodel_s1b_VAR.nc gpp_pmodel_s1c_VAR.nc gpp_pmodel_s1_VAR.nc
+
+# ## get mean relative variance S1a, S1b, S1c
+# cdo ensmean gpp_pmodel_s1a_RELVAR.nc gpp_pmodel_s1b_RELVAR.nc gpp_pmodel_s1c_RELVAR.nc gpp_pmodel_s1_RELVAR.nc
+
+# ## get daily soil moisture limitation factor from comparing GPP to s0
+# echo "get daily soil moisture limitation factor..."
+# cdo div s1a_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1a_fapar3g_v2_global.d.soilmstress.nc
+# cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
+# cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
+
+# cd $here
+
 
 # ##----------------------------------------------------
 # ## MTE
@@ -194,46 +209,46 @@ cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g
 
 # cd $here
 
-##----------------------------------------------------
-## VPM
-##----------------------------------------------------
-cd $myhome/data/gpp_vpm/
+# ##----------------------------------------------------
+# ## VPM
+# ##----------------------------------------------------
+# cd $myhome/data/gpp_vpm/
 
-# ## concatenae annual files (cdo mergetime doesn't work)
-# Rscript preprocess_vpm.R
+# # ## concatenae annual files (cdo mergetime doesn't work)
+# # Rscript preprocess_vpm.R
 
-## process fully
-proc_10y gpp_vpm
+# ## process fully
+# proc_10y gpp_vpm
 
-cd $here
-
-
-##----------------------------------------------------
-## BESS
-##----------------------------------------------------
-cd $myhome/data/gpp_bess/
-
-## multiply with days per month
-cdo muldpm gpp_bess.nc gpp_bess_DPM.nc
-
-## get annual sums
-cdo yearsum gpp_bess_DPM.nc gpp_bess_ANN.nc
-
-## process fully
-proc_10y gpp_bess
-
-cd $here
+# cd $here
 
 
-##----------------------------------------------------
-## MODIS
-##----------------------------------------------------
-cd $myhome/data/gpp_modis/
+# ##----------------------------------------------------
+# ## BESS
+# ##----------------------------------------------------
+# cd $myhome/data/gpp_bess/
 
-## process fully
-proc_10y gpp_modis
+# ## multiply with days per month
+# cdo muldpm gpp_bess.nc gpp_bess_DPM.nc
 
-cd $here
+# ## get annual sums
+# cdo yearsum gpp_bess_DPM.nc gpp_bess_ANN.nc
+
+# ## process fully
+# proc_10y gpp_bess
+
+# cd $here
+
+
+# ##----------------------------------------------------
+# ## MODIS
+# ##----------------------------------------------------
+# cd $myhome/data/gpp_modis/
+
+# ## process fully
+# proc_10y gpp_modis
+
+# cd $here
 
 
 

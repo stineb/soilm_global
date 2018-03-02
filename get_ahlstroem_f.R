@@ -8,7 +8,7 @@ get_ahlstroem_f <- function( arr, isabs=FALSE ){
   ## use gridcell totals not per unit area
   if (isabs==FALSE){
     source( "integrate_gridcell.R" )
-    arr_abs <- integrate_gridcell( arr, global=FALSE, overwrite=FALSE )
+    arr_abs <- integrate_gridcell( arr, global=FALSE, overwrite=TRUE )
     glob <- apply( arr_abs, c(3), FUN=sum, na.rm=TRUE )
   } else {
     arr_abs <- arr

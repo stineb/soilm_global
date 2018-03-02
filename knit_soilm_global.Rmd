@@ -420,7 +420,7 @@ This shows that Australia, sub-tropical southern Africa, and other red-colored r
 To look at the spatial scale-dependence of the amplification factor, I did a similar analysis as in Jung et al. (2017).
 
 First, create grid definition files for remapping with CDO. These are stored in `./grids/` as text files.
-```{r do_jung, warning=FALSE, eval=FALSE, message=FALSE}
+```{r do_jung, warning=FALSE, eval=FALSE, message=FALSE, echo = FALSE}
 source("define_grids.R")
 source("regrid_jung.R")
 ```

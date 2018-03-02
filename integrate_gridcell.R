@@ -20,11 +20,19 @@ integrate_gridcell <- function( arr, global=TRUE, overwrite=FALSE ){
       dy <- 0.5
       lon <- seq(-179.75, 179.75, by=dx )
       lat <- seq(-89.75, 89.75, by=dy )
-      arr_area <- arr[,,1]
+      if (length(dim(arr))==3){
+        arr_area <- arr[,,1]
+        arr_tmp  <- arr[,,1]
+      } else if (length(dim(arr))==2) {
+        arr_area <- arr
+        arr_tmp  <- arr
+      } else {
+        print("cannot deal with this number of dimensions")
+      }
       arr_area[] <- NA
       for (ilon in seq(dim(arr)[1])){
         for (ilat in seq(dim(arr)[2])){
-          if (!is.na(arr[ilon,ilat,])){
+          if (!is.na(arr_tmp[ilon,ilat])){
             arr_area[ilon,ilat] <- area( lat[ilat], dx=dx, dy=dy )
           }
         }
