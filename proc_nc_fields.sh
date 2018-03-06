@@ -1,6 +1,6 @@
 #!/bin/bash
 
-proc_daily () {
+get_anom () {
 
 	##-----------------------------
 	## argument 1: base file name
@@ -10,14 +10,14 @@ proc_daily () {
 	echo "----------------------------"
 
 	## detrend and remove mean	
-	echo "detrending $1_DAY.nc..."
-	cdo detrend -selyear,1982/2011 -selname,gpp $1_DAY.nc $1_DETR_DAY_0mean.nc
+	echo "detrending $1_MON.nc..."
+	cdo detrend -selyear,1982/2016 -selname,gpp $1_MON.nc $1_DETR_MON_0mean.nc
 
 	## get daily anomalies, warning: this doesn't remove the linear trend
 	echo "get anomalies..."
-	cdo -ydaysub $1_DETR_DAY_0mean.nc -ydaymean $1_DETR_DAY_0mean.nc $1_DAY_ANOM.nc
+	cdo -ymonsub $1_DETR_MON_0mean.nc -ymonmean $1_DETR_MON_0mean.nc $1_MON_ANOM.nc
 
-	rm $1_DETR_DAY_0mean.nc
+	rm $1_DETR_MON_0mean.nc
 
 	return 0
 
@@ -33,16 +33,16 @@ proc_30y () {
 	echo "----------------------------"
 
 	## detrend at each gridcell
-	cdo detrend -selyear,1982/2011 -selname,gpp $1_ANN.nc $1_DETR.nc
-	cdo detrend -selyear,2001/2011 -selname,gpp $1_ANN.nc $1_DETR20XX.nc
+	cdo detrend -selyear,1982/2016 -selname,gpp $1_ANN.nc $1_DETR.nc
+	cdo detrend -selyear,2001/2016 -selname,gpp $1_ANN.nc $1_DETR20XX.nc
 
 	## get variance of annual GPP at each pixel
 	cdo timvar $1_DETR.nc $1_VAR.nc
 	cdo timvar $1_DETR20XX.nc $1_VAR20XX.nc
 
 	## get mean field
-	cdo timmean -selyear,1982/2011 -selname,gpp $1_ANN.nc $1_MEAN.nc
-	cdo timmean -selyear,2001/2011 -selname,gpp $1_ANN.nc $1_MEAN20XX.nc
+	cdo timmean -selyear,1982/2016 -selname,gpp $1_ANN.nc $1_MEAN.nc
+	cdo timmean -selyear,2001/2016 -selname,gpp $1_ANN.nc $1_MEAN20XX.nc
 
 	## get relative variance field
 	cdo div $1_VAR.nc $1_MEAN.nc $1_RELVAR.nc
@@ -60,12 +60,12 @@ proc_30y () {
 	cdo mulc,1e-15 tmp3.nc $1_GLOB.nc
 
 	## additional file
-	cdo selyear,1982/2011 $1_GLOB.nc $1_GLOB30yr.nc
-	cdo selyear,2001/2011 $1_GLOB.nc $1_GLOB20XX.nc
+	cdo selyear,1982/2016 $1_GLOB.nc $1_GLOB30yr.nc
+	cdo selyear,2001/2016 $1_GLOB.nc $1_GLOB20XX.nc
 
 	## detrend
-	cdo detrend -selyear,1982/2011 -selname,gpp $1_GLOB.nc $1_DETR_GLOB.nc
-	cdo detrend -selyear,2001/2011 -selname,gpp $1_GLOB.nc $1_DETR_GLOB20XX.nc
+	cdo detrend -selyear,1982/2016 -selname,gpp $1_GLOB.nc $1_DETR_GLOB.nc
+	cdo detrend -selyear,2001/2016 -selname,gpp $1_GLOB.nc $1_DETR_GLOB20XX.nc
 
 	## variance of global time series
 	cdo timvar $1_DETR_GLOB.nc $1_VAR_GLOB.nc
@@ -148,17 +148,18 @@ myhome=~
 ##----------------------------------------------------
 cd $myhome/data/pmodel_fortran_output/
 
-# ## reduce to 30 years and get annual total
-# echo "get annual totals..."
-# cdo yearsum -selyear,1982/2011 s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_ANN.nc
+## reduce to 30 years and get annual total
+echo "get annual totals..."
+cdo monsum  -selyear,1982/2016 s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_MON.nc
+cdo yearsum -selyear,1982/2016 s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_ANN.nc
 
-# ## process annual files
-# echo "process annual files..."
-# proc_30y gpp_pmodel_s0
+## process annual files
+echo "process annual files..."
+proc_30y gpp_pmodel_s0
 
 ## process daily files to get daily anomalies
 ln -svf s0_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s0_DAY.nc
-proc_daily gpp_pmodel_s0
+get_anom gpp_pmodel_s0
 
 cd $here
 
@@ -168,43 +169,47 @@ cd $here
 ##----------------------------------------------------
 cd $myhome/data/pmodel_fortran_output/
 
-# ## reduce to 30 years and get annual total
-# echo "get annual totals..."
-# cdo yearsum -selyear,1982/2011 s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_ANN.nc
-# cdo yearsum -selyear,1982/2011 s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_ANN.nc
-# cdo yearsum -selyear,1982/2011 s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_ANN.nc
+## reduce to 30 years and get annual total
+echo "get annual totals..."
+cdo yearsum -selyear,1982/2016 s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_ANN.nc
+cdo yearsum -selyear,1982/2016 s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_ANN.nc
+cdo yearsum -selyear,1982/2016 s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_ANN.nc
 
-# ## process fully
-# echo "process fully..."
-# proc_30y gpp_pmodel_s1a
-# proc_30y gpp_pmodel_s1b
-# proc_30y gpp_pmodel_s1c
+cdo monsum  -selyear,1982/2016 s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_MON.nc
+cdo monsum  -selyear,1982/2016 s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_MON.nc
+cdo monsum  -selyear,1982/2016 s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_MON.nc
 
-# echo "get ensemble means..."
+## process annual files
+echo "process annual files..."
+proc_30y gpp_pmodel_s1a
+proc_30y gpp_pmodel_s1b
+proc_30y gpp_pmodel_s1c
 
-# ## get mean annual GPP across S1a, S1b, S1c
-# cdo ensmean gpp_pmodel_s1a_MEAN.nc gpp_pmodel_s1b_MEAN.nc gpp_pmodel_s1c_MEAN.nc gpp_pmodel_s1_MEAN.nc 
+echo "get ensemble means..."
 
-# ## get mean variance S1a, S1b, S1c
-# cdo ensmean gpp_pmodel_s1a_VAR.nc gpp_pmodel_s1b_VAR.nc gpp_pmodel_s1c_VAR.nc gpp_pmodel_s1_VAR.nc
+## get mean annual GPP across S1a, S1b, S1c
+cdo ensmean gpp_pmodel_s1a_MEAN.nc gpp_pmodel_s1b_MEAN.nc gpp_pmodel_s1c_MEAN.nc gpp_pmodel_s1_MEAN.nc 
 
-# ## get mean relative variance S1a, S1b, S1c
-# cdo ensmean gpp_pmodel_s1a_RELVAR.nc gpp_pmodel_s1b_RELVAR.nc gpp_pmodel_s1c_RELVAR.nc gpp_pmodel_s1_RELVAR.nc
+## get mean variance S1a, S1b, S1c
+cdo ensmean gpp_pmodel_s1a_VAR.nc gpp_pmodel_s1b_VAR.nc gpp_pmodel_s1c_VAR.nc gpp_pmodel_s1_VAR.nc
 
-# ## get daily soil moisture limitation factor from comparing GPP to s0
-# echo "get daily soil moisture limitation factor..."
-# cdo div s1a_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1a_fapar3g_v2_global.d.soilmstress.nc
-# cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
-# cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
+## get mean relative variance S1a, S1b, S1c
+cdo ensmean gpp_pmodel_s1a_RELVAR.nc gpp_pmodel_s1b_RELVAR.nc gpp_pmodel_s1c_RELVAR.nc gpp_pmodel_s1_RELVAR.nc
+
+## get daily soil moisture limitation factor from comparing GPP to s0
+echo "get daily soil moisture limitation factor..."
+cdo div s1a_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1a_fapar3g_v2_global.d.soilmstress.nc
+cdo div s1b_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1b_fapar3g_v2_global.d.soilmstress.nc
+cdo div s1c_fapar3g_v2_global.d.gpp.nc s0_fapar3g_v2_global.d.gpp.nc s1c_fapar3g_v2_global.d.soilmstress.nc
 
 ## process daily files to get daily anomalies
 ln -svf s1a_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1a_DAY.nc
 ln -svf s1b_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1b_DAY.nc
 ln -svf s1c_fapar3g_v2_global.d.gpp.nc gpp_pmodel_s1c_DAY.nc
 
-proc_daily gpp_pmodel_s1a
-proc_daily gpp_pmodel_s1b
-proc_daily gpp_pmodel_s1c
+get_anom gpp_pmodel_s1a
+get_anom gpp_pmodel_s1b
+get_anom gpp_pmodel_s1c
 
 cd $here
 
