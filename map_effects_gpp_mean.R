@@ -33,12 +33,14 @@ source("~/.Rprofile")
             toplefttext=expression(paste("GPP, no soil moisture limitation")), 
             toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
             maxval=4600, color=cols
+            , file = "fig/map_gpp_nolimit.pdf"
             )
 
   plot_map( gpp_s1, lev = c( 0, 4500, 10 ), 
             toplefttext=expression(paste("GPP, with soil moisture limitation")), 
             toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
             maxval=4600, color=cols
+            , file = "fig/map_gpp_limit.pdf"
             )
 
   ##-----------------------------------------------------
@@ -48,6 +50,7 @@ source("~/.Rprofile")
             toplefttext=expression(paste("GPP loss")), 
             toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
             maxval=1900, color=cols
+            , file = "fig/map_gpp_loss_abs.pdf"
             )
 
   ##-----------------------------------------------------
@@ -57,4 +60,5 @@ source("~/.Rprofile")
             toplefttext=expression(paste("GPP loss")), 
             toprighttext=expression(paste("%")),
             color=cols, maxval = 100
+            , file = "fig/map_gpp_loss_rel.pdf"
             )

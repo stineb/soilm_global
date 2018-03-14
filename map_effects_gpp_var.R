@@ -31,6 +31,7 @@ plot_map( gpp_s1*1e-3, lev=c( 0, 40, 10 ),
       toplefttext=expression(paste("GPP aboslute variance")), 
       toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
       maxval = 200, color=cols
+      , file = "fig/map_gpp_var_s1.pdf" 
       )
 
 ##-----------------------------------------------------
@@ -40,6 +41,7 @@ plot_map( (gpp_s1 - gpp_s0)*1e-3, lev=c( -10, 10, 10 ),
           toplefttext=expression(paste("GPP change in absolute variance")), 
           toprighttext=expression(paste("kgC m"^{-2}, "yr"^{-1})),
           positive = FALSE, maxval=60, minval=-60
+          , file = "fig/map_gpp_var_diff.pdf"
           )
 
 

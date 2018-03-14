@@ -23,8 +23,8 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
   magn <- 4
   ncols <- 2
   nrows <- 1
-  widths <- rep(1.6*magn,ncols)
-  widths[2] <- 0.15*widths[1]
+  widths <- rep(1.4*magn,ncols)
+  widths[2] <- 0.17*widths[1]
   heights <- rep(magn,nrows)
   order <- matrix( c(1,2), nrows, ncols, byrow=FALSE)
 
@@ -62,7 +62,7 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
 
     out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=FALSE, maxval=maxval, minval=minval )
 
-    par( mar=c(3,3,1,1),xaxs="i", yaxs="i",las=1)
+    par( mar=c(3,3,3,1),xaxs="i", yaxs="i",las=1)
     image(
             lon, lat, 
             arr,
@@ -90,7 +90,7 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
     if (!is.na(toprighttext)) mtext( toprighttext, line=1, adj=1 )
 
     ## Color key
-    par( mar=c(3,3,1,1),xaxs="i", yaxs="i",las=1)
+    par( mar=c(3,3,3,1),xaxs="i", yaxs="i",las=1)
     out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=1 )
 
   if (!is.na(file)) dev.off()  

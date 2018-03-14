@@ -170,7 +170,8 @@ ampl_agg <- abind( ampl_agg_1a, ampl_agg_1b, ampl_agg_1c, along = 3 ) %>%
 save( ampl_agg, file="data/ampl_agg_jung.Rdata" )
 
 ## Plot scale dependence of soil moisture effect on GPP interannual variance
-par(las=1)
+pdf("fig/plot_jung.pdf", width = 5, height = 4 )
+par(las=1, mar=c(4,4,1,1))
 with( ampl_agg, plot( resnr, relvar_median, type="l", col="black", lwd=2, ylim=c(0,10), xaxt = "n", xlab="spatial resolution (degrees)", ylab="ampl. of rel. var. of ann. GPP" ) )
 axis( 1, at=seq(length(vec_res)), labels=as.character( vec_res ) )
 with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q01, relvar_q99), col=add_alpha("tomato2", 0.25), border = NA ) )
@@ -178,6 +179,7 @@ with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q05, relvar_q95), col=ad
 with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q10, relvar_q90), col=add_alpha("tomato2", 0.25), border = NA ) )
 with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q25, relvar_q75), col=add_alpha("tomato2", 0.25), border = NA ) )
 abline( h = 1.0, lty=3 )
+dev.off()
 
 
 
