@@ -19,9 +19,9 @@ load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC
 ##------------------------------------------------
 successcodes <- read_csv( "successcodes.csv" )
 
-## Exclude sites for which no fapar data is available and hence no model results
-df_error_fapar <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/error_missing_forcingdata_MODIS_FPAR_MCD15A3H_fluxnet2015.csv" ) ) 
-successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>% rename( error_fapar = error ) %>% filter( error_fapar == 0 )
+# ## Exclude sites for which no fapar data is available and hence no model results
+# df_error_fapar <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/error_missing_forcingdata_MODIS_FPAR_MCD15A3H_fluxnet2015.csv" ) ) 
+# successcodes <- successcodes %>% left_join( df_error_fapar, by="mysitename" ) %>% rename( error_fapar = error ) %>% filter( error_fapar == 0 )
 
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
@@ -87,7 +87,7 @@ if ( file.exists( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Da
   df_bess_gpp_v1 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv1.GPP.Daily.mat" ) )$data %>% as.data.frame()
   df_bess_gpp_v2 <- readMat( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/BESSv2.GPP.Daily.mat" ) )$data %>% as.data.frame()
 
-  meta <- read_csv( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/FLUXNET2015v1-3.csv"))
+  meta <- read_csv( paste0( myhome, "data/gpp_bess/sitescale_fluxnet/FLUXNET2015v1-3.csv") )
 
   colnames(df_bess_gpp_v1) <- meta$Name
   colnames(df_bess_gpp_v2) <- meta$Name
@@ -196,12 +196,12 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## soil moisture stress factor (derived from two different fitting methods, see knit...Rmd)
     nice <- nice %>%  mutate( meanalpha=meanalphaval ) %>%
-                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.1214, bpar=0.8855, cpar=0.125, dpar=0.75 ),
-                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.09242, bpar = 0.79194 ),  ## when fitting to ratio_obs_mod_pmodel
+                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.1214, bpar=0.8855, cpar=0.125, dpar=0.75 ), ## method for s1a
+                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.09242, bpar = 0.79194 ),  ## when fitting to ratio_obs_mod_pmodel, method for s1b
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.1366, bpar = 0.4850 ),  ## when fitting to fLUE
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.09534, bpar = 0.49812 ),  ## when fitting to fLUE, weighted by 1-fLUE
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.06289, bpar = 0.50539 ),  ## when fitting to fLUE, weighted by (1-fLUE)^2
-                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel
+                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel, method for s1c
                               )
 
 
