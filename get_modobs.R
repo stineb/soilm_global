@@ -102,11 +102,11 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
     if ( ncol(fluxnet[[sitename]]$ddf[[ outputset ]])>0 ){
 
       ## combine separate dataframes into single one 
-      df_site <-  fluxnet[[ sitename ]]$ddf$inp %>%
+      df_site <-  fluxnet[[ sitename ]]$ddf[[ outputset ]] %>%
         mutate( mysitename=sitename ) %>%
         left_join( fluxnet[[ sitename ]]$ddf$obs, by = "date" ) %>%
         left_join( fluxnet[[ sitename ]]$ddf$swc_obs, by = "date" ) %>%
-        left_join( fluxnet[[ sitename ]]$ddf[[ outputset ]], by = "date" )
+        left_join( fluxnet[[ sitename ]]$ddf$inp, by = "date" )
 
       ## rename 
       df_site <- df_site %>% rename( soilm_splash220 = wcont )

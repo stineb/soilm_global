@@ -3,6 +3,7 @@ library(raster)
 library(neuroim)
 library(igraph)
 library(fields) ## for image.plot() function
+library(dplyr)
 
 ## Define continents from SREX regions
 # SREX <- raster("/net/exo/landclim/data/dataset/SREX-Region-Masks/20120709/0.5deg_lat-lon_time-invariant/processed/netcdf/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
@@ -97,6 +98,14 @@ for (j in 1:6) {
 
 save( IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file="data/extremes.Rdata" )
 
+## sort 
+list_impacts <- list()
+for (k in 1:6){
+  df_impacts <- tibble( s0 = IMPACT_s0[[k]], s1a = IMPACT_s1a[[k]], s1b = IMPACT_s1b[[k]], s1c = IMPACT_s1c[[k]] ) %>%
+                arrange( desc(s1c) )  
+  list_impacts[[k]] <- df_impacts
+}
+
 ## Plot PDF of x>X
 cont <- c("NA", "SA", "EU", "AF", "RU", "AU")
 continent <- c("North America", "South America", "Europe", "Africa", "Russia", "Australia")
@@ -108,7 +117,7 @@ for (k in c(2,4,6)) {
   n0 <- length(IMPACT_s0[[k]])
   n1 <- length(IMPACT_s1c[[k]])
   n <- min(n0,n1)
-  plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC/yr", pch=16, col = rgb(1,0,0,1), axes=FALSE )
+  plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = rgb(1,0,0,1), axes=FALSE )
   polygon( c( sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, rev(sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
   points( sort( -1 * IMPACT_s0[[k]][1:n],  decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
   mtext( bquote( alpha["s1b"] == .(format( fit_s1b[[k]]$alpha, digits = 3) ) ), side=1, line=-4, adj=0.1 )
@@ -121,11 +130,18 @@ for (k in c(2,4,6)) {
 legend( "left", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.5 )
 dev.off()
 
+
+largestExtreme <- 0 * CC_s1$index
+largestExtreme[IMPACT_s1a[[1]]] <- 1
+apply(largestExtreme, 3, sum)
+apply(largestExtreme, 1:2, sum)
+
+
 ## Plot difference s1 - s0, absolute
 pdf("fig/extremes_s1-s0_abs.pdf",width=10)
 par( mfrow=c(2,3), las=1 )
 for (k in c(1,3,5,2,4,6)) {
-  plot( -1e-9*( IMPACT_s1b[[k]] - IMPACT_s0[[k]]), ylab="PgC/yr", pch=16, col = rgb(0,0,0,1) )
+  plot( -1e-9*( IMPACT_s1b[[k]] - IMPACT_s0[[k]]), ylab="PgC", pch=16, col = rgb(0,0,0,1) )
   mtext( continent[k], line=1, font=2, adj=0 )
   abline( h=0 )
 }
