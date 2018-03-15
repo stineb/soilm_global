@@ -109,9 +109,11 @@ for (k in 1:6){
 ## Plot PDF of x>X
 cont <- c("NA", "SA", "EU", "AF", "RU", "AU")
 continent <- c("North America", "South America", "Europe", "Africa", "Russia", "Australia")
-pdf( "fig/extremes.pdf", width=10 )
-par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-for (k in c(1,3,5,2,4,6)) {
+pdf( "fig/extremes.pdf", width=10, height = 3.5 )
+# par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+# for (k in c(1,3,5,2,4,6)) {
+par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+for (k in c(2,4,6)) {
   n0 <- length(IMPACT_s0[[k]])
   n1 <- length(IMPACT_s1c[[k]])
   n <- min(n0,n1)

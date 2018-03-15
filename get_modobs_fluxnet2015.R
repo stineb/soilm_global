@@ -1,14 +1,13 @@
-get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getvars=c( "gpp", "wcont", "aet", "pet" ), add_swcvars=TRUE, overwrite=overwrite, overwrite_dosites=overwrite_dosites, outdir="./" ){
+get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getvars=c( "gpp", "wcont", "aet", "pet" ), add_swcvars=TRUE, overwrite=overwrite, overwrite_dosites=overwrite_dosites ){
 
   # ## XXX debug------------------------------------------
   # simsuite = "fluxnet2015"
   # data = fluxnet
-  # outputset = c( "s14" )
+  # outputset = c( "s15" )
   # getvars   = c( "gpp", "wcont", "aet", "pet" )
   # add_swcvars = TRUE
   # overwrite   = TRUE
   # overwrite_dosites = TRUE
-  # outdir="./"
   # ##----------------------------------------------------
 
   source( "get_fluxdata_fluxnet2015.R" )
@@ -72,7 +71,6 @@ get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getv
   if (class(out)=="try-error") { 
     print( paste( "error opening", path ) )
     avl2015 <- FALSE
-    missing_2015 <- c( missing_2015, sitename )
   } else {
     ## Normalise observational soil moisture to within minimum (=0) and maximum (=1), and
     out$obs_swc <- out$obs_swc %>% mutate_at( vars(starts_with("SWC_F_MDS")), funs(norm_to_max(.)) )

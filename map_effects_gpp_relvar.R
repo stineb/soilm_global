@@ -3,6 +3,9 @@ library(RColorBrewer)
 source("plot_map.R")
 source("~/.Rprofile")
 
+## file name for figure
+filn <- "fig/map_gpp_relvar_diff.pdf"
+
 ##------------------------------------------------------------------------
 ## GPP interannual relative variance change
 ##------------------------------------------------------------------------
@@ -62,7 +65,6 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
   maxval = 35
   color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
   lev=c( 0, 4, 10 )
-  filn="fig/map_relvar.pdf"
 
   ## half degree resolution
   lon <- seq(-179.75, 179.75, 0.5)
@@ -85,7 +87,7 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
   a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
   b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )
 
-  # if (!is.na(filn)) pdf( filn, width=sum(widths), height=sum(heights) )
+  if (!is.na(filn)) pdf( filn, width=sum(widths), height=sum(heights) )
 
     panel <- layout(
               order,
@@ -171,7 +173,7 @@ plot_map( gpp_s1, lev=c( 0, 40, 10 ),
     abline( v=1, lty=3 )
     box()
 
-  # if (!is.na(filn)) dev.off()  
+  if (!is.na(filn)) dev.off()
 
 ## save vector amplification factor
 save( vec, file="data/ampl_relvar.Rdata" )
