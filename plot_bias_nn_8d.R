@@ -43,7 +43,6 @@ load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_8d_agg', '
 
 ## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
 load( "data/linearfit2_ratio.Rdata" )
-df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
 df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
 
 ## group data by fLUE
@@ -52,15 +51,8 @@ binwidth <- 1.0/nbins
 fvarbins <- seq( from=0, to=1, by=binwidth )
 xvals <- fvarbins[1:nbins]+binwidth/2
 
-df_dday_agg       <- df_dday_agg    %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
 df_dday_8d_agg    <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) ) %>%
                                         mutate( ifelse( is.nan(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ) )
-
-## load nice_agg to get data outside droughts
-load( "data/nice_nn_agg_lue_obs_evi.Rdata" )  # loads nice_agg
-load( "data/nice_nn_8d_agg_lue_obs_evi.Rdata" )   # loads nice_8d_agg
-nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid ), by="mysitename" )
-
 
 ##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE

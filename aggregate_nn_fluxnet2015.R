@@ -2,6 +2,7 @@ library(dplyr)
 library(R.matlab)
 library(readr)
 library(lubridate)
+library(tibble)
 
 syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
@@ -213,11 +214,11 @@ for (sitename in do.sites){
           print( "getting BESS data ...")
 
           ## get bess v1 data for this site
-          bess <- df_bess_gpp_v1 %>%  select( date, sitename ) %>%
+          bess <- df_bess_gpp_v1[ , is.element( names(df_bess_gpp_v1), c("date", sitename) )] %>%
                     setNames( c("date", "gpp_bess_v1")) 
 
           ## add bess v2 data for this site                                      
-          bess <- df_bess_gpp_v2 %>%  select( date, sitename ) %>%
+          bess <- df_bess_gpp_v2[ , is.element( names(df_bess_gpp_v2), c("date", sitename) )] %>%
                     setNames( c("date", "gpp_bess_v2")) %>%
                     right_join( bess, by="date" )
         
