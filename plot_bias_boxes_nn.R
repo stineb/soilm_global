@@ -7,7 +7,9 @@ require(tidyr)
 
 source( "analyse_modobs.R" )
 source( "remove_outliers.R" )
-source( "compl_df_flue_est.R" )
+# source( "compl_df_flue_est.R" )
+
+source("stress_quad_1sided.R")
 
 getpeak <- function( vec ) {
   vec  <- vec[!is.na(vec)]
@@ -47,10 +49,10 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_8d_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg'
 
-## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
-load( "data/linearfit2_ratio.Rdata" )
-df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
-df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
+# ## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
+# load( "data/linearfit2_ratio.Rdata" )
+# df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
+# df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
 
 ## define fLUE bins
 nbins <- 11
@@ -79,14 +81,50 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
 ##------------------------------------------------
 ## correct ratio with estimated fLUE
 ##------------------------------------------------
-df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel / flue_est_2,
-                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1 / flue_est_2,
-                                        ratio_obs_mod_bess_v2_corr = ratio_obs_mod_bess_v2 / flue_est_2
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+df_dday_agg    <- df_dday_agg    %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+df_dday_8d_agg <- df_dday_8d_agg %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+
+df_dday_agg <- df_dday_agg %>% mutate(  flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020 ) ) %>%
+                               mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel / flue_est_3,
+                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1 / flue_est_3,
+                                        ratio_obs_mod_bess_v2_corr = ratio_obs_mod_bess_v2 / flue_est_3
                                       )
  
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis / flue_est_2,
-                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_2 
+df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020 ) ) %>%
+                                     mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis / flue_est_3,
+                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_3 
                                             )
+
+## test 
+for (sitename in unique(df_dday_agg$mysitename)){
+  
+  ## point cloud
+  par( las=1, mar=c(2,4.5,2.5,rightmar) )
+  xlim <- c(0,1.1)
+  ylim <- c(0,2)
+  with( 
+    filter( df_dday_agg, mysitename == sitename ),  # necessary to get useful bins with plot()
+    plot( 
+      fvar, 
+      ratio_obs_mod_pmodel_corr, 
+      xlab="",
+      ylab="GPP observed / GPP modelled",
+      xlim=xlim,
+      ylim=ylim,
+      main="",
+      pch=16
+    )
+  )
+  
+  abline( h=1.0, lwd=0.5, lty=2 )
+  abline( v=1.0, lwd=0.5, lty=2 )
+  lines( c(-99,99), c(-99,99), col='black' )
+  mtext( paste("P-model ", sitename), line=0.5, adj=0, font=2, cex=0.8 )
+    
+}
+
 
 ##------------------------------------------------
 ## filter out some sites 

@@ -11,9 +11,6 @@ source( "../utilities/init_dates_dataframe.R" )
 source("calc_flue_est_alpha.R")
 source("stress_quad_1sided.R")
 
-# IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
-load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
-
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
@@ -201,7 +198,8 @@ for (sitename in do.sites){
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.1366, bpar = 0.4850 ),  ## when fitting to fLUE
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.09534, bpar = 0.49812 ),  ## when fitting to fLUE, weighted by 1-fLUE
                               # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.06289, bpar = 0.50539 ),  ## when fitting to fLUE, weighted by (1-fLUE)^2
-                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel, method for s1c
+                              # flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel, method for s1c
+                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020  )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
                               )
 
 

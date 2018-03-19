@@ -132,14 +132,20 @@ source("calc_flue_est_alpha.R")
 ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1a$linmod)[1], bpar=coef(linearfit_1a$linmod)[2], cpar=0.125, dpar=0.75 ) )
 
 ## evaluate bias~soil moisture
-nbins <- 5
+nbins <- 10
 binwidth <- 1/nbins
-alphabins <- seq( from=0, to=1, by=binwidth )
-soilmbins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+bins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
-bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins" )
-bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) )
+## boxplot with soil moisture bins
+bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1 )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") )
+
+## boxplot with fLUE bins
+bp <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1 )
+bp <- boxplot( log( bias_pmodel * flue_est ) ~ infvarbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") )
 ```
@@ -185,14 +191,14 @@ Above boxplot shows that the bias in predicted GPP is reduced but not resolved. 
 <!-- ddf <- ddf %>% mutate( flue_est = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1b$linmod)[1], bpar=coef(linearfit_1b$linmod)[2], cpar=0.125, dpar=0.75 ) ) -->
 
 <!-- ## evaluate bias~soil moisture -->
-<!-- nbins <- 5 -->
+<!-- nbins <- 4 -->
 <!-- binwidth <- 1/nbins -->
 <!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) -->
+<!-- bins <- seq( from=0, to=1, by=binwidth ) -->
+<!-- ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) ) -->
 
-<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins" ) -->
-<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) ) -->
+<!-- bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1 ) -->
+<!-- bp <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="royalblue3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.6), boxwex=0.03, axes=FALSE, xlim=c(0,1) ) -->
 <!-- abline( h=0.0, lty=3 ) -->
 <!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "royalblue3") ) -->
 <!-- ``` -->
@@ -244,15 +250,20 @@ This approach (II) effectively resolves the bias in P-model GPP predictions even
 ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
 
 ## re-define bins for evaluation
-nbins <- 5
+nbins <- 10
 binwidth <- 1/nbins
-alphabins <- seq( from=0, to=1, by=binwidth )
-soilmbins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) )
+bins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
 ## plot boxplot: bias by soil moisture bin
-bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins"  )
-bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) )
+bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+
+## plot boxplot: bias by fLUE bin
+bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
 ```
@@ -272,6 +283,89 @@ stress_quad_1sided_alpha <- function( x, alpha, x0, apar, bpar ){
 }
 ```
 Here, `x0` is set to 0.9. `alpha` is $\alpha$ (AET/PET, mean over daily values per site), and `x` is soil moisture.
+
+
+### Approach III: Fitting to the model bias with notorious sites
+
+Here, I'm doing the same as above, but now with a subset of sites that have a particularly strong sensitivity to low soil moisture.
+
+```{r get_linearfit3_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+notorious.sites <- c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM", "IT-SRo", "US-SRG", "US-SRM")
+
+## Use fixed point (soil moisture) above which stress function is 1 (no stress)
+x0_fix <- 0.9
+linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE )
+# linearfit2 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE )
+save( linearfit3, file="data/linearfit3_ratio.Rdata" )
+```
+
+This approach (III) seems to over-correct LUE at very low soil moisture, as shown by the boxplots below.
+```{r correct_linearfit3_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+## add estimated fLUE to ddf
+ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit3$linmod)[["(Intercept)"]], coef(linearfit3$linmod)[["meanalpha"]] ) )
+
+## re-define bins for evaluation
+nbins <- 4
+binwidth <- 1/nbins
+bins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+
+## plot boxplot: bias by soil moisture bin
+bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+
+## plot boxplot: bias by soil moisture bin
+bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  )
+bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+```
+
+Site-by-site evaluations of the different fits are shown in figures `fig/fit_to_bias_plot_per_site.pdf`, `fig/flue_est_per_site.pdf`, and `fig/gpp_per_site.pdf`.
+```{r plot_linearfit3}
+source("plot_linearfit3.R")
+plot_linearfit3( linearfit_1a, linearfit2, linearfit3, ddf, nice_agg )
+```
+
+
+<!-- XXX below doesn't work well -->
+
+<!-- ### Approach IV: Fitting to fLUE during droughts  -->
+
+<!-- Here, the soil moisture stress function is fitted to fLUE values during droughts. -->
+
+<!-- ```{r get_linearfit3_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
+<!-- x0_fix <- 0.9 -->
+<!-- linearfit4 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 ), target="fvar", monthly=FALSE, bin=TRUE, x0_fix=x0_fix, useweights = FALSE ) -->
+<!-- save( linearfit4, file="data/linearfit4_ratio.Rdata" ) -->
+<!-- ``` -->
+
+<!-- asdf -->
+<!-- ```{r correct_linearfit4_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit4$linmod)[["(Intercept)"]], coef(linearfit4$linmod)[["meanalpha"]] ) ) -->
+
+<!-- ## re-define bins for evaluation -->
+<!-- nbins <- 4 -->
+<!-- binwidth <- 1/nbins -->
+<!-- bins <- seq( from=0, to=1, by=binwidth ) -->
+<!-- ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) ) -->
+
+<!-- ## plot boxplot: bias by soil moisture bin -->
+<!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  ) -->
+<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") ) -->
+
+<!-- ## plot boxplot: bias by soil moisture bin -->
+<!-- bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  ) -->
+<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") ) -->
+<!-- ``` -->
 
 
 <!-- ### Approach III: Fitting to the model bias directly -->
@@ -295,15 +389,15 @@ Here, `x0` is set to 0.9. `alpha` is $\alpha$ (AET/PET, mean over daily values p
 <!-- ddf <- ddf %>% mutate( flue_est = stress_quad_1sided_alpha( soilm_mean, meanalpha, 0.9, apar=coef(linearfit3)["apar"], bpar=coef(linearfit3)["bpar"] ) ) -->
 
 <!-- ## re-define bins for evaluation -->
-<!-- nbins <- 5 -->
+<!-- nbins <- 4 -->
 <!-- binwidth <- 1/nbins -->
 <!-- alphabins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- soilmbins <- seq( from=0, to=1, by=binwidth ) -->
-<!-- ddf <- ddf %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) -->
+<!-- bins <- seq( from=0, to=1, by=binwidth ) -->
+<!-- ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) ) -->
 
 <!-- ## plot boxplot: bias by soil moisture bin -->
-<!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins"  ) -->
-<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
+<!-- bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins"  ) -->
+<!-- bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1) ) -->
 <!-- abline( h=0.0, lty=3 ) -->
 <!-- legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") ) -->
 <!-- ``` -->

@@ -15,13 +15,13 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
 
     ## Get median by bin and get fvar_vs_soilm for this site (used for clustering)
     if (bin){
-      nsbins <- 10
-      sbins <- seq( 0.0, 1.0, 1.0/nsbins )
-      xvals <- sbins[1:(length(sbins)-1)] + (sbins[2]-sbins[1])/2
-      df$insbin <- NULL
-      df <- df %>% mutate( insbin = cut( soilm_mean , breaks = sbins ) ) %>% group_by( insbin )
-      tmp <- df %>% summarise( median=median( fvar, na.rm=TRUE ) ) %>% complete( insbin, fill = list( median = NA ) ) %>% dplyr::select( median )
-      yvals <- unlist(tmp)[1:nsbins]
+      nbins <- 10
+      bins <- seq( 0.0, 1.0, 1.0/nbins )
+      xvals <- bins[1:(length(bins)-1)] + (bins[2]-bins[1])/2
+      df$inbin <- NULL
+      df <- df %>% mutate( inbin = cut( fvar , breaks = bins ) ) %>% group_by( inbin )
+      tmp <- df %>% summarise( median=median( fvar, na.rm=TRUE ) ) %>% complete( inbin, fill = list( median = NA ) ) %>% dplyr::select( median )
+      yvals <- unlist(tmp)[1:nbins]
       df_tmp <- data.frame( soilm_mean=xvals, fvar=yvals )
     } else {
       df_tmp <- df

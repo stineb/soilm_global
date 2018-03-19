@@ -113,8 +113,8 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_o
 ##------------------------------------------------
 ## filter out some sites 
 ##------------------------------------------------
-# df_dday_agg    <- df_dday_agg    %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
-# df_dday_8d_agg <- df_dday_8d_agg %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
+df_dday_agg    <- df_dday_agg    %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM", "IT-SRo", "US-SRG", "US-SRM") ) )
+df_dday_8d_agg <- df_dday_8d_agg %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
 
 ##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE
