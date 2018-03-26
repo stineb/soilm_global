@@ -1,4 +1,4 @@
-plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
+plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
 
   require(dplyr)
   require(lubridate)
@@ -10,7 +10,7 @@ plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, ddf=NULL, 
     ## aggregated to weekly
     ##-----------------------------------------------
     wdf <- nice_agg %>% mutate( gpp_pmodel1 = gpp_pmodel * flue_est_1, 
-                                gpp_pmodel2 = gpp_pmodel * flue_est_2, 
+                                gpp_pmodel2 = gpp_pmodel * flue_est_5, 
                                 gpp_pmodel3 = gpp_pmodel * flue_est_3 ) %>%
                         group_by( mysitename, week(date), year(date) ) %>% 
                         summarise( gpp_obs = mean(gpp_obs, na.rm=TRUE),
@@ -27,11 +27,11 @@ plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, ddf=NULL, 
     if (makepdf) print( paste( "plotting GPPobs and (GPP_Pmodel * fLUEest) vs. time for each site into file ", filn, "..." ) )
     if (makepdf) pdf( filn, width = 10, height = 6 )
     for (sitename in linearfit2$data$mysitename){
-
+      
       df_tmp <- dplyr::filter(wdf, mysitename==sitename)
-
-      if (nrow(df_tmp)>0){
-
+      
+      if (nrow(df_tmp)>0 && any(!is.na(df_tmp$gpp_obs))){
+        
         par(las=1)
         plot(  df_tmp$date, df_tmp$gpp_obs, xlab="time", ylab="GPP (gC m-2 d-1)", col=add_alpha("black", 0.5), pch=16 )
         lines( df_tmp$date, df_tmp$gpp_pmodel, col="grey50" )

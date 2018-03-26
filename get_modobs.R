@@ -16,7 +16,7 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
 
   # ## xxx debug ----------------
   # simsuite = "fluxnet2015"
-  # outputset = "s15"
+  # outputset = "s16"
   # add_swcvars=TRUE
   # add_swcvars_etbucket = FALSE
   # overwrite = TRUE
@@ -86,6 +86,7 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
                                       data              = fluxnet,
                                       getvars           = c( "gpp", "wcont", "aet", "pet" ), 
                                       add_swcvars       = add_swcvars, 
+                                      whc               = siteinfo$whc[which(siteinfo$mysitename==sitename)],
                                       overwrite         = TRUE, 
                                       overwrite_dosites = TRUE
                                       )
@@ -109,7 +110,7 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
         left_join( fluxnet[[ sitename ]]$ddf$inp, by = "date" )
 
       ## rename 
-      df_site <- df_site %>% rename( soilm_splash220 = wcont )
+      df_site <- df_site %>% rename( soilm_splash = wcont )
 
       df_fluxnet <- df_fluxnet %>% bind_rows( df_site )
     

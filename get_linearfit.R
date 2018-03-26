@@ -14,7 +14,7 @@ get_linearfit <- function( df, monthly=FALSE ){
     df <- df %>% mutate( moy = as.numeric( format( date, format="%m" ) ) )
 
     ## aggregate nice_agg to monthly values
-    df <- df %>% group_by( mysitename, year, moy ) %>% summarise( fvar = mean( fvar, na.rm=TRUE ), soilm_mean = mean( soilm_mean, na.rm=TRUE ) )    
+    df <- df %>% group_by( mysitename, year, moy ) %>% summarise( fvar = mean( fvar, na.rm=TRUE ), soilm_splash = mean( soilm_splash, na.rm=TRUE ) )    
   }
 
   ##------------------------------------------------------------------------
@@ -23,7 +23,7 @@ get_linearfit <- function( df, monthly=FALSE ){
   ## Bin values and get mean fLUE for soil moisture < 0.25 for each site (:= flue0)
   intervals <- seq(0, 1, 0.25)
   df$ininterval <- NULL
-  df <- df %>% mutate( ininterval = cut( soilm_mean , breaks = intervals ) ) %>% group_by( mysitename, ininterval )
+  df <- df %>% mutate( ininterval = cut( soilm_splash , breaks = intervals ) ) %>% group_by( mysitename, ininterval )
   df_flue0 <- df %>%  dplyr::summarise( y0=mean( fvar, na.rm=TRUE ) ) %>% 
                       complete( ininterval, fill = list( y0 = NA ) ) %>% 
                       dplyr::filter( ininterval=="(0,0.25]" )

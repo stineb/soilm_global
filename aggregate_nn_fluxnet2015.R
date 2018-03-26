@@ -26,7 +26,7 @@ do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysit
 ## Manual settings ----------------
 # do.sites   = "FR-Pue" # uncomment to run for single site
 simsuite = "fluxnet2015"
-outputset = "s15"
+outputset = "s16"
 nam_target = "lue_obs_evi"
 use_weights= FALSE    
 use_fapar  = FALSE
@@ -36,16 +36,11 @@ overwrite_8d    = TRUE
 verbose         = FALSE
 ##---------------------------------
 
-norm_to_max <- function( vec ){
-  vec <- ( vec - min( vec, na.rm=TRUE ) ) / ( max( vec, na.rm=TRUE ) - min( vec, na.rm=TRUE ) )
-  return( vec )
-}
-
 ##------------------------------------------------
 ## Get FLUXNET 2015 data and SOFUN outputs from site-scale simulations
 ## The file loaded here is created by 'get_modobs.R'
 ##------------------------------------------------
-datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v4.Rdata" )
+datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v5.Rdata" )
 load( datafilnam_flat )  # loads 'df_fluxnet'
 
 ##------------------------------------------------
@@ -145,7 +140,7 @@ for (sitename in do.sites){
     ## load site data and "detatch"
     ##------------------------------------------------
     nice <- filter( df_fluxnet, mysitename==sitename ) %>% 
-            select( date, temp, ppfd, vpd, prec, fpar, gpp_obs=GPP_NT_VUT_REF, starts_with("SWC_F_MDS"), soilm_splash220, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
+            select( date, temp, ppfd, vpd, prec, fpar, gpp_obs=GPP_NT_VUT_REF, starts_with("SWC_F_MDS"), soilm_splash, gpp_pmodel=gpp, aet_pmodel=aet, pet_pmodel=pet )
 
     ##------------------------------------------------
     ## Get NN-derived data (flue, is_drought_byvar) from separate file
@@ -272,7 +267,7 @@ for (sitename in do.sites){
                 "vpd",
                 "evi", 
                 "fpar", 
-                "soilm_splash220",
+                "soilm_splash",
                 "soilm_swbm",
                 "soilm_mean",
                 "soilm_obs_mean",

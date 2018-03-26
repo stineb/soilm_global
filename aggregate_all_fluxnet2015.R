@@ -26,7 +26,7 @@ do.sites <- filter( siteinfo, code!=0 )$mysitename
 ## Manual settings ----------------
 # do.sites   = "AR-Vir" # uncomment to run for single site
 simsuite = "fluxnet2015"
-outputset = "s15"
+outputset = "s16"
 overwrite_nice  = TRUE
 overwrite_8d    = TRUE
 verbose         = FALSE

@@ -1,14 +1,18 @@
-get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getvars=c( "gpp", "wcont", "aet", "pet" ), add_swcvars=TRUE, overwrite=overwrite, overwrite_dosites=overwrite_dosites ){
+get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getvars=c( "gpp", "wcont", "aet", "pet" ), add_swcvars=TRUE, whc=NA, overwrite=overwrite, overwrite_dosites=overwrite_dosites ){
 
   # ## XXX debug------------------------------------------
+  # sitename = "AR-SLu"
+  # whc = 268
   # simsuite = "fluxnet2015"
-  # data = fluxnet
-  # outputset = c( "s15" )
+  # data = list()
+  # outputset = c( "s16" )
   # getvars   = c( "gpp", "wcont", "aet", "pet" )
   # add_swcvars = TRUE
   # overwrite   = TRUE
   # overwrite_dosites = TRUE
   # ##----------------------------------------------------
+
+  require(readr)
 
   source( "get_fluxdata_fluxnet2015.R" )
   source( "get_meteo_fluxnet2015.R" )
@@ -46,8 +50,8 @@ get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getv
     } else {
 
       ## For comparison with FLUXNET 2015 data, normalise simulated soil moisture to between 0 and 1
-      print( "WARNING: Normalising simulated soil moisture to maximum (=1) for comparability with observational data.")
-      ddf_tmp <- ddf_tmp %>% mutate( wcont = wcont / max( wcont, na.rm = TRUE ) )  
+      print( "WARNING: Normalising simulated soil moisture to WHC given for each site.")
+      ddf_tmp <- ddf_tmp %>% mutate( wcont = wcont / whc )
 
       ## add to list
       ddf[[ iset ]] <- ddf_tmp
