@@ -69,20 +69,32 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
 ##------------------------------------------------
 ## correct ratio with estimated fLUE
 ##------------------------------------------------
-# df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel / flue_est_1,
-#                                         ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1 / flue_est_1
+# df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel,
+#                                         ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1
 #                                       )
 
-# df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis / flue_est_1,
-#                                               ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_1 
+# df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis,
+#                                               ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm 
 #                                             )
-df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel,
-                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1
-                                      )
 
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis,
-                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm 
+## Merge mean annual alpha (AET/PET) values into this dataframe
+# load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+# df_dday_agg    <- df_dday_agg    %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+# df_dday_8d_agg <- df_dday_8d_agg %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+
+df_dday_agg <- df_dday_agg %>% mutate(  flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020 ) ) %>%
+                               mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel, # / flue_est_3,
+                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1, # / flue_est_3,
+                                        ratio_obs_mod_bess_v2_corr = ratio_obs_mod_bess_v2 # / flue_est_3
+                                      )
+ 
+df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020 ) ) %>%
+                                     mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis, # / flue_est_3,
+                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm, # / flue_est_3,
+                                              ratio_obs_mod_mte_corr = ratio_obs_mod_mte # / flue_est_3 
                                             )
+
+
 
 ##------------------------------------------------
 ## filter out some sites 
@@ -93,6 +105,8 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_o
 ##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE
 ##------------------------------------------------
+
+ylim <- c(0,4)
 
 ## panel setup
 magn <- 3
@@ -125,9 +139,8 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     ## point cloud
     par( las=1, mar=c(2,4.5,2.5,rightmar) )
     xlim <- c(0,1.2)
-    ylim <- c(0,3)
     with( 
-          filter( df_dday_agg, ratio_obs_mod_pmodel_corr<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_agg, ratio_obs_mod_pmodel_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_pmodel_corr, 
@@ -163,9 +176,9 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
 
     }
 
-    ## use only data during droughts for stats
-    sub <- filter( df_dday_agg, is_drought_byvar==1 ) 
-    stats <- analyse_modobs( sub$ratio_obs_mod_pmodel_corr, sub$fvar, do.plot=FALSE )
+    # ## use only data during droughts for stats
+    # sub <- filter( df_dday_agg, is_drought_byvar==1 ) 
+    # stats <- analyse_modobs( sub$ratio_obs_mod_pmodel_corr, sub$fvar, do.plot=FALSE )
 
     # # write stats into plot
     # x0 <- 0.05*xlim[2]
@@ -210,9 +223,8 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   #---------------------------------------------------------
     par( las=1, mar=c(2,2,2.5,rightmar) )
     xlim <- c(0,1.2)
-    ylim <- c(0,3)
     with( 
-          filter( df_dday_8d_agg, ratio_obs_mod_modis_corr<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_modis_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_modis_corr, 
@@ -276,9 +288,8 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   #---------------------------------------------------------
     par( las=1, mar=c(2,4.5,2.5,rightmar) )
     xlim <- c(0,1.2)
-    ylim <- c(0,3)
     with( 
-          filter( df_dday_agg, ratio_obs_mod_bess_v1_corr<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_agg, ratio_obs_mod_bess_v1_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_bess_v1_corr, 
@@ -343,12 +354,11 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   #---------------------------------------------------------
     par( las=1, mar=c(2,2,2.5,rightmar) )
     xlim <- c(0,1.2)
-    ylim <- c(0,3)
     with( 
-          filter( df_dday_agg, ratio_obs_mod_bess_v2<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_agg, ratio_obs_mod_bess_v2_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
-                      ratio_obs_mod_bess_v2, 
+                      ratio_obs_mod_bess_v2_corr, 
                       xlab="",
                       ylab="",
                       xlim=xlim,
@@ -410,9 +420,8 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   #---------------------------------------------------------
     par( las=1, mar=c(4,4.5,2.5,rightmar) )
     xlim <- c(0,1.2)
-    ylim <- c(0,3)
     with( 
-          filter( df_dday_8d_agg, ratio_obs_mod_vpm_corr<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_vpm_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
                       ratio_obs_mod_vpm_corr, 
@@ -477,10 +486,10 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   #---------------------------------------------------------
     par( las=1, mar=c(4,2,2.5,rightmar) )
     with( 
-          filter( df_dday_8d_agg, ratio_obs_mod_mte<5 ),  # necessary to get useful bins with heatscatter()
+          filter( df_dday_8d_agg, ratio_obs_mod_mte_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
                       fvar, 
-                      ratio_obs_mod_mte, 
+                      ratio_obs_mod_mte_corr, 
                       xlab="fLUE",
                       ylab="",
                       xlim=c(0,1.2),
@@ -543,7 +552,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
   # #---------------------------------------------------------
   #   par( las=1, mar=c(4,4.5,2.5,0) )
   #   with( 
-  #         filter( df_dday_8d_agg, ratio_obs_mod_rf<5 ),  # necessary to get useful bins with heatscatter()
+  #         filter( df_dday_8d_agg, ratio_obs_mod_rf<10 ),  # necessary to get useful bins with heatscatter()
   #         plot( 
   #               fvar, 
   #               ratio_obs_mod_rf, 
@@ -596,7 +605,7 @@ dev.off()
 #   
 #     par( las=1, mar=c(4,4.5,2.5,0) )
 #     with( 
-#       filter( sub, ratio_obs_mod_mte<5 ),  # necessary to get useful bins with heatscatter()
+#       filter( sub, ratio_obs_mod_mte<10 ),  # necessary to get useful bins with heatscatter()
 #       plot( 
 #         fvar, 
 #         ratio_obs_mod_mte, 

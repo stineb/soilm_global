@@ -6,7 +6,9 @@ require(tidyr)
 
 source( "analyse_modobs.R" )
 source( "remove_outliers.R" )
-source( "compl_df_flue_est.R" )
+# source( "compl_df_flue_est.R" )
+
+source("stress_quad_1sided.R")
 
 getpeak <- function( vec ) {
   vec  <- vec[!is.na(vec)]
@@ -46,10 +48,10 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_8d_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg'
 
-## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
-load( "data/linearfit2_ratio.Rdata" )
-df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
-df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
+# ## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
+# load( "data/linearfit2_ratio.Rdata" )
+# df_dday_agg       <- compl_df_flue_est( df_dday_agg   , linearfit2, x0_fix=0.9  )
+# df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
 
 ## define fLUE bins
 nbins <- 11
@@ -78,18 +80,51 @@ nice_agg <- nice_agg %>% left_join( dplyr::select( siteinfo, mysitename, classid
 ##------------------------------------------------
 ## correct ratio with estimated fLUE
 ##------------------------------------------------
-df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel / flue_est_2,
-                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1 / flue_est_2,
-                                        ratio_obs_mod_bess_v2_corr = ratio_obs_mod_bess_v2 / flue_est_2
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+df_dday_agg    <- df_dday_agg    %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+df_dday_8d_agg <- df_dday_8d_agg %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+
+df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr  = ifelse( flue_est_2>0, ratio_obs_mod_pmodel  / flue_est_2, NA ),
+                                        ratio_obs_mod_bess_v1_corr = ifelse( flue_est_2>0, ratio_obs_mod_bess_v1 / flue_est_2, NA ),
+                                        ratio_obs_mod_bess_v2_corr = ifelse( flue_est_2>0, ratio_obs_mod_bess_v2 / flue_est_2, NA )
                                       )
  
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis / flue_est_2,
-                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_2 
+df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ifelse( flue_est_2>0, ratio_obs_mod_modis / flue_est_2, NA ),
+                                              ratio_obs_mod_vpm_corr   = ifelse( flue_est_2>0, ratio_obs_mod_vpm / flue_est_2, NA ) 
                                             )
 
-# ##------------------------------------------------
-# ## filter out some sites 
-# ##------------------------------------------------
+## test 
+for (sitename in unique(df_dday_agg$mysitename)){
+  
+  ## point cloud
+  xlim <- c(0,1.1)
+  ylim <- c(0,2)
+  with( 
+    filter( df_dday_agg, mysitename == sitename ),  # necessary to get useful bins with plot()
+    plot( 
+      fvar, 
+      ratio_obs_mod_pmodel_corr, 
+      xlab="",
+      ylab="GPP observed / GPP modelled",
+      xlim=xlim,
+      ylim=ylim,
+      main="",
+      pch=16
+    )
+  )
+  
+  abline( h=1.0, lwd=0.5, lty=2 )
+  abline( v=1.0, lwd=0.5, lty=2 )
+  lines( c(-99,99), c(-99,99), col='black' )
+  mtext( paste("P-model ", sitename), line=0.5, adj=0, font=2, cex=0.8 )
+    
+}
+
+
+##------------------------------------------------
+## filter out some sites 
+##------------------------------------------------
 # df_dday_agg    <- df_dday_agg    %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
 # df_dday_8d_agg <- df_dday_8d_agg %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
 # 
@@ -135,15 +170,15 @@ rightmar <- 1
 heights <- 1.2*c(0.6*magn,0.6*magn,0.68*magn)
 order <- matrix(seq(ncols*nrows),nrows,ncols,byrow=TRUE)
 
-pdf( "fig/bias_vs_fvar_boxes.pdf", width=sum(widths), height=sum(heights) )
-
-  panel <- layout(
-                  order,
-                  widths=widths,
-                  heights=heights,
-                  TRUE
-                  )
-  # layout.show(panel)
+# pdf( "fig/bias_vs_fvar_boxes.pdf", width=sum(widths), height=sum(heights) )
+# 
+#   panel <- layout(
+#                   order,
+#                   widths=widths,
+#                   heights=heights,
+#                   TRUE
+#                   )
+#   # layout.show(panel)
 
   #---------------------------------------------------------
   # P-model
@@ -490,56 +525,8 @@ pdf( "fig/bias_vs_fvar_boxes.pdf", width=sum(widths), height=sum(heights) )
   #   boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
   #   abline( h=1.0, lwd=0.5, lty=2 )
 
-dev.off()
+# dev.off()
 
-
-# #---------------------------------------------------------
-# # MTE by site
-# #---------------------------------------------------------
-# for (sitename in unique(df_dday_mte_agg$mysitename)){
-# 
-#   sub <- filter( df_dday_mte_agg, mysitename == sitename )
-# 
-#   if (nrow(sub)>5){
-#   
-#     par( las=1, mar=c(4,4.5,2.5,0) )
-#     with( 
-#       filter( sub, ratio_obs_mod_mte<5 ),  # necessary to get useful bins with plot()
-#       plot( 
-#         fvar, 
-#         ratio_obs_mod_mte, 
-#         xlab="fLUE",
-#         ylab="GPP observed / GPP modelled",
-#         xlim=c(0,1.2),
-#         ylim=ylim,
-#         cex=1.2,
-#         pch=16,
-#         col=add_alpha("black", 1),
-#         main=""
-#       ) 
-#       
-#     )
-#     abline( h=1.0, lwd=0.5, lty=2 )
-#     abline( v=1.0, lwd=0.5, lty=2 )
-#     lines( c(-99,99), c(-99,99), col='black' )
-#     mtext( sitename, line=1, adj=0.5 )
-#     
-#     sub <- sub %>% mutate( inbin = cut( fvar, breaks = fvarbins ) )
-#     
-#     xvals <- fvarbins[1:nbins]+binwidth/2
-#     df_bins <- try( sub %>% group_by( inbin ) %>% filter( !is.na(inbin) & !is.na(ratio_obs_mod_mte) ) %>% 
-#       summarise( peak=getpeak(ratio_obs_mod_mte), uhalfpeak=getuhalfpeak( ratio_obs_mod_mte, lev=0.75 ), lhalfpeak=getlhalfpeak( ratio_obs_mod_mte, lev=0.75 ) ) %>%
-#       complete( inbin, fill = list( peak = NA ) ) %>% 
-#       mutate( mids=xvals ))
-#     
-#     if (class(df_bins)!="try-error"){
-#       rect( xvals-0.02, df_bins$lhalfpeak, xvals+0.02, df_bins$uhalfpeak, col = add_alpha("red", 0.5), border = NA )
-#       with( df_bins, points( xvals, peak, pch='-', col="red", cex=2 ) )
-#     }
-#     
-#   }
-#   
-# }
 
 
 
