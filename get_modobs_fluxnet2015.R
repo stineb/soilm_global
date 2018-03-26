@@ -12,6 +12,7 @@ get_modobs_fluxnet2015 <- function( sitename, simsuite, outputset, data=NA, getv
 
   source( "get_fluxdata_fluxnet2015.R" )
   source( "get_meteo_fluxnet2015.R" )
+  source( "get_daily_modelout.R" )
 
   avl2015 <- TRUE
   avl_mod <- rep( TRUE, length(outputset) )

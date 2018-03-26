@@ -2,7 +2,6 @@ syshome <- Sys.getenv( "HOME" )
 source( paste( syshome, "/.Rprofile", sep="" ) )
 
 require(dplyr)
-require(LSD)
 require(tidyr)
 
 source( "analyse_modobs.R" )
@@ -88,16 +87,45 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_o
                                               ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_2 
                                             )
 
-##------------------------------------------------
-## filter out some sites 
-##------------------------------------------------
+# ##------------------------------------------------
+# ## filter out some sites 
+# ##------------------------------------------------
 # df_dday_agg    <- df_dday_agg    %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
 # df_dday_8d_agg <- df_dday_8d_agg %>% filter( !( mysitename %in% c("US-Var", "IT-Noe", "FR-Pue", "AU-Stp") ) )
+# 
+# for (sitename in unique(df_dday_agg$mysitename)){
+# 
+#   #---------------------------------------------------------
+#   # P-model
+#   #---------------------------------------------------------
+#     ## point cloud
+#     par( las=1, mar=c(2,4.5,2.5,rightmar) )
+#     xlim <- c(0,1.1)
+#     ylim <- c(0,2)
+#     with( 
+#           filter( df_dday_agg, ratio_obs_mod_pmodel_corr<5 & mysitename==sitename ),  # necessary to get useful bins with plot()
+#           plot( 
+#                 fvar, 
+#                 ratio_obs_mod_pmodel_corr, 
+#                 xlab="",
+#                 ylab="GPP observed / GPP modelled",
+#                 xlim=xlim,
+#                 ylim=ylim,
+#                 main="",
+#                 pch=16
+#               )
+#         )
+#     abline( h=1.0, lwd=0.5, lty=2 )
+#     abline( v=1.0, lwd=0.5, lty=2 )
+#     lines( c(-99,99), c(-99,99), col='black' )
+#     mtext( paste0( "P-model - ", sitename ), line=0.5, adj=0, font=2, cex=0.8 )
+# 
+# }
+
 
 ##------------------------------------------------
 ## GPPobs/GPPmod vs. fLUE
 ##------------------------------------------------
-
 ## panel setup
 magn <- 3
 nrows <- 3

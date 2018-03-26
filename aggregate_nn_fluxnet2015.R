@@ -185,7 +185,12 @@ for (sitename in do.sites){
                       mutate( dry = ifelse(alpha<0.95, TRUE, FALSE) ) %>%
 
                       ## get LUE and remove outliers
-                      mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) )
+                      mutate( lue_obs_fpar = remove_outliers( gpp_obs / ( ppfd * fpar ), coef=3.0 ) ) %>%
+
+                      ## get mean observational soil moisture across different depths (if available)
+                      mutate( soilm_obs_mean = apply( select( ., starts_with("SWC_F_MDS") ), 1, FUN = mean, na.rm = TRUE ) ) %>%
+                      mutate( soilm_obs_mean = ifelse( is.nan(soilm_obs_mean), NA, soilm_obs_mean ) )
+
 
 
     ## fLUE estimate based on current soil moisture and average AET/PET
@@ -271,6 +276,7 @@ for (sitename in do.sites){
                 "soilm_splash220",
                 "soilm_swbm",
                 "soilm_mean",
+                "soilm_obs_mean",
                 "bias_pmodel", 
                 "ratio_obs_mod_pmodel", 
                 "lue_obs_evi", 

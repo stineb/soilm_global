@@ -35,8 +35,8 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
   source("get_modobs_fluxnet2015.R")
 
   siteinfo   <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_", simsuite, "_sofun.csv" ) )
-  datafilnam <- paste0( "data/modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v4" )
-  datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v4" )
+  datafilnam <- paste0( "data/modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v5" )
+  datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v5" )
 
   ## Exclude sites for which no fapar data is available
   df_error_fapar <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/error_missing_forcingdata_MODIS_FPAR_MCD15A3H_fluxnet2015.csv" ) ) 

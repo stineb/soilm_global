@@ -41,6 +41,11 @@ rmse <- function( mod, obs ){
   return(rmse)
 }
 
+myboxplot <- function( ... ){
+  bp <- boxplot( ..., staplewex = 0.0, whisklty = 1 )
+  return(bp)
+}
+
 ##------------------------------------------------
 ## Manual
 ##------------------------------------------------
@@ -69,46 +74,32 @@ df_dday_agg       <- df_dday_agg    %>% mutate( insoilmbin = cut( as.numeric(soi
 df_dday_8d_agg    <- df_dday_8d_agg %>% mutate( insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) %>%
                                         mutate( ifelse( is.nan(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ) )
 
-df_rmse <- df_dday_agg %>% group_by( insoilmbin ) %>%
-                           summarise( rmse_s0 = rmse( gpp_pmodel, gpp_obs ), rmse_s1 = rmse( gpp_pmodel * flue_est_2, gpp_obs ) ) %>%
-                           mutate( reduction = (1 - rmse_s1 / rmse_s0 ) * 100 )
+df_binned <- df_dday_agg %>% group_by( insoilmbin ) %>%
+                             summarise( rmse_s0 = rmse( gpp_pmodel, gpp_obs ), rmse_s1 = rmse( gpp_pmodel * flue_est_2, gpp_obs ),
+                                        meanbias_bess_v1 = median(bias_bess_v1, na.rm=TRUE),
+                                        meanbias_bess_v2 = median(bias_bess_v2, na.rm=TRUE),
+                                        meanbias_pmodel = median(bias_pmodel, na.rm=TRUE)
+                                       ) %>%
+                             mutate( reduction = (1 - rmse_s1 / rmse_s0 ) * 100 )
+
+df_8d_binned <- df_dday_8d_agg %>% group_by( insoilmbin ) %>%
+                                   summarise( meanbias_modis = median(bias_modis, na.rm=TRUE),
+                                              meanbias_vpm = median(bias_vpm, na.rm=TRUE),
+                                              meanbias_mte = median(bias_mte, na.rm=TRUE)
+                                             )
 
 ##------------------------------------------------
 ## correct ratio with estimated fLUE
 ##------------------------------------------------
-df_dday_agg <- df_dday_agg %>% mutate(  ratio_obs_mod_pmodel_corr = ratio_obs_mod_pmodel / flue_est_2,
-                                        ratio_obs_mod_bess_v1_corr = ratio_obs_mod_bess_v1 / flue_est_2,
-                                        ratio_obs_mod_bess_v2_corr = ratio_obs_mod_bess_v2 / flue_est_2
+df_dday_agg <- df_dday_agg %>% mutate(  normdbias_bin0_pmodel = bias_pmodel / df_binned$meanbias_pmodel[nrow(df_binned)],
+                                        normdbias_bin0_bess_v1 = bias_bess_v1 / df_binned$meanbias_bess_v1[nrow(df_binned)],
+                                        normdbias_bin0_bess_v2 = bias_bess_v2 / df_binned$meanbias_bess_v2[nrow(df_binned)]
                                       )
  
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis_corr = ratio_obs_mod_modis / flue_est_2,
-                                              ratio_obs_mod_vpm_corr = ratio_obs_mod_vpm / flue_est_2 
+df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  normdbias_bin0_modis = bias_modis / df_8d_binned$meanbias_modis[nrow(df_binned)],
+                                              normdbias_bin0_vpm = bias_vpm / df_8d_binned$meanbias_vpm[nrow(df_binned)],
+                                              normdbias_bin0_mte = bias_mte / df_8d_binned$meanbias_mte[nrow(df_binned)]
                                             )
-
-## quick and dirty
-# bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(soilmbins[1:nbins]+1/nbins*0.35), boxwex=0.052, xlim=c(0,1), ylab="log of obs./mod.", xlab="soil moisture bins"  )
-# bp4 <- boxplot( log( bias_pmodel * flue_est ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(soilmbins[1:nbins]+1/nbins*0.65), boxwex=0.052, axes=FALSE, xlim=c(0,1) )
-# abline( h=0.0, lty=3 )
-# legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-
-# ## get distribution of bias within bins
-# df_bins <- df_dday_agg %>%  group_by( insoilmbin ) %>% filter( !is.na(insoilmbin) & !is.na(ratio_obs_mod_pmodel_corr) ) %>% 
-#                             summarise(  peak_corr      = getpeak(      ratio_obs_mod_pmodel_corr ), 
-#                                         uhalfpeak_corr = getuhalfpeak( ratio_obs_mod_pmodel_corr, lev=0.75 ), 
-#                                         lhalfpeak_corr = getlhalfpeak( ratio_obs_mod_pmodel_corr, lev=0.75 ),
-#                                         peak           = getpeak(      ratio_obs_mod_pmodel      ), 
-#                                         uhalfpeak      = getuhalfpeak( ratio_obs_mod_pmodel     , lev=0.75 ), 
-#                                         lhalfpeak      = getlhalfpeak( ratio_obs_mod_pmodel     , lev=0.75 )
-#                                          ) %>%
-#                             mutate( mids=xvals )
-
-# ## plot uncorrected  
-# rect( xvals-0.04, df_bins$lhalfpeak, xvals+0.00, df_bins$uhalfpeak, col = add_alpha("red", 0.5), border = NA )
-# with( df_bins, points( xvals-0.02, peak, pch='-', col="red", cex=2 ) )
-
-# ## plot CORRECTED distribution within bins
-# rect( xvals-0.0, df_bins$lhalfpeak_corr, xvals+0.04, df_bins$uhalfpeak_corr, col = add_alpha("springgreen3", 0.5), border = NA )
-# with( df_bins, points( xvals+0.02, peak_corr, pch='-', col="springgreen3", cex=2 ) )
 
 ##------------------------------------------------
 ## filter out some sites 
@@ -146,8 +137,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(2,4.5,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_pmodel ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_pmodel ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="tomato", 
                     las=1, 
@@ -158,11 +149,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.052, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="observed/modelled", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_pmodel * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_pmodel * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -185,8 +176,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(2,2,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_modis ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_modis ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="tomato", 
                     las=1, 
@@ -197,11 +188,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.052, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="log of obs./mod.", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_modis * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_modis * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -223,8 +214,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(2,4.5,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_bess_v1 ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_bess_v1 ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="tomato", 
                     las=1, 
@@ -235,11 +226,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.052, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="log of obs./mod.", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_bess_v1 * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_bess_v1 * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -261,8 +252,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(2,2,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_bess_v2 ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_bess_v2 ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="tomato", 
                     las=1, 
@@ -273,11 +264,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.052, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="log of obs./mod.", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_bess_v2 * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_bess_v2 * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -299,8 +290,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(4,4.5,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_vpm ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_vpm ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="tomato", 
                     las=1, 
@@ -311,11 +302,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.055, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="log of obs./mod.", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_vpm * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_vpm * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -337,8 +328,8 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
     par( las=1, mar=c(4,2,2.5,rightmar) )
     xlim <- c(0,1)
     ylim <- c(0,6)
-    bp1 <- boxplot( 
-                    ( bias_mte ) ~ insoilmbin, 
+    bp1 <- myboxplot( 
+                    ( normdbias_bin0_mte ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="tomato", 
                     las=1, 
@@ -349,11 +340,11 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
                     boxwex=0.055, 
                     xlim=xlim, 
                     ylim=ylim,
-                    ylab="log of obs./mod.", 
+                    ylab="GPP modelled / observed, norm.", 
                     xlab="soil moisture bins"  
                     )
-    bp4 <- boxplot( 
-                    ( bias_mte * flue_est_2 ) ~ insoilmbin, 
+    bp4 <- myboxplot( 
+                    ( normdbias_bin0_mte * flue_est_2 ) ~ insoilmbin, 
                     data=df_dday_8d_agg, 
                     col="springgreen3", 
                     las=1, 
@@ -410,7 +401,7 @@ pdf( "fig/bias_vs_fvar_boxes_soilm.pdf", width=sum(widths), height=sum(heights) 
   #   #---------------------------------------------------------
   #   par( las=1, mar=c(4,0,2.5,2), xpd=FALSE )
 
-  #   boxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
+  #   myboxplot( filter( df_dday_8d_agg, dday < 0 )$ratio_obs_mod_rf, outline=FALSE, ylim=ylim, axes=FALSE, col='grey50' )
   #   abline( h=1.0, lwd=0.5, lty=2 )
 
 dev.off()
@@ -424,8 +415,8 @@ pdf("fig/bias_vs_fvar_boxes_soilm_pmodel.pdf", width = 6, height = 5 )
   par( las=1, mar=c(4,4.5,2.5,rightmar) )
   xlim <- c(0,1)
   ylim <- c(0,6.3)
-  bp1 <- boxplot( 
-                  ( bias_pmodel ) ~ insoilmbin, 
+  bp1 <- myboxplot( 
+                  ( normdbias_bin0_pmodel ) ~ insoilmbin, 
                   data=df_dday_agg, 
                   col="tomato", 
                   las=1, 
@@ -436,13 +427,13 @@ pdf("fig/bias_vs_fvar_boxes_soilm_pmodel.pdf", width = 6, height = 5 )
                   boxwex=0.052, 
                   xlim=xlim, 
                   ylim=ylim,
-                  ylab="GPP modelled / observed", 
+                  ylab="GPP modelled / observed, norm.", 
                   xlab="soil moisture bins",
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_1 ) ~ insoilmbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_1 ) ~ insoilmbin, 
                   data=df_dday_agg, 
                   col="springgreen1", 
                   las=1, 
@@ -457,8 +448,8 @@ pdf("fig/bias_vs_fvar_boxes_soilm_pmodel.pdf", width = 6, height = 5 )
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_2 ) ~ insoilmbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_2 ) ~ insoilmbin, 
                   data=df_dday_agg, 
                   col="springgreen3", 
                   las=1, 
@@ -473,8 +464,8 @@ pdf("fig/bias_vs_fvar_boxes_soilm_pmodel.pdf", width = 6, height = 5 )
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_3 ) ~ insoilmbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_3 ) ~ insoilmbin, 
                   data=df_dday_agg, 
                   col="springgreen4", 
                   las=1, 
@@ -503,8 +494,8 @@ pdf("fig/bias_vs_fvar_boxes_flue_pmodel.pdf", width = 6, height = 5 )
   par( las=1, mar=c(4,4.5,2.5,rightmar) )
   xlim <- c(0,1)
   ylim <- c(0,20)
-  bp1 <- boxplot( 
-                  ( bias_pmodel ) ~ infvarbin, 
+  bp1 <- myboxplot( 
+                  ( normdbias_bin0_pmodel ) ~ infvarbin, 
                   data=df_dday_agg, 
                   col="tomato", 
                   las=1, 
@@ -515,13 +506,13 @@ pdf("fig/bias_vs_fvar_boxes_flue_pmodel.pdf", width = 6, height = 5 )
                   boxwex=0.052, 
                   xlim=xlim, 
                   ylim=ylim,
-                  ylab="GPP modelled / observed", 
+                  ylab="GPP modelled / observed, norm.", 
                   xlab="fLUE bins",
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_1 ) ~ infvarbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_1 ) ~ infvarbin, 
                   data=df_dday_agg, 
                   col="springgreen1", 
                   las=1, 
@@ -536,8 +527,8 @@ pdf("fig/bias_vs_fvar_boxes_flue_pmodel.pdf", width = 6, height = 5 )
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_2 ) ~ infvarbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_2 ) ~ infvarbin, 
                   data=df_dday_agg, 
                   col="springgreen3", 
                   las=1, 
@@ -552,8 +543,8 @@ pdf("fig/bias_vs_fvar_boxes_flue_pmodel.pdf", width = 6, height = 5 )
                   staplewex = 0.0,
                   whisklty = 1
                   )
-  bp4 <- boxplot( 
-                  ( bias_pmodel * flue_est_3 ) ~ infvarbin, 
+  bp4 <- myboxplot( 
+                  ( normdbias_bin0_pmodel * flue_est_3 ) ~ infvarbin, 
                   data=df_dday_agg, 
                   col="springgreen4", 
                   las=1, 
