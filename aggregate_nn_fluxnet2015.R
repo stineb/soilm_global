@@ -255,6 +255,7 @@ for (sitename in do.sites){
                 "gpp_nn_act", 
                 "gpp_nn_pot",
                 "fvar",
+                "fvar_smooth",
                 "flue_est_1",
                 "flue_est_2",
                 "flue_est_3",

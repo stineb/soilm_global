@@ -2,9 +2,9 @@ plot_fit_fvar_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit
 
   require(dplyr)
   require(lubridate)
+  require(zoo)
 
   if (!is.null(ddf)){
-
     ##-----------------------------------------------
     ## Time series: fLUE and fLUEest from approaches I, II, and III
     ##-----------------------------------------------
@@ -18,12 +18,14 @@ plot_fit_fvar_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit
       if (nrow(df_tmp)>0){
         
         par(las=1)
-        plot(  df_tmp$date, df_tmp[[ "fvar" ]], type="l", xlab="time", ylab="fLUE", col="black", ylim = c(0.2, 1.2) )
+        plot(  df_tmp$date, df_tmp[[ "fvar" ]], type="l", xlab="time", ylab="fLUE", col="grey70", ylim = c(0.0, 1.2) )
+        lines( df_tmp$date, df_tmp[[ "fvar_smooth" ]], col="black" )
         lines( df_tmp$date, df_tmp$flue_est_1, col="springgreen3" )
         lines( df_tmp$date, df_tmp$flue_est_5, col="royalblue3" )
         lines( df_tmp$date, df_tmp$flue_est_3, col="tomato" )
         title( sitename )
         legend( "bottomright", c("approach I", "approach II", "approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
+        abline( h=0.2, lty=3 )
       }
     }
     if (makepdf) dev.off()

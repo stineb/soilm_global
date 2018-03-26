@@ -120,7 +120,7 @@ nice_agg <- nice_agg %>% mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, a
 nbins <- 4
 binwidth <- 1/nbins
 bins <- seq( from=0, to=1, by=binwidth )
-nice_agg <- nice_agg %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+nice_agg <- nice_agg %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
 ## boxplot with soil moisture bins
 bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=nice_agg, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1 )
@@ -200,7 +200,7 @@ nice_agg <- nice_agg %>% mutate( flue_est_2 = stress_quad_1sided_alpha( soilm_me
 nbins <- 4
 binwidth <- 1/nbins
 bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
 ## plot boxplot: bias by soil moisture bin
 bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
@@ -270,7 +270,7 @@ nice_agg <- nice_agg %>% mutate( flue_est_3 = stress_quad_1sided_alpha( soilm_me
 nbins <- 4
 binwidth <- 1/nbins
 bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
 ## plot boxplot: bias by soil moisture bin
 bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylim=c(-3,5), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
@@ -349,7 +349,7 @@ nice_agg <- nice_agg %>% mutate( flue_est_5 = stress_exp_alpha( soilm_mean, mean
 nbins <- 4
 binwidth <- 1/nbins
 bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
 
 ## plot boxplot: bias by soil moisture bin
 bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
@@ -418,22 +418,22 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate( inbin = cut( fvar, breaks = fvarbin
 ## Bias for each model separately
 ## pmodel
 par(las=1)
-boxplot( ratio_obs_mod_pmodel ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_pmodel ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "P-model", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_modis ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "MODIS", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_vpm ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "VPM", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "BESS", line=0.5, adj = 0, font=2 )
 ```
@@ -463,22 +463,22 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis   = ratio_obs_
 ##------------------------------------------------
 ## Bias for each model separately after "normalisation"
 ## pmodel
-boxplot( ratio_obs_mod_pmodel ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_pmodel ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "P-model, normalised", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_modis ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "MODIS, normalised", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_vpm ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "VPM, normalised", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=filter(df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "BESS, normalised", line=0.5, adj = 0, font=2 )
 ```
@@ -522,22 +522,22 @@ df_dday_8d_agg <- df_dday_8d_agg %>% as_tibble() %>%
 ## approach II
 
 ## pmodel
-boxplot( ratio_obs_mod_pmodel_corr_2 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_pmodel_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "P-model, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis_corr_2 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_modis_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "MODIS, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm_corr_2 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_vpm_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "VPM, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1_corr_2 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_bess_v1_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "BESS, norm., corr. II", line=0.5, adj = 0, font=2 )
 ```
@@ -545,22 +545,22 @@ mtext( "BESS, norm., corr. II", line=0.5, adj = 0, font=2 )
 And now with appraoch III
 ```{r}
 ## pmodel
-boxplot( ratio_obs_mod_pmodel_corr_3 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_pmodel_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "P-model, norm., corr. III", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis_corr_3 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_modis_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "MODIS, norm., corr. III", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm_corr_3 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_vpm_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "VPM, norm., corr. III", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1_corr_3 ~ inbin, data=filter( df_dday_8d_agg, mysitename!="US-Var"), xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
+boxplot( ratio_obs_mod_bess_v1_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
 abline( h=1, lty=3 )
 mtext( "BESS, norm., corr. III", line=0.5, adj = 0, font=2 )
 ```
@@ -590,19 +590,19 @@ df_dday_8d_agg_pooled <- tmp0 %>% left_join( tmp1, by = c("mysitename", "date", 
 ##------------------------------------------------
 ## Quick plots IV:
 ##------------------------------------------------
-boxplot( ratio_obs_mod ~ inbin, data = filter( df_dday_8d_agg_pooled, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_1 ~ inbin, data = filter( df_dday_8d_agg_pooled, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod_corr_1 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, norm., corr. I", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_2 ~ inbin, data = filter( df_dday_8d_agg_pooled, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod_corr_2 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, norm., corr. II", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_3 ~ inbin, data = filter( df_dday_8d_agg_pooled, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod_corr_3 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, norm., corr. III", line=0.5, adj = 0, font=2 )
 ```
@@ -620,11 +620,11 @@ df_dday_8d_agg_pooled2 <- df_dday_8d_agg_pooled %>% select( mysitename, inbin, r
 ##------------------------------------------------
 ## Quick plots V:
 ##------------------------------------------------
-boxplot( ratio_obs_mod ~ inbin, data = filter( df_dday_8d_agg_pooled, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, norm.", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr ~ inbin, data = filter( df_dday_8d_agg_pooled2, mysitename != "US-Var"), outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+boxplot( ratio_obs_mod_corr ~ inbin, data = df_dday_8d_agg_pooled2, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
 abline( h=1, lty=3 )
 mtext( "Pooled models, norm., pooled corr.", line=0.5, adj = 0, font=2 )
 ```

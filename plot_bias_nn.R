@@ -57,8 +57,8 @@ binwidth <- 1.0/nbins
 fvarbins <- seq( from=0, to=1, by=binwidth )
 xvals <- fvarbins[1:nbins]+binwidth/2
 
-df_dday_agg       <- df_dday_agg    %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) )
-df_dday_8d_agg    <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar, breaks = fvarbins ) ) %>%
+df_dday_agg       <- df_dday_agg    %>% mutate( infvarbin = cut( fvar_smooth, breaks = fvarbins ) )
+df_dday_8d_agg    <- df_dday_8d_agg %>% mutate( infvarbin = cut( fvar_smooth, breaks = fvarbins ) ) %>%
                                         mutate( ifelse( is.nan(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ) )
 
 ## load nice_agg to get data outside droughts
@@ -142,7 +142,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_agg, ratio_obs_mod_pmodel_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_pmodel_corr, 
                       xlab="",
                       ylab="GPP observed / GPP modelled",
@@ -226,7 +226,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_8d_agg, ratio_obs_mod_modis_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_modis_corr, 
                       xlab="",
                       ylab="",
@@ -291,7 +291,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_agg, ratio_obs_mod_bess_v1_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_bess_v1_corr, 
                       xlab="",
                       ylab="GPP observed / GPP modelled",
@@ -357,7 +357,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_agg, ratio_obs_mod_bess_v2_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_bess_v2_corr, 
                       xlab="",
                       ylab="",
@@ -423,7 +423,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_8d_agg, ratio_obs_mod_vpm_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_vpm_corr, 
                       xlab="fLUE",
                       ylab="GPP observed / GPP modelled",
@@ -488,7 +488,7 @@ pdf( "fig/bias_vs_fvar.pdf", width=sum(widths), height=sum(heights) )
     with( 
           filter( df_dday_8d_agg, ratio_obs_mod_mte_corr<10 ),  # necessary to get useful bins with heatscatter()
           heatscatter( 
-                      fvar, 
+                      fvar_smooth, 
                       ratio_obs_mod_mte_corr, 
                       xlab="fLUE",
                       ylab="",
