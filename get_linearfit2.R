@@ -137,6 +137,6 @@ get_linearfit2 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   ##------------------------------------------------------------------------
   linmod <- lm( y0 ~ meanalpha, data=dplyr::filter( out, y0 > -1 ) )
   
-  return( list( linmod=linmod, data=out ) )
+  return( list( linmod=linmod, data=dplyr::filter( out, y0 > -1 ) ) )
 
 }

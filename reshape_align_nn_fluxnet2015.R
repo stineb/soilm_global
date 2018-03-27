@@ -46,9 +46,11 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                 "alpha", 
                 "gpp_pmodel",
                 "bias_pmodel", 
+                "bias_pmodel_diff", 
                 "ratio_obs_mod_pmodel",
                 "gpp_bess_v1", "gpp_bess_v2",
                 "bias_bess_v1", "bias_bess_v2",
+                "bias_bess_v1_diff", "bias_bess_v2_diff",
                 "ratio_obs_mod_bess_v1", "ratio_obs_mod_bess_v2"
               )
 
@@ -68,18 +70,23 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                     "alpha", 
                     "gpp_modis", 
                     "bias_modis", 
+                    "bias_modis_diff", 
                     "ratio_obs_mod_modis",
                     "gpp_vpm",
                     "bias_vpm",
+                    "bias_vpm_diff",
                     "ratio_obs_mod_vpm", 
                     "gpp_mte", 
                     "bias_mte", 
+                    "bias_mte_diff", 
                     "ratio_obs_mod_mte",
                     "gpp_pmodel", 
                     "bias_pmodel", 
+                    "bias_pmodel_diff", 
                     "ratio_obs_mod_pmodel",
                     "gpp_bess_v1", "gpp_bess_v2",
                     "bias_bess_v1", "bias_bess_v2",
+                    "bias_bess_v1_diff", "bias_bess_v2_diff",
                     "ratio_obs_mod_bess_v1", "ratio_obs_mod_bess_v2"
                   )
 

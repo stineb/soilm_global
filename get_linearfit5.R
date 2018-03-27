@@ -1,6 +1,6 @@
 ## This works like get_linearfit5.R but with a different functional form of the soil moisture stress function: 2-parameter exponential instead of parabolic
 
-get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
+get_yintersect <- function( df, target="fvar", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
 
   require(dplyr)
   require(tidyr)
@@ -58,7 +58,7 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
                       eq,
                       data=df_tmp,
                       start=list( y0=0.0, curve=3.0 ),
-                      lower=c( -10.0,  1.0 ),
+                      lower=c( -5,  1.0 ),
                       upper=c( 1.0, 99.0  ),
                       algorithm="port"
                       )

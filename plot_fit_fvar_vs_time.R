@@ -18,8 +18,8 @@ plot_fit_fvar_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit
       if (nrow(df_tmp)>0){
         
         par(las=1)
-        plot(  df_tmp$date, df_tmp[[ "fvar" ]], type="l", xlab="time", ylab="fLUE", col="grey70", ylim = c(0.0, 1.2) )
-        lines( df_tmp$date, df_tmp[[ "fvar_smooth" ]], col="black" )
+        plot(  df_tmp$date, df_tmp[[ "fvar" ]], type="l", xlab="time", ylab="fLUE", col="black", ylim = c(0.0, 1.2) )
+        # lines( df_tmp$date, df_tmp[[ "fvar_smooth" ]], col="black" )
         lines( df_tmp$date, df_tmp$flue_est_1, col="springgreen3" )
         lines( df_tmp$date, df_tmp$flue_est_5, col="royalblue3" )
         lines( df_tmp$date, df_tmp$flue_est_3, col="tomato" )
