@@ -372,27 +372,27 @@ kable(df_coef, caption = "Overview of parameters determining y0 as a function of
 
 Site-by-site evaluations of the three different soil moisture stress functions are shown below.
 
-<!-- ### Stress vs. soil moisture -->
+### Stress vs. soil moisture
 
-<!-- ```{r plot_site_vs_soilmoisture} -->
-<!-- source("plot_fit_vs_soilmoist.R") -->
-<!-- plot_fit_vs_soilmoist( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = TRUE ) -->
-<!-- ``` -->
+```{r plot_site_vs_soilmoisture}
+source("plot_fit_vs_soilmoist.R")
+plot_fit_vs_soilmoist( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = FALSE )
+```
 
-<!-- ### Stress and fLUE vs. time -->
+### Stress and fLUE vs. time
 
-<!-- ```{r plot_site_fit_fvar_vs_time} -->
-<!-- source("plot_fit_fvar_vs_time.R") -->
-<!-- load("data/nice_nn_agg_lue_obs_evi.Rdata") -->
-<!-- plot_fit_fvar_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = TRUE ) -->
-<!-- ``` -->
+```{r plot_site_fit_fvar_vs_time}
+source("plot_fit_fvar_vs_time.R")
+load("data/nice_nn_agg_lue_obs_evi.Rdata")
+plot_fit_fvar_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = TRUE )
+```
 
-<!-- ### GPP, P-model original and corrected -->
+### GPP, P-model original and corrected
 
-<!-- ```{r plot_site_fit_gpp_vs_time} -->
-<!-- source("plot_fit_gpp_vs_time.R") -->
-<!-- plot_fit_gpp_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf=TRUE ) -->
-<!-- ``` -->
+```{r plot_site_fit_gpp_vs_time}
+source("plot_fit_gpp_vs_time.R")
+plot_fit_gpp_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf=TRUE )
+```
 
 
 ## Universal stress function?

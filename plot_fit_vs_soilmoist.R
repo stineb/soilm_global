@@ -18,6 +18,8 @@ plot_fit_vs_soilmoist <- function( linearfit1, linearfit_mid, linearfit_strong, 
       df_tmp <- dplyr::filter(ddf, mysitename==sitename)
       data_tmp <- dplyr::filter( linearfit6$data, mysitename==sitename )
 
+      classid <- unique(df_tmp$classid)
+
       par(las=1)
       plot( df_tmp$soilm_mean, df_tmp[[ "fvar" ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("black", 0.2) )
       abline( h=1.0, lwd=0.5 )
@@ -36,12 +38,12 @@ plot_fit_vs_soilmoist <- function( linearfit1, linearfit_mid, linearfit_strong, 
                   from=0.0, to=1.0, col='springgreen3', add=TRUE, lwd=2 )
 
         ## Curve from approach II (mid)
-        mycurve(  function(x) stress_quad_1sided_alpha( x, 
+        mycurve(  function(x) stress_quad_1sided_alpha_grasstree( x, 
                                                         dplyr::select( data_tmp, meanalpha), 
                                                         x0=0.9, 
                                                         c(coef(linearfit_mid$linmod_tree)[["(Intercept)"]],coef(linearfit_mid$linmod_grass)[["(Intercept)"]]), 
                                                         c(coef(linearfit_mid$linmod_tree)[["meanalpha"]],coef(linearfit_mid$linmod_grass)[["meanalpha"]]),
-                                                        dplyr::select( data_tmp, classid)
+                                                        classid
                                                        ),
                   from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
 

@@ -20,11 +20,11 @@ plot_fit_fvar_vs_time <- function( linearfit1, linearfit_mid, linearfit_strong, 
         par(las=1)
         plot(  df_tmp$date, df_tmp[[ "fvar" ]], type="l", xlab="time", ylab="fLUE", col="black", ylim = c(0.0, 1.2) )
         # lines( df_tmp$date, df_tmp[[ "fvar_smooth" ]], col="black" )
-        lines( df_tmp$date, df_tmp$flue_est_1, col="springgreen3" )
-        lines( df_tmp$date, df_tmp$flue_est_2, col="royalblue3" )
-        lines( df_tmp$date, df_tmp$flue_est_3, col="tomato" )
+        lines( df_tmp$date, df_tmp$flue_est_I, col="springgreen3" )
+        lines( df_tmp$date, df_tmp$flue_est_IV, col="royalblue3" )
+        lines( df_tmp$date, df_tmp$flue_est_II, col="tomato" )
         title( sitename )
-        legend( "bottomright", c("approach I", "approach II", "approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
+        legend( "bottomright", c("approach I", "approach IV", "approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
         abline( h=0.2, lty=3 )
         
       }
