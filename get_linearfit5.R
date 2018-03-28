@@ -99,6 +99,8 @@ get_linearfit5 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   
   require(dplyr)
   require(tidyr)
+  
+  siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
 
   beta_min <- 0.01
 
@@ -135,10 +137,13 @@ get_linearfit5 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   ##------------------------------------------------------------------------
   ## Fit linear models
   ##------------------------------------------------------------------------
-  linmod_y0 <- lm( y0 ~ meanalpha, data=out )
-  # linmod_curve <- lm( curve ~ y0, data=out )
-  linmod_curve <- lm( curve ~ meanalpha, data=out )
+  out <- out %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
+
+  linmod_y0_tree  <- lm( y0 ~ meanalpha, data=dplyr::filter( out, !(classid %in% c("GRA", "CSH") ) ) )
+  linmod_y0_grass <- lm( y0 ~ meanalpha, data=dplyr::filter( out,   classid %in% c("GRA", "CSH") ) )
+
+  linmod_curve   <- lm( curve ~ meanalpha, data=out )
   
-  return( list( linmod_curve=linmod_curve, linmod_y0=linmod_y0, data=out ) )
+  return( list( linmod_curve=linmod_curve, linmod_y0_tree=linmod_y0_tree, linmod_y0_grass=linmod_y0_grass, data=out ) )
 
 }

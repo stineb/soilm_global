@@ -11,6 +11,7 @@ source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep
 source( "../utilities/init_dates_dataframe.R" )
 source("calc_flue_est_alpha.R")
 source("stress_quad_1sided.R")
+source("stress_exp.R")
 
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
@@ -208,11 +209,21 @@ for (sitename in do.sites){
     ## Calculate soil moiture stress based on two alternative functions
     ##------------------------------------------------
     ## soil moisture stress factor (derived from two different fitting methods, see knit...Rmd)
+    myclassid <- unique( nice$classid )
+    mymeanalpha <- meanalphaval
     nice <- nice %>%  mutate( meanalpha=meanalphaval ) %>%
-                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.2617121, bpar=0.384491, cpar=0.125, dpar=0.75 ), ## method for s1a
-                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = c( 0.1785247, 0.1007749), bpar = c(0.450165384, 0.006306946), classid=classid ),  ## when fitting to ratio_obs_mod_pmodel, method for s1b
-                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.4798, bpar = 0.8329 )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
+                      mutate( flue_est_I  = calc_flue_est_alpha( soilm_mean, mymeanalpha, apar=0.2617121, bpar=0.5668587, cpar=0.125, dpar=0.75 ), ## method for s1a
+                              flue_est_II = stress_quad_1sided_alpha( soilm_mean, mymeanalpha, x0 = 0.9, apar = 0.0606651, bpar = 0.5090085 ),  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
+                              flue_est_III = stress_quad_1sided_alpha( soilm_mean, mymeanalpha, x0 = 0.9, apar = 0.05151085, bpar = 0.1920844 )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
                               )
+
+    nice$flue_est_IV <- rep( NA, nrow( nice ))
+    nice$flue_est_V  <- rep( NA, nrow( nice ))
+    for (idx in seq(nrow(nice))){
+      nice$flue_est_IV[idx] <- stress_quad_1sided_alpha_grasstree( nice$soilm_mean[idx], mymeanalpha, x0 = 0.9, apar = c( 0.1785247, 0.1007749 ), bpar = c(0.4501654, 0.0063069), classid=myclassid )  ## when fitting to ratio_obs_mod_pmodel, method for s1b
+      nice$flue_est_V[idx]  <- stress_exp_alpha_grasstree( nice$soilm_mean[idx], mymeanalpha, c(0.2067347, 0.0056745), c( 0.5543440, 0.4116154), 6.170356, -3.797436, classid=myclassid ) ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites)
+    }
+
 
     # ##------------------------------------------------
     # ## Add NN-based fLUE estimate
@@ -309,9 +320,11 @@ for (sitename in do.sites){
                 "gpp_nn_pot",
                 "fvar",
                 "fvar_smooth",
-                "flue_est_1",
-                "flue_est_2",
-                "flue_est_3",
+                "flue_est_I",
+                "flue_est_II",
+                "flue_est_III",
+                "flue_est_IV",
+                "flue_est_V",
                 "is_drought_byvar", 
                 "gpp_pmodel",
                 "aet_pmodel",
