@@ -1,4 +1,4 @@
-plot_fit_vs_soilmoist <- function( linearfit1, linearfit2, linearfit3, linearfit5, linearfit6, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
+plot_fit_vs_soilmoist <- function( linearfit1, linearfit_mid, linearfit_strong, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
 
   require(dplyr)
   require(lubridate)
@@ -35,24 +35,22 @@ plot_fit_vs_soilmoist <- function( linearfit1, linearfit2, linearfit3, linearfit
                                                     ),
                   from=0.0, to=1.0, col='springgreen3', add=TRUE, lwd=2 )
 
-        ## Curve from approach 2
+        ## Curve from approach II (mid)
         mycurve(  function(x) stress_quad_1sided_alpha( x, 
                                                         dplyr::select( data_tmp, meanalpha), 
                                                         x0=0.9, 
-                                                        coef(linearfit2$linmod)[["(Intercept)"]], 
-                                                        coef(linearfit2$linmod)[["meanalpha"]] 
+                                                        c(coef(linearfit_mid$linmod_tree)[["(Intercept)"]],coef(linearfit_mid$linmod_grass)[["(Intercept)"]]), 
+                                                        c(coef(linearfit_mid$linmod_tree)[["meanalpha"]],coef(linearfit_mid$linmod_grass)[["meanalpha"]]),
+                                                        dplyr::select( data_tmp, classid)
                                                        ),
                   from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
 
-        ## Curve from approach 6
-        apar <- c( coef(linearfit6$linmod_tree)[["(Intercept)"]], coef(linearfit6$linmod_grass)[["(Intercept)"]] )
-        bpar <- c( coef(linearfit6$linmod_tree)[["meanalpha"]], coef(linearfit6$linmod_grass)[["meanalpha"]] )
+        ## Curve from approach III (strong)
         mycurve(  function(x) stress_quad_1sided_alpha( x, 
                                                         dplyr::select( data_tmp, meanalpha), 
                                                         x0=0.9, 
-                                                        apar, 
-                                                        bpar,
-                                                        dplyr::select( data_tmp, classid)
+                                                        coef(linearfit_strong$linmod)[["(Intercept)"]], 
+                                                        coef(linearfit_strong$linmod)[["meanalpha"]]
                                                         ),
                   from=0.0, to=1.0, col='tomato', add=TRUE, lwd=2 )
 

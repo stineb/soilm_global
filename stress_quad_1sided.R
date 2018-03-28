@@ -6,6 +6,8 @@ stress_quad_1sided <- function( x, x0, beta ){
 
 stress_quad_1sided_alpha <- function( x, alpha, x0, apar, bpar, classid=NA ){
 
+  ## the first element is for non-grasses
+
   if (is.na(classid)){
 
     y0 <- apar + bpar * alpha

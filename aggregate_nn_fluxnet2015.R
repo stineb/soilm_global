@@ -47,7 +47,8 @@ load( datafilnam_flat )  # loads 'df_fluxnet'
 ## Load data for NN predictions
 ##------------------------------------------------
 ## load the NN model object
-load( "data/nn_caret.Rdata" )
+load( "data/nn_caret_GRA.Rdata" )
+load( "data/rf.Rdata" )
 load( "data/ai_fluxnet2015.Rdata" )  # loads 'df_ai'
 load( "data/wtd_fluxnet2015.Rdata" )  # loads 'df_wtd'
 siteinfo <- read_csv( "data/siteinfo_fluxnet2015_sofun.csv" )
@@ -200,63 +201,61 @@ for (sitename in do.sites){
     ## fLUE estimate based on current soil moisture and average AET/PET
     meanalphaval <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
 
+    ## add vegetation type to dataframe
+    nice <- nice %>% left_join( select( siteinfo, mysitename, classid ), by="mysitename")
+
     ##------------------------------------------------
     ## Calculate soil moiture stress based on two alternative functions
     ##------------------------------------------------
     ## soil moisture stress factor (derived from two different fitting methods, see knit...Rmd)
     nice <- nice %>%  mutate( meanalpha=meanalphaval ) %>%
-                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.1214, bpar=0.8855, cpar=0.125, dpar=0.75 ), ## method for s1a
-                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.09242, bpar = 0.79194 ),  ## when fitting to ratio_obs_mod_pmodel, method for s1b
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.1366, bpar = 0.4850 ),  ## when fitting to fLUE
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.09534, bpar = 0.49812 ),  ## when fitting to fLUE, weighted by 1-fLUE
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.06289, bpar = 0.50539 ),  ## when fitting to fLUE, weighted by (1-fLUE)^2
-                              # flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel, method for s1c
-                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020  )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
+                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.2617121, bpar=0.384491, cpar=0.125, dpar=0.75 ), ## method for s1a
+                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = c( 0.1785247, 0.1007749), bpar = c(0.450165384, 0.006306946), classid=classid ),  ## when fitting to ratio_obs_mod_pmodel, method for s1b
+                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.4798, bpar = 0.8329 )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
                               )
 
-    ##------------------------------------------------
-    ## Add NN-based fLUE estimate
-    ##------------------------------------------------
-    ## add mean aridity index (P/PET) to dataframe
-    nice <- nice %>% left_join( select( df_ai, mysitename, ai ), by="mysitename" )
+    # ##------------------------------------------------
+    # ## Add NN-based fLUE estimate
+    # ##------------------------------------------------
+    # ## add mean aridity index (P/PET) to dataframe
+    # nice <- nice %>% left_join( select( df_ai, mysitename, ai ), by="mysitename" )
 
-    ## add water table depth to dataframe
-    nice <- nice %>% left_join( df_wtd, by="mysitename" )
+    # ## add water table depth to dataframe
+    # nice <- nice %>% left_join( df_wtd, by="mysitename" )
 
-    ## add vegetation type to dataframe
-    nice <- nice %>% left_join( select( siteinfo, mysitename, classid ), by="mysitename")
+    # ## predict the values
+    # tmp <- select( nice, mysitename, date, soilm_splash, classid, ai, wtd, fpar) %>%
+    #        mutate( GRA = ifelse( classid=="GRA", TRUE, FALSE ),
+    #                SAV = ifelse( classid=="SAV", TRUE, FALSE ),
+    #                ENF = ifelse( classid=="ENF", TRUE, FALSE ),
+    #                WET = ifelse( classid=="WET", TRUE, FALSE ),
+    #                WSA = ifelse( classid=="WSA", TRUE, FALSE ),
+    #                EBF = ifelse( classid=="EBF", TRUE, FALSE ),
+    #                DBF = ifelse( classid=="DBF", TRUE, FALSE ),
+    #                CSH = ifelse( classid=="CSH", TRUE, FALSE )
+    #               ) %>%
+    #        mutate(  classid = as.factor(classid), 
+    #                 GRA = as.factor(GRA),
+    #                 SAV = as.factor(SAV),
+    #                 ENF = as.factor(ENF),
+    #                 WET = as.factor(WET),
+    #                 WSA = as.factor(WSA),
+    #                 EBF = as.factor(EBF),
+    #                 DBF = as.factor(DBF),
+    #                 CSH = as.factor(CSH)
+    #                 )
+    # na_idxs <- apply( tmp, 2, FUN=function (x) which(is.na(x)) ) %>% unlist() %>% unique()
+    # tmp <- tmp[-na_idxs,]
+    # print(  apply( tmp, 2, FUN=function (x) sum(is.na(x)) ) )
+    
+    # ## predict
+    # vals <- as.vector( predict( rf, tmp ) )
+    # tmp <- tmp %>% mutate( flue_est_nn = vals )
+    # nice <- nice %>% left_join( select( tmp, mysitename, date, flue_est_nn ), by = c("mysitename", "date") )
 
-    ## predict the values
-    tmp <- select( nice, mysitename, date, soilm_splash, classid, ai, wtd, fpar) %>%
-           mutate( GRA = ifelse( classid=="GRA", TRUE, FALSE ),
-                   SAV = ifelse( classid=="SAV", TRUE, FALSE ),
-                   ENF = ifelse( classid=="ENF", TRUE, FALSE ),
-                   WET = ifelse( classid=="WET", TRUE, FALSE ),
-                   WSA = ifelse( classid=="WSA", TRUE, FALSE ),
-                   EBF = ifelse( classid=="EBF", TRUE, FALSE ),
-                   DBF = ifelse( classid=="DBF", TRUE, FALSE ),
-                   CSH = ifelse( classid=="CSH", TRUE, FALSE )
-                  ) %>%
-           mutate(  classid = as.factor(classid), 
-                    GRA = as.factor(GRA),
-                    SAV = as.factor(SAV),
-                    ENF = as.factor(ENF),
-                    WET = as.factor(WET),
-                    WSA = as.factor(WSA),
-                    EBF = as.factor(EBF),
-                    DBF = as.factor(DBF),
-                    CSH = as.factor(CSH)
-                    )
-    na_idxs <- apply( tmp, 2, FUN=function (x) which(is.na(x)) ) %>% unlist() %>% unique()
-    tmp <- tmp[-na_idxs,]
-    print(  apply( tmp, 2, FUN=function (x) sum(is.na(x)) ) )
-    vals <- as.vector( predict( nn_caret, tmp ) )
-    tmp <- tmp %>% mutate( flue_est_nn = vals )
-    nice <- nice %>% left_join( select( tmp, mysitename, date, flue_est_nn), by = c("mysitename", "date") )
-
-    ## test plot
-    with(nice, plot(date, fvar, type="l", main=sitename))
-    with(nice, lines(date, flue_est_nn, col="red"))
+    # ## test plot
+    # with(nice, plot(date, fvar, type="l", main=sitename, ylim=c(0,1)))
+    # with(nice, lines(date, flue_est_nn, col="red"))
     
     ##------------------------------------------------
     ## Add BESS-GPP for this site to daily dataframe 'nice'

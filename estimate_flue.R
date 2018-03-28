@@ -67,15 +67,18 @@ train = sample( 1:nrow(df), round(0.8*nrow(df)) )
 ##------------------------------------------------------------------
 print("random forest...")
 rf = randomForest( 
-  fvar ~ soilm_splash + classid + ai + wtd + fpar, 
+  # fvar ~ soilm_splash + ai + fpar , # + wtd + GRA
+  # fvar ~ soilm_splash + GRA , # + wtd 
+  fvar ~ soilm_splash + ai , # + wtd + GRA
   data = df,
   importance = TRUE,
   subset = train 
   )
 
-analyse_modobs( rf$predicted, rf$y )
+analyse_modobs( df$fvar, predict( rf, df ) )
 varImpPlot(rf)
 save( rf, file = "data/rf.Rdata")
+
 
 ##------------------------------------------------------------------
 ## Neural Network
@@ -126,9 +129,9 @@ save( nn_caret_classid, file = "data/nn_caret_classid.Rdata" )
 ## one sees here that within the 'classid' predictor, it's the highest importance is whether or not it is a GRAland ("GRA")
 ## therefore, train again, now with 'GRA' as a predictor, instead of 'classid'
 ## train
-print("caret nnet (GRA, SAV)...")
+print("caret nnet (GRA)...")
 nn_caret_GRA <- train(
-  fvar ~ soilm_splash + GRA + SAV + ai + wtd + fpar,
+  fvar ~ soilm_splash + GRA + ai + fpar,
   data      = df,
   method    = "nnet",
   tuneGrid  = tune_grid,
@@ -140,10 +143,24 @@ analyse_modobs( df[,"fvar"]$fvar, as.vector(predict( nn_caret_GRA, df )) )
 varImp( nn_caret_GRA )
 save( nn_caret_GRA, file = "data/nn_caret_GRA.Rdata" )
 
+# ## train
+# print("caret rf....")
+# rf_caret <- train(
+#   fvar ~ soilm_splash + GRA + ai + fpar,
+#   data      = df,
+#   method    = "rf",
+#   trControl = traincotrlParams
+# )
+
+# analyse_modobs( df[,"fvar"]$fvar, as.vector(predict( rf_caret, df )) )
+# varImp( rf_caret )
+# save( rf_caret, file = "data/rf_caret.Rdata" )
+
 ##------------------------------------------------------------------
 ## Greedy search of priority list of predictors
 ##------------------------------------------------------------------
 greedy_pred <- function( df, target, preds ){
+
   ##///////////////////////////////////////////////////////////////////
   ## This function consecutively adds predictors to NN model finding 
   ## the order of best performance.
@@ -174,7 +191,7 @@ greedy_pred <- function( df, target, preds ){
     if (npreds==1){
       eval_preds <- preds
     } else {
-      eval_preds <- preds[ -which(preds==use_preds) ]
+      eval_preds <- preds[ !(preds %in% use_preds) ]
     }
     
     for (ipred in eval_preds){
@@ -192,10 +209,10 @@ greedy_pred <- function( df, target, preds ){
         trControl = traincotrlParams,
         trace     = FALSE
       )
-
+      
       ## get performance statistics of model: modelled (NN) vs. observed
       out <- analyse_modobs( df[[ target ]], as.vector( predict( nn, df ) ), do.plot=FALSE )
-
+      
       ## construct "priority array" = array holding all the performance statistics
       tmp <- data.frame( nse=out$nse, rsq=out$rsq, rmse=out$rmse )
       row.names(tmp) <- ipred
@@ -216,11 +233,12 @@ greedy_pred <- function( df, target, preds ){
 
   out <- list( prio=prio, nn=nn )
 
+  print(out)
   return( out )
 
 }
 
-out <- greedy_pred( df=df, target = "fvar", preds =  c( "soilm_splash", "ai", "wtd", "fpar", "GRA", "SAV", "ENF", "WET", "WSA", "EBF", "DBF", "CSH" ) )
+out <- greedy_pred( df=df, target = "fvar", preds =  c( "soilm_splash", "ai", "wtd", "fpar", "GRA", "SAV" ) ) # , "ENF", "WET", "WSA", "EBF", "DBF", "CSH"
 save( out, file="data/prio_preds.Rdata" )
 
 #                      nse       rsq       rmse
@@ -230,19 +248,4 @@ save( out, file="data/prio_preds.Rdata" )
 # fpar          0.74363376 0.8047961 0.09699041
 # wtd           0.74852281 0.8091091 0.09595733
 
-
-
-
-# ## train
-# print("caret rf....")
-# rf_caret <- train(
-#   fvar ~ soilm_splash + classid + ai + wtd + fpar,
-#   data      = df,
-#   method    = "rf",
-#   # linout    = TRUE,
-#   # tuneGrid  = tune_grid,
-#   # preProc   = preprocessParams,
-#   trControl = traincotrlParams
-#   # trace     = FALSE
-# )
 

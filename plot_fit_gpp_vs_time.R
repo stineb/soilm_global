@@ -1,4 +1,4 @@
-plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
+plot_fit_gpp_vs_time <- function( linearfit1, linearfit_mid, linearfit_strong, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
 
   require(dplyr)
   require(lubridate)
@@ -11,7 +11,7 @@ plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5
     ##-----------------------------------------------
     nice_agg <- nice_agg %>% mutate( inlowbin1 = ifelse( fvar < 0.2, 1, NA ), inlowbin2 = ifelse( fvar < 0.3, 1, NA ), inlowbin3 = ifelse( fvar < 0.4, 1, NA ) )
     wdf <- nice_agg %>% mutate( gpp_pmodel1 = gpp_pmodel * flue_est_1, 
-                                gpp_pmodel2 = gpp_pmodel * flue_est_5, 
+                                gpp_pmodel2 = gpp_pmodel * flue_est_2 , 
                                 gpp_pmodel3 = gpp_pmodel * flue_est_3 ) %>%
                         group_by( mysitename, week(date), year(date) ) %>% 
                         summarise( gpp_obs = mean(gpp_obs, na.rm=TRUE),
