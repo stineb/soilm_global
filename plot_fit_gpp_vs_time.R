@@ -1,4 +1,4 @@
-plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
+plot_fit_gpp_vs_time <- function( linearfit1, linearfit_mid, linearfit_strong, ddf=NULL, nice_agg=NULL, makepdf=FALSE ){
 
   require(dplyr)
   require(lubridate)
@@ -10,15 +10,15 @@ plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5
     ## aggregated to weekly
     ##-----------------------------------------------
     nice_agg <- nice_agg %>% mutate( inlowbin1 = ifelse( fvar < 0.2, 1, NA ), inlowbin2 = ifelse( fvar < 0.3, 1, NA ), inlowbin3 = ifelse( fvar < 0.4, 1, NA ) )
-    wdf <- nice_agg %>% mutate( gpp_pmodel1 = gpp_pmodel * flue_est_1, 
-                                gpp_pmodel2 = gpp_pmodel * flue_est_5, 
-                                gpp_pmodel3 = gpp_pmodel * flue_est_3 ) %>%
+    wdf <- nice_agg %>% mutate( gpp_pmodel_I = gpp_pmodel * flue_est_I, 
+                                gpp_pmodel_IV = gpp_pmodel * flue_est_IV , 
+                                gpp_pmodel_III = gpp_pmodel * flue_est_III ) %>%
                         group_by( mysitename, week(date), year(date) ) %>% 
                         summarise( gpp_obs = mean(gpp_obs, na.rm=TRUE),
                                    gpp_pmodel  = mean(gpp_pmodel , na.rm=TRUE),
-                                   gpp_pmodel1 = mean(gpp_pmodel1, na.rm=TRUE),
-                                   gpp_pmodel2 = mean(gpp_pmodel2, na.rm=TRUE),
-                                   gpp_pmodel3 = mean(gpp_pmodel3, na.rm=TRUE),
+                                   gpp_pmodel_I = mean(gpp_pmodel_I, na.rm=TRUE),
+                                   gpp_pmodel_IV = mean(gpp_pmodel_IV, na.rm=TRUE),
+                                   gpp_pmodel_III = mean(gpp_pmodel_III, na.rm=TRUE),
                                    date = mean(date)
                                    ) %>%
                         mutate( year=year(date)) %>%
@@ -36,9 +36,9 @@ plot_fit_gpp_vs_time <- function( linearfit1, linearfit2, linearfit3, linearfit5
         par(las=1)
         plot(  df_tmp$date, df_tmp$gpp_obs, xlab="time", ylab="GPP (gC m-2 d-1)", col=add_alpha("black", 0.5), pch=16, ylim=c( 0, max( c( df_tmp$gpp_obs, df_tmp$gpp_pmodel ), na.rm=TRUE ) ) )
         lines( df_tmp$date, df_tmp$gpp_pmodel, col="grey50" )
-        lines( df_tmp$date, df_tmp$gpp_pmodel1, col="springgreen3" )
-        lines( df_tmp$date, df_tmp$gpp_pmodel2, col="royalblue3" )
-        lines( df_tmp$date, df_tmp$gpp_pmodel3, col="tomato" )
+        lines( df_tmp$date, df_tmp$gpp_pmodel_I, col="springgreen3" )
+        lines( df_tmp$date, df_tmp$gpp_pmodel_IV, col="royalblue3" )
+        lines( df_tmp$date, df_tmp$gpp_pmodel_III, col="tomato" )
         title( sitename )
 
         legend( "topright", c("P-model", "corrected, approach I", "corrected, approach II", "corrected, approach III"), lty=1, bty="n", lwd=2, col=c("grey50", "springgreen3", "royalblue3", "tomato") )

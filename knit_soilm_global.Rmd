@@ -55,7 +55,7 @@ source("execute_reshape_align_nn_fluxnet2015.R")
 ```
 For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset.
 
-```{r plot_bias, eval=TRUE, message=FALSE, warning=FALSE}
+```{r plot_bias, eval=FALSE, message=FALSE, warning=FALSE}
 source("plot_bias_nn.R")
 ```
 ![*Bias vs. fLUE*](./fig/bias_vs_fvar.pdf)
@@ -82,69 +82,11 @@ I tested several approaches to fit parameters $a$ and $b$. Best results were obt
 
 ### Approach I
 
+Based on fLUE in lowest soil moisture bin and its relationship to mean AET/PET.
+
 This uses the relationship between minimum fLUE and mean AET/PET, identified in Stocker et al. (2018). Parameters $a$ and $b$ are calculated from a linear regression between each site's $\varphi_0$ and $\alpha$ (mean annual AET/PET, calculated from daily values of simulations with the SPLASH model). $\varphi_0$ is derived for each site as the mean fLUE value of data in the lowest soil moisture quartile. This defines parameters $a$ and $b$, and hence $\beta$ in above equations. This is identical to the linear regression of fLUE$_0$ to soil moisture shown in Stocker et al. (2018) Fig. 9.
 ```{r linearfit1a, message=FALSE, warning=FALSE, echo=FALSE}
 library(dplyr)
-load( "data/nice_nn_agg_lue_obs_evi.Rdata" )       # loads 'nice_agg'
-
-## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
-successcodes <- read.csv( paste0( myhome, "/sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv" ), as.is = TRUE )
-do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
-nice_agg <- nice_agg %>% filter( mysitename %in% do.sites )
-
-## Merge mean annual alpha (AET/PET) values into this dataframe
-load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
-nice_agg <- nice_agg %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
-source("get_linearfit.R")
-source("plot_linearfit.R")
-
-# usesites <- read.csv("use_biaseval.csv") %>% mutate( use_biaseval=ifelse(is.na(use_biaseval), FALSE, TRUE ) )
-linearfit_1a  <- get_linearfit( filter( nice_agg, ratio_obs_mod_pmodel < 5 ), monthly=FALSE )
-save( linearfit_1a,  file="data/linearfit_1a.Rdata" )
-plot_linearfit( linearfit_1a )
-```
-
-In summary, this method derives the following fitting parameters:
-```{r}
-print( coef(linearfit_1a$linmod) )
-```
-
-Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, I'm assessing this with GPP predictions from the P-model.
-```{r correct_linearfit1a, message=FALSE, warning=FALSE, echo=FALSE}
-source("calc_flue_est_alpha.R")
-
-## add estimated fLUE to nice_agg
-nice_agg <- nice_agg %>% mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1a$linmod)[1], bpar=coef(linearfit_1a$linmod)[2], cpar=0.125, dpar=0.75 ) )
-
-## evaluate bias~soil moisture
-nbins <- 4
-binwidth <- 1/nbins
-bins <- seq( from=0, to=1, by=binwidth )
-nice_agg <- nice_agg %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
-
-## boxplot with soil moisture bins
-bp <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=nice_agg, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1 )
-bp <- boxplot( log( bias_pmodel * flue_est_1 ) ~ insoilmbin, data=nice_agg, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.6), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
-abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-
-## boxplot with fLUE bins
-bp <- boxplot( log( bias_pmodel ) ~ infvarbin, data=nice_agg, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1 )
-bp <- boxplot( log( bias_pmodel * flue_est_1 ) ~ infvarbin, data=nice_agg, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.6), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
-abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-```
-
-Above boxplot shows that the bias in predicted GPP is reduced but not resolved. Apparently, the predicted LUE reduction at low soil moisture is generally not strong enough.
-
-Here, the boxplot for fLUE bins suggests that the bias is stronger than when looking at the boxplot for soil moisture bins.
-
-
-### Approach II: Fitting to the model bias
-
-In contrast to the method above, I'm fitting parameters $a$ and $b$ not to the maximum fLUE reduction, but to the bias in modelled versus observed GPP (for the P-model), i.e. to the ratio of observed over modelled GPP as a function of soil moisture. First, a quadratic function of the form described above (Eq. XXX) is fitted to the ratio of observed versus modelled GPP for each site individually. This yields a site-specific relationship of model bias with soil moisture and defines the maximum LUE reduction (or LUE correction) at low soil moisture ($\varphi_0$) for each site. Second, $\varphi_0$ is regressed against $\alpha$ as above.
-
-```{r get_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE}
 load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
 ddf <- df_dday_agg
 rm("df_dday_agg")  # rename to be a bit more concise
@@ -157,16 +99,66 @@ ddf <- ddf %>% filter( mysitename %in% do.sites )
 ## Merge mean annual alpha (AET/PET) values into this dataframe
 load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
 ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+source("get_linearfit.R")
+source("plot_linearfit.R")
 
+linearfit1  <- get_linearfit( filter( ddf, ratio_obs_mod_pmodel < 5 ), monthly=FALSE )
+save( linearfit1,  file="data/linearfit1.Rdata" )
+plot_linearfit( linearfit1 )
+```
+
+In summary, this method derives the following fitting parameters:
+```{r}
+print( coef(linearfit1$linmod) )
+df_coef <- tibble( approach="I", apar=coef(linearfit1$linmod)["(Intercept)"], bpar=coef(linearfit1$linmod)["meanalpha"], apar_grass=NA, bpar_grass=NA )
+```
+
+Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, I'm assessing this with GPP predictions from the P-model.
+```{r correct_linearfit1a, message=FALSE, warning=FALSE, echo=FALSE}
+source("calc_flue_est_alpha.R")
+
+## add estimated fLUE to ddf
+ddf <- ddf %>%  mutate( flue_est_I = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit1$linmod)[1], bpar=coef(linearfit1$linmod)[2], cpar=0.125, dpar=0.75 ) ) %>% 
+                          mutate( bias_pmodel_diff = gpp_pmodel - gpp_obs,
+                                  bias_pmodel_diff_corr = gpp_pmodel * fvar - gpp_obs,
+                                  bias_pmodel_diff_corr_I = gpp_pmodel * flue_est_I - gpp_obs
+                                 )
+
+## evaluate bias~soil moisture
+nbins <- 4
+binwidth <- 1/nbins
+bins <- seq( from=0, to=1, by=binwidth )
+ddf <- ddf %>% mutate( inbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+
+## Bias (difference), correction by fLUE directly, fLUE bins
+bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp2 <- boxplot( bias_pmodel_diff_corr_I ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected by I", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
+```
+
+Above boxplot shows that the bias in predicted GPP is reduced but not resolved. Apparently, the predicted LUE reduction at low soil moisture is generally not strong enough.
+
+Here, the boxplot for fLUE bins suggests that the bias is stronger than when looking at the boxplot for soil moisture bins.
+
+
+### Approach II
+
+Based on fitted relationship between fLUE and soil moisture, taking its y-axis intersect and its relationship to mean AET/PET.
+
+In contrast to the method above, I'm fitting parameters $a$ and $b$ not to the maximum fLUE reduction, but to the bias in modelled versus observed GPP (for the P-model), i.e. to the ratio of observed over modelled GPP as a function of soil moisture. First, a quadratic function of the form described above (Eq. XXX) is fitted to the ratio of observed versus modelled GPP for each site individually. This yields a site-specific relationship of model bias with soil moisture and defines the maximum LUE reduction (or LUE correction) at low soil moisture ($\varphi_0$) for each site. Second, $\varphi_0$ is regressed against $\alpha$ as above.
+
+```{r get_linearfit2, warning=FALSE, message=FALSE, echo=FALSE}
 ## load additional functions
 source("get_linearfit2.R")
 source("stress_quad_1sided.R")
 
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
-# linearfit2 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 ), target="ratio_obs_mod_pmodel", monthly = FALSE, bin = FALSE, x0_fix = x0_fix, useweights = FALSE, doplot = TRUE)
-linearfit2 <- get_linearfit2( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
+linearfit2 <- get_linearfit2( filter( ddf, dday>=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
 save( linearfit2, file="data/linearfit2_ratio.Rdata" )
+df_coef <- df_coef %>% bind_rows( tibble( approach="II", apar=coef(linearfit2$linmod)["(Intercept)"], bpar=coef(linearfit2$linmod)["meanalpha"], apar_grass=NA, bpar_grass=NA ))
 ```
 
 Again, we have a linear relationship between the maximum LUE reduction (y-axis intersect) and mean site aridity (AET/PET).
@@ -180,39 +172,18 @@ eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), "
 mtext( line=-2.5, eq, adj=0.1 )
 ```
 
-<!-- This generally leads to a stronger sensitivity to soil moisture across the whole aridity spectrum. Compare to the solid line to dashed line, where the solid line represents the regression from approach II and the dashed line from approach I. -->
-<!-- ```{r plot_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
-<!-- source("plot_linearfit2.R") -->
-<!-- load("data/linearfit_1a.Rdata") -->
-
-<!-- ## plot fLUE0 vs. mean alpha and functional relationship (data cloud and fitted line) for all sites. -->
-<!-- # plot_linearfit2( linearfit2, linearfit_1a, df=ddf ) -->
-<!-- ``` -->
-
 This approach (II) effectively resolves the bias in P-model GPP predictions even at very low soil moisture, as shown by the boxplots below (logarithm of observed over modelled in soil moisture bins).
-```{r correct_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+```{r correct_linearfit2_boxpl, warning=FALSE, message=FALSE, echo=FALSE}
 ## add estimated fLUE to ddf
-ddf <- ddf %>% mutate( flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
-nice_agg <- nice_agg %>% mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_1a$linmod)[1], bpar=coef(linearfit_1a$linmod)[2], cpar=0.125, dpar=0.75 ) )
-nice_agg <- nice_agg %>% mutate( flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) )
+ddf <- ddf %>%  mutate( flue_est_II = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit2$linmod)[["(Intercept)"]], coef(linearfit2$linmod)[["meanalpha"]] ) ) %>% 
+                mutate( bias_pmodel_diff_corr_II = gpp_pmodel * flue_est_II - gpp_obs )
 
-## re-define bins for evaluation
-nbins <- 4
-binwidth <- 1/nbins
-bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
-
-## plot boxplot: bias by soil moisture bin
-bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_2 ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+## Bias (difference), correction by fLUE directly, fLUE bins
+bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp2 <- boxplot( bias_pmodel_diff_corr_II ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-
-## plot boxplot: bias by fLUE bin
-bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_2 ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
-abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+legend("bottomleft", c("P-model", "P-model, corrected by II", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
 ```
 
 In summary, this method derives the following fitting parameters:
@@ -233,93 +204,124 @@ stress_quad_1sided_alpha <- function( x, alpha, x0, apar, bpar ){
 ```
 Here, `x0` is set to 0.9. `alpha` is $\alpha$ (AET/PET, mean over daily values per site), and `x` is soil moisture.
 
+### Approach III
 
-### Approach III: Fitting to the model bias with notorious sites
+As II, but for notorious sites.
 
-Here, I'm doing the same as above, but now with a subset of sites that have a particularly strong sensitivity to low soil moisture. These are:
+In contrast to the method above, I'm fitting parameters $a$ and $b$ not to the maximum fLUE reduction, but to the bias in modelled versus observed GPP (for the P-model), i.e. to the ratio of observed over modelled GPP as a function of soil moisture. First, a quadratic function of the form described above (Eq. XXX) is fitted to the ratio of observed versus modelled GPP for each site individually. This yields a site-specific relationship of model bias with soil moisture and defines the maximum LUE reduction (or LUE correction) at low soil moisture ($\varphi_0$) for each site. Second, $\varphi_0$ is regressed against $\alpha$ as above.
 
-- IT-Noe
-- FR-Pue
-- AU-Stp
-- AU-Fog
-- AU-DaP
-- AU-ASM
-- IT-SRo
-- US-SRG
-- US-SRM
-
-Site US-Var was excluded here due to it's somewhat outlier-behaviour ($\varphi_0$ is essentially zero).
-
-```{r get_linearfit3_ratio, warning=FALSE, message=FALSE, echo=FALSE}
-notorious.sites <- c("IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM", "IT-SRo", "US-SRG", "US-SRM") # "US-Var"
-
+```{r get_linearfit3, warning=FALSE, message=FALSE, echo=FALSE}
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
-linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE, doplot = FALSE )
-# linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE, doplot = TRUE )
-save( linearfit3, file="data/linearfit3_ratio.Rdata" )
+notorious <- c("IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM", "IT-SRo", "US-SRG", "US-SRM", "US-Var") 
+linearfit3 <- get_linearfit2( filter( ddf, dday>=0, mysitename %in% notorious ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
+save( linearfit3, file="data/linearfit2_ratio.Rdata" )
+df_coef <- df_coef %>% bind_rows( tibble( approach="III", apar=coef(linearfit3$linmod)["(Intercept)"], bpar=coef(linearfit3$linmod)["meanalpha"], apar_grass=NA, bpar_grass=NA ))
 ```
 
-This approach (III) seems to over-correct LUE at very low soil moisture, but is the only approach that relieves the bias in the lowest fLUE quartile, as shown by the boxplots below.
-```{r correct_linearfit3_ratio, warning=FALSE, message=FALSE, echo=FALSE}
+This approach (II) effectively resolves the bias in P-model GPP predictions even at very low soil moisture, as shown by the boxplots below (logarithm of observed over modelled in soil moisture bins).
+```{r correct_linearfit3_boxpl, warning=FALSE, message=FALSE, echo=FALSE}
 ## add estimated fLUE to ddf
-ddf <- ddf %>% mutate( flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit3$linmod)[["(Intercept)"]], coef(linearfit3$linmod)[["meanalpha"]] ) )
-nice_agg <- nice_agg %>% mutate( flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit3$linmod)[["(Intercept)"]], coef(linearfit3$linmod)[["meanalpha"]] ) )
+ddf <- ddf %>%  mutate( flue_est_III = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit3$linmod)[["(Intercept)"]], coef(linearfit3$linmod)[["meanalpha"]] ) ) %>% 
+                mutate( bias_pmodel_diff_corr_III = gpp_pmodel * flue_est_III - gpp_obs )
 
-## re-define bins for evaluation
-nbins <- 4
-binwidth <- 1/nbins
-bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
-
-## plot boxplot: bias by soil moisture bin
-bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylim=c(-3,5), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_3 ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, staplewex=0, whisklty=1 )
+## Bias (difference), correction by fLUE directly, fLUE bins
+bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp2 <- boxplot( bias_pmodel_diff_corr_III ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-
-## plot boxplot: bias by soil moisture bin
-bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylim=c(-3,5), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_3 ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
-abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+legend("bottomleft", c("P-model", "P-model, corrected by III", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
 ```
 
+### Approach IV
 
+Separate fit for grasslands and others, otherwise identical to approach II
 
-### Linearfit 5: Exponential stress function
-
-```{r get_linearfit5, warning=FALSE, message=FALSE, echo=FALSE}
-load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
-ddf <- df_dday_agg
-rm("df_dday_agg")  # rename to be a bit more concise
-
-## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
-successcodes <- read.csv( paste0( myhome, "/sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv" ), as.is = TRUE )
-do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
-ddf <- ddf %>% filter( mysitename %in% do.sites )
-
-## Merge mean annual alpha (AET/PET) values into this dataframe
-load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
-ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+```{r get_linearfit6, warning=FALSE, message=FALSE, echo=FALSE}
+## Merge IGBP class ID into dataframe
+require(readr)
+siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
+ddf <- ddf %>% select( -starts_with("classid")) %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
 
 ## load additional functions
-source("get_linearfit5.R")
+source("get_linearfit6.R")
 source("stress_quad_1sided.R")
 
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
-linearfit5 <- get_linearfit5( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
-save( linearfit5, file="data/linearfit5.Rdata" )
+linearfit6 <- get_linearfit6( filter( ddf, dday >=0 & !(mysitename %in% c("CH-Oe1", "US-Var")) ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
+save( linearfit6, file="data/linearfit6_ratio.Rdata" )
+df_coef <- df_coef %>% bind_rows( tibble( approach="IV", apar=coef(linearfit6$linmod_tree)["(Intercept)"], bpar=coef(linearfit6$linmod_tree)["meanalpha"], apar_grass=coef(linearfit6$linmod_grass)["(Intercept)"], bpar_grass=coef(linearfit6$linmod_grass)["meanalpha"] ))
 ```
 
 Again, we have a linear relationship between the maximum LUE reduction (y-axis intersect) and mean site aridity (AET/PET).
 ```{r}
 par(las=1)
-with(linearfit5$data, plot( meanalpha, y0, pch=16 ) )
-abline( linearfit5$linmod_y0 )
-mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit5$linmod_y0 )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 )
-cf <- coef(linearfit5$linmod_y0) %>% round( 2 )
+with( filter( linearfit6$data, classid %in% c("GRA", "CSH")), plot( meanalpha, y0, pch=16 , ylim=c(0,1), xlim=c(0,1)) )
+with( filter( linearfit6$data, !(classid %in% c("GRA", "CSH"))), points( meanalpha, y0, pch=1 ) )
+abline( linearfit6$linmod_grass )
+abline( linearfit6$linmod_tree, lty=2 )
+mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit6$linmod_grass )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 )
+cf <- coef(linearfit6$linmod_grass) %>% round( 2 )
+eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " )
+mtext( line=-2.5, eq, adj=0.1 )
+```
+
+<!-- This generally leads to a stronger sensitivity to soil moisture across the whole aridity spectrum. Compare to the solid line to dashed line, where the solid line represents the regression from approach II and the dashed line from approach I. -->
+<!-- ```{r plot_linearfit2_ratio, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- source("plot_linearfit2.R") -->
+<!-- load("data/linearfit1.Rdata") -->
+
+<!-- ## plot fLUE0 vs. mean alpha and functional relationship (data cloud and fitted line) for all sites. -->
+<!-- # plot_linearfit2( linearfit2, linearfit1, df=ddf ) -->
+<!-- ``` -->
+
+
+```{r correct_linearfit6, warning=FALSE, message=FALSE, echo=FALSE}
+source("stress_quad_1sided.R")
+apar <- c( coef(linearfit6$linmod_tree)[["(Intercept)"]], coef(linearfit6$linmod_grass)[["(Intercept)"]] )
+bpar <- c( coef(linearfit6$linmod_tree)[["meanalpha"]], coef(linearfit6$linmod_grass)[["meanalpha"]] )
+
+## add estimated fLUE to ddf
+ddf$flue_est_IV <- rep( NA, nrow( ddf ))
+for (idx in seq(nrow(ddf))){
+  ddf$flue_est_IV[idx] <- stress_quad_1sided_alpha_grasstree( ddf$soilm_mean[idx], ddf$meanalpha[idx], x0 = 0.9, apar, bpar, ddf$classid[idx] )
+}
+ddf <- ddf %>% mutate( bias_pmodel_diff_corr_IV = gpp_pmodel * flue_est_IV - gpp_obs )
+
+## Bias (difference), correction by fLUE directly, fLUE bins
+bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp2 <- boxplot( bias_pmodel_diff_corr_IV ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+abline( h=0.0, lty=3 )
+legend("bottomleft", c("P-model", "P-model, corrected by IV", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
+```
+
+
+### Linearfit V: Exponential stress function
+
+```{r get_linearfit5, warning=FALSE, message=FALSE, echo=FALSE}
+## load additional functions
+source("get_linearfit5.R")
+
+## Use fixed point (soil moisture) above which stress function is 1 (no stress)
+x0_fix <- 0.9
+linearfit5 <- get_linearfit5( filter( ddf, dday>=0, mysitename!="CH-Oe1" ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
+save( linearfit5, file="data/linearfit5.Rdata" )
+df_coef <- df_coef %>% bind_rows( tibble( approach="V", apar=coef(linearfit5$linmod_y0_tree)["(Intercept)"], bpar=coef(linearfit5$linmod_y0_tree)["meanalpha"], apar_grass=coef(linearfit5$linmod_y0_grass)["(Intercept)"], bpar_grass=coef(linearfit5$linmod_y0_grass)["meanalpha"] ))
+```
+
+What sort of relationships do we see between `y0` and aridity or vegetation type?
+
+Again, we have a linear relationship between the maximum LUE reduction (y-axis intersect) and mean site aridity (AET/PET).
+```{r}
+par(las=1)
+with(filter(linearfit5$data, classid!="GRA"), plot( meanalpha, y0, pch=1, ylim=c(0,1) ) )
+with(filter(linearfit5$data, classid=="GRA"), points( meanalpha, y0, pch=16 ) )
+abline( linearfit5$linmod_y0_tree, lty=2 )
+abline( linearfit5$linmod_y0_grass )
+mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit5$linmod_y0_tree )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 )
+cf <- coef(linearfit5$linmod_y0_tree) %>% round( 2 )
 eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " )
 mtext( line=-2.5, eq, adj=0.1 )
 ```
@@ -336,59 +338,60 @@ eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), "
 mtext( line=-2.5, eq, adj=0.1 )
 ```
 
-
 Let's see how this works...
 ```{r correct_linearfit5, warning=FALSE, message=FALSE, echo=FALSE}
 source("stress_exp.R")
 
+apar <- c( coef(linearfit5$linmod_y0_tree)[["(Intercept)"]], coef(linearfit5$linmod_y0_grass)[["(Intercept)"]] )
+bpar <- c( coef(linearfit5$linmod_y0_tree)[["meanalpha"]], coef(linearfit5$linmod_y0_grass)[["meanalpha"]] )
+
 ## add estimated fLUE to ddf
-ddf <- ddf %>% mutate( flue_est_5 = stress_exp_alpha( soilm_mean, meanalpha, coef(linearfit5$linmod_y0)[1], coef(linearfit5$linmod_y0)[2], coef(linearfit5$linmod_curve)[1], coef(linearfit5$linmod_curve)[2] ) )
-nice_agg <- nice_agg %>% mutate( flue_est_5 = stress_exp_alpha( soilm_mean, meanalpha, coef(linearfit5$linmod_y0)[1], coef(linearfit5$linmod_y0)[2], coef(linearfit5$linmod_curve)[1], coef(linearfit5$linmod_curve)[2] ) )
+ddf$flue_est_V  <- rep( NA, nrow( ddf ))
+for (idx in seq(nrow(ddf))){
+  ddf$flue_est_V[idx]  <- stress_exp_alpha_grasstree( ddf$soilm_mean[idx], ddf$meanalpha[idx], apar, bpar, coef(linearfit5$linmod_curve)[1], coef(linearfit5$linmod_curve)[2], classid=ddf$classid[idx] )
+}
 
-## re-define bins for evaluation
-nbins <- 4
-binwidth <- 1/nbins
-bins <- seq( from=0, to=1, by=binwidth )
-ddf <- ddf %>% mutate( infvarbin = cut( as.numeric(fvar_smooth), breaks = bins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = bins ) )
+ddf <- ddf %>% mutate( bias_pmodel_diff_corr_V = gpp_pmodel * flue_est_V - gpp_obs )
 
-## plot boxplot: bias by soil moisture bin
-bp1 <- boxplot( log( bias_pmodel ) ~ insoilmbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="soil moisture bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_5 ) ~ insoilmbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
+## Bias (difference), correction by fLUE directly, fLUE bins
+bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp2 <- boxplot( bias_pmodel_diff_corr_V ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
+bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
-
-## plot boxplot: bias by fLUE bin
-bp1 <- boxplot( log( bias_pmodel ) ~ infvarbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.05, xlim=c(0,1), ylab="log of mod./obs.", xlab="fLUE bins", staplewex=0, whisklty=1  )
-bp4 <- boxplot( log( bias_pmodel * flue_est_5 ) ~ infvarbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, at=(bins[1:nbins]+1/nbins*0.7), boxwex=0.05, axes=FALSE, xlim=c(0,1), staplewex=0, whisklty=1 )
-abline( h=0.0, lty=3 )
-legend("bottomleft", c("P-model", "P-model, corrected"), bty="n", fill=c("tomato", "springgreen3") )
+legend("bottomleft", c("P-model", "P-model, corrected by V", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
 ```
 
+### Overview
 
+```{r echo = FALSE, results = 'asis', warning=FALSE}
+library(knitr)
+kable(df_coef, caption = "Overview of parameters determining y0 as a function of site aridity.")
+```
 
 ## Site-by-site evaluations
 
-Site-by-site evaluations of the three different soil moisture stress functions are shown below. 
+Site-by-site evaluations of the three different soil moisture stress functions are shown below.
 
 ### Stress vs. soil moisture
 
 ```{r plot_site_vs_soilmoisture}
 source("plot_fit_vs_soilmoist.R")
-plot_fit_vs_soilmoist( linearfit_1a, linearfit2, linearfit3, linearfit5, ddf, nice_agg )
+plot_fit_vs_soilmoist( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = FALSE )
 ```
 
 ### Stress and fLUE vs. time
 
 ```{r plot_site_fit_fvar_vs_time}
 source("plot_fit_fvar_vs_time.R")
-plot_fit_fvar_vs_time( linearfit_1a, linearfit2, linearfit3, linearfit5, ddf, nice_agg, makepdf = TRUE )
+load("data/nice_nn_agg_lue_obs_evi.Rdata")
+plot_fit_fvar_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf = TRUE )
 ```
 
 ### GPP, P-model original and corrected
 
 ```{r plot_site_fit_gpp_vs_time}
 source("plot_fit_gpp_vs_time.R")
-plot_fit_gpp_vs_time( linearfit_1a, linearfit2, linearfit3, linearfit5, ddf, nice_agg, makepdf=TRUE )
+plot_fit_gpp_vs_time( linearfit1, linearfit6, linearfit3, ddf, nice_agg, makepdf=TRUE )
 ```
 
 
@@ -400,17 +403,24 @@ We've seen that all RS-models exhibit a bias towards overestimating GPP at low s
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" )
 
+## IMPORTANT: REMOVE DUPLICATE ROWS (were introduced because one date can below to multiple drought instances (within their before-after window) )
+df_dday_agg    <- df_dday_agg    %>% select( -dday, -inst ) %>% unique()
+df_dday_8d_agg <- df_dday_8d_agg %>% select( -dday, -inst ) %>% unique()
+
+
+df_dday_8d_agg <- filter( df_dday_8d_agg, mysitename!="US-Var")
+
 ##------------------------------------------------
 ## bin data
 ##------------------------------------------------
 ## define fLUE bins
-nbins <- 11
-max <- 1.1
+nbins <- 5
+max <- 1.0
 binwidth <- max/nbins
-fvarbins <- seq( from=0, to=max, by=binwidth )
-xvals <- fvarbins[1:nbins]+binwidth/2
+bins <- seq( from=0, to=max, by=binwidth )
+xvals <- bins[1:nbins]+binwidth/2
 
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate( inbin = cut( fvar, breaks = fvarbins ) )
+df_dday_8d_agg <- df_dday_8d_agg %>% mutate( inbin = cut( fvar, breaks = bins ) )
 
 ##------------------------------------------------
 ## Quick plots I:
@@ -418,23 +428,23 @@ df_dday_8d_agg <- df_dday_8d_agg %>% mutate( inbin = cut( fvar, breaks = fvarbin
 ## Bias for each model separately
 ## pmodel
 par(las=1)
-boxplot( ratio_obs_mod_pmodel ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_pmodel_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "P-model", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_modis_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "MODIS", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_vpm_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "VPM", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_bess_v1_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "BESS", line=0.5, adj = 0, font=2 )
 ```
 
@@ -446,44 +456,49 @@ All RS-models (except the P-model) underestimate GPP when fLUE is high. To remov
 ## to 1 for bin fvar = 1.0-1.1
 ##------------------------------------------------
 df_binmedians <- df_dday_8d_agg %>%   group_by( inbin ) %>% 
-                                      summarise( median_modis   = median( ratio_obs_mod_modis,   na.rm = TRUE ),
-                                                 median_vpm     = median( ratio_obs_mod_vpm,     na.rm = TRUE ),
-                                                 median_bess_v1 = median( ratio_obs_mod_bess_v1, na.rm = TRUE ),
-                                                 median_pmodel  = median( ratio_obs_mod_pmodel,  na.rm = TRUE )
+                                      summarise( median_modis   = median( bias_modis,   na.rm = TRUE ),
+                                                 median_vpm     = median( bias_vpm,     na.rm = TRUE ),
+                                                 median_bess_v1 = median( bias_bess_v1, na.rm = TRUE ),
+                                                 median_pmodel  = median( bias_pmodel,  na.rm = TRUE )
                                                 )
 
-df_dday_8d_agg <- df_dday_8d_agg %>% mutate(  ratio_obs_mod_modis   = ratio_obs_mod_modis     / df_binmedians$median_modis[nbins],
-                                              ratio_obs_mod_vpm     = ratio_obs_mod_vpm      / df_binmedians$median_vpm[nbins], 
-                                              ratio_obs_mod_bess_v1 = ratio_obs_mod_bess_v1 / df_binmedians$median_bess_v1[nbins], 
-                                              ratio_obs_mod_pmodel  = ratio_obs_mod_pmodel / df_binmedians$median_pmodel[nbins]  
-                                              )
+df_dday_8d_agg <- df_dday_8d_agg %>%  mutate(  gpp_modis   = gpp_modis     / df_binmedians$median_modis[nbins],
+                                               gpp_vpm     = gpp_vpm      / df_binmedians$median_vpm[nbins], 
+                                               gpp_bess_v1 = gpp_bess_v1 / df_binmedians$median_bess_v1[nbins], 
+                                               gpp_pmodel  = gpp_pmodel / df_binmedians$median_pmodel[nbins]  
+                                               ) %>%
+                                      mutate( bias_pmodel_diff  = gpp_pmodel  - gpp_obs,
+                                              bias_modis_diff   = gpp_modis   - gpp_obs,
+                                              bias_vpm_diff     = gpp_vpm     - gpp_obs,
+                                              bias_bess_v1_diff = gpp_bess_v1 - gpp_obs
+                                             )
 
 ##------------------------------------------------
 ## Quick plots II:
 ##------------------------------------------------
 ## Bias for each model separately after "normalisation"
 ## pmodel
-boxplot( ratio_obs_mod_pmodel ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_pmodel_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "P-model, normalised", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_modis_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "MODIS, normalised", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_vpm_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "VPM, normalised", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_bess_v1_diff ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "BESS, normalised", line=0.5, adj = 0, font=2 )
 ```
 
-### Corrected, by models
+### Corrected, by models and stress function
 Now, we apply the empirical soil moisture stress functions and check whether the systematic biases are resolved for each RS-model. First, using approach II:
 ```{r}
 ##------------------------------------------------
@@ -492,144 +507,285 @@ Now, we apply the empirical soil moisture stress functions and check whether the
 library(tibble)
 df_dday_8d_agg <- df_dday_8d_agg %>% as_tibble() %>%
                                      mutate(  
-                                              ratio_obs_mod_modis_corr_1   = ifelse( flue_est_1>0, ratio_obs_mod_modis     / flue_est_1, NA ),
-                                              ratio_obs_mod_vpm_corr_1     = ifelse( flue_est_1>0, ratio_obs_mod_vpm      / flue_est_1, NA ), 
-                                              ratio_obs_mod_bess_v1_corr_1 = ifelse( flue_est_1>0, ratio_obs_mod_bess_v1 / flue_est_1, NA ), 
-                                              ratio_obs_mod_pmodel_corr_1  = ifelse( flue_est_1>0, ratio_obs_mod_pmodel / flue_est_1, NA ),
+                                              bias_modis_diff_corr   = gpp_modis   * fvar - gpp_obs,
+                                              bias_vpm_diff_corr     = gpp_vpm     * fvar - gpp_obs, 
+                                              bias_bess_v1_diff_corr = gpp_bess_v1 * fvar - gpp_obs, 
+                                              bias_pmodel_diff_corr  = gpp_pmodel  * fvar - gpp_obs,
 
-                                              ratio_obs_mod_modis_corr_2   = ifelse( flue_est_2>0, ratio_obs_mod_modis     / flue_est_2, NA ),
-                                              ratio_obs_mod_vpm_corr_2     = ifelse( flue_est_2>0, ratio_obs_mod_vpm      / flue_est_2, NA ), 
-                                              ratio_obs_mod_bess_v1_corr_2 = ifelse( flue_est_2>0, ratio_obs_mod_bess_v1 / flue_est_2, NA ), 
-                                              ratio_obs_mod_pmodel_corr_2  = ifelse( flue_est_2>0, ratio_obs_mod_pmodel / flue_est_2, NA ),
+                                              bias_modis_diff_corr_I   = gpp_modis   * flue_est_I - gpp_obs,
+                                              bias_vpm_diff_corr_I     = gpp_vpm     * flue_est_I - gpp_obs, 
+                                              bias_bess_v1_diff_corr_I = gpp_bess_v1 * flue_est_I - gpp_obs, 
+                                              bias_pmodel_diff_corr_I  = gpp_pmodel  * flue_est_I - gpp_obs,
 
-                                              ratio_obs_mod_modis_corr_3   = ifelse( flue_est_3>0, ratio_obs_mod_modis     / flue_est_3, NA ),
-                                              ratio_obs_mod_vpm_corr_3     = ifelse( flue_est_3>0, ratio_obs_mod_vpm      / flue_est_3, NA ), 
-                                              ratio_obs_mod_bess_v1_corr_3 = ifelse( flue_est_3>0, ratio_obs_mod_bess_v1 / flue_est_3, NA ), 
-                                              ratio_obs_mod_pmodel_corr_3  = ifelse( flue_est_3>0, ratio_obs_mod_pmodel / flue_est_3, NA )
-                                            ) %>%
-                                     select( mysitename, fvar, date, dday, inst, inbin,
-                                             ratio_obs_mod_modis, ratio_obs_mod_vpm, ratio_obs_mod_bess_v1, ratio_obs_mod_pmodel, 
-                                             ratio_obs_mod_modis_corr_1, ratio_obs_mod_vpm_corr_1, ratio_obs_mod_bess_v1_corr_1, ratio_obs_mod_pmodel_corr_1, 
-                                             ratio_obs_mod_modis_corr_2, ratio_obs_mod_vpm_corr_2, ratio_obs_mod_bess_v1_corr_2, ratio_obs_mod_pmodel_corr_2, 
-                                             ratio_obs_mod_modis_corr_3, ratio_obs_mod_vpm_corr_3, ratio_obs_mod_bess_v1_corr_3, ratio_obs_mod_pmodel_corr_3 
-                                             )
+                                              bias_modis_diff_corr_II   = gpp_modis   * flue_est_II - gpp_obs,
+                                              bias_vpm_diff_corr_II     = gpp_vpm     * flue_est_II - gpp_obs, 
+                                              bias_bess_v1_diff_corr_II = gpp_bess_v1 * flue_est_II - gpp_obs, 
+                                              bias_pmodel_diff_corr_II  = gpp_pmodel  * flue_est_II - gpp_obs,
+
+                                              ## flue_est_IV is based on separate grasslands and others
+                                              bias_modis_diff_corr_IV   = gpp_modis   * flue_est_IV - gpp_obs,
+                                              bias_vpm_diff_corr_IV     = gpp_vpm     * flue_est_IV - gpp_obs, 
+                                              bias_bess_v1_diff_corr_IV = gpp_bess_v1 * flue_est_IV - gpp_obs, 
+                                              bias_pmodel_diff_corr_IV  = gpp_pmodel  * flue_est_IV - gpp_obs,
+
+                                              bias_modis_diff_corr_III   = gpp_modis   * flue_est_III - gpp_obs,
+                                              bias_vpm_diff_corr_III     = gpp_vpm     * flue_est_III - gpp_obs, 
+                                              bias_bess_v1_diff_corr_III = gpp_bess_v1 * flue_est_III - gpp_obs, 
+                                              bias_pmodel_diff_corr_III  = gpp_pmodel  * flue_est_III - gpp_obs,
+
+                                              ## flue_est_V is based on exponential stress function
+                                              bias_modis_diff_corr_V   = gpp_modis   * flue_est_V - gpp_obs,
+                                              bias_vpm_diff_corr_V     = gpp_vpm     * flue_est_V - gpp_obs, 
+                                              bias_bess_v1_diff_corr_V = gpp_bess_v1 * flue_est_V - gpp_obs, 
+                                              bias_pmodel_diff_corr_V  = gpp_pmodel  * flue_est_V - gpp_obs
+                                            )
 
 ##------------------------------------------------
 ## Quick plots III:
 ##------------------------------------------------
 ## Bias for each model separately after "normalisation"
 
-## approach II
+## Corrected by fLUE
 
 ## pmodel
-boxplot( ratio_obs_mod_pmodel_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_pmodel_diff_corr ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "P-model, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+# library(LSD)
+# with( df_dday_8d_agg, heatscatter( fvar, bias_pmodel_diff, ylim = c(-6,6), xlim = c(0,1.2) ) )
+# abline( h=0, lty=3 )
+
+# with( df_dday_8d_agg, heatscatter( fvar, bias_pmodel_diff_corr, ylim = c(-6,6), xlim = c(0,1.2) ) )
+# abline( h=0, lty=3 )
+
+# with( df_dday_8d_agg, heatscatter( fvar, bias_pmodel_diff_corr_III, ylim = c(-6,6), xlim = c(0,1.2) ) )
+# abline( h=0, lty=3 )
+
+## MODIS
+boxplot( bias_modis_diff_corr ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "MODIS, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+## vpm
+boxplot( bias_vpm_diff_corr ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "VPM, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+## bess_v1
+boxplot( bias_bess_v1_diff_corr ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "BESS, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+
+## Corrected by estimated fLUE (following approach II)
+
+## pmodel
+boxplot( bias_pmodel_diff_corr_II ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "P-model, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_modis_diff_corr_II ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "MODIS, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_vpm_diff_corr_II ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "VPM, norm., corr. II", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1_corr_2 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
+boxplot( bias_bess_v1_diff_corr_II ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
 mtext( "BESS, norm., corr. II", line=0.5, adj = 0, font=2 )
-```
 
-And now with appraoch III
-```{r}
+
+## Corrected by estimated fLUE (following approach IV)
+
 ## pmodel
-boxplot( ratio_obs_mod_pmodel_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
-mtext( "P-model, norm., corr. III", line=0.5, adj = 0, font=2 )
+boxplot( bias_pmodel_diff_corr_IV ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "P-model, norm., corr. IV", line=0.5, adj = 0, font=2 )
 
 ## MODIS
-boxplot( ratio_obs_mod_modis_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
-mtext( "MODIS, norm., corr. III", line=0.5, adj = 0, font=2 )
+boxplot( bias_modis_diff_corr_IV ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "MODIS, norm., corr. IV", line=0.5, adj = 0, font=2 )
 
 ## vpm
-boxplot( ratio_obs_mod_vpm_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
-mtext( "VPM, norm., corr. III", line=0.5, adj = 0, font=2 )
+boxplot( bias_vpm_diff_corr_IV ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "VPM, norm., corr. IV", line=0.5, adj = 0, font=2 )
 
 ## bess_v1
-boxplot( ratio_obs_mod_bess_v1_corr_3 ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "ratio obs./mod.", outline=FALSE, ylim=c(0,3) )
-abline( h=1, lty=3 )
-mtext( "BESS, norm., corr. III", line=0.5, adj = 0, font=2 )
+boxplot( bias_bess_v1_diff_corr_IV ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "BESS, norm., corr. IV", line=0.5, adj = 0, font=2 )
+
+## Corrected by estimated fLUE (following approach V)
+
+## pmodel
+boxplot( bias_pmodel_diff_corr_V ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "P-model, norm., corr. V", line=0.5, adj = 0, font=2 )
+
+## MODIS
+boxplot( bias_modis_diff_corr_V ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "MODIS, norm., corr. V", line=0.5, adj = 0, font=2 )
+
+## vpm
+boxplot( bias_vpm_diff_corr_V ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "VPM, norm., corr. V", line=0.5, adj = 0, font=2 )
+
+## bess_v1
+boxplot( bias_bess_v1_diff_corr_V ~ inbin, data=df_dday_8d_agg, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "BESS, norm., corr. V", line=0.5, adj = 0, font=2 )
 ```
 
-### Corrected, pooled models
+### Corrected, by models, pooled stress function
+
+```{r}
+##------------------------------------------------
+## Treat data from different stress functions as one - gather data
+##------------------------------------------------
+pmodel <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_pmodel_diff_corr_I, bias_pmodel_diff_corr_IV, bias_pmodel_diff_corr_III ) %>%
+                              gather( fct, pmodel, bias_pmodel_diff_corr_I, bias_pmodel_diff_corr_IV, bias_pmodel_diff_corr_III )
+
+modis <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_modis_diff_corr_I, bias_modis_diff_corr_IV, bias_modis_diff_corr_III ) %>%
+                             gather( fct, modis, bias_modis_diff_corr_I, bias_modis_diff_corr_IV, bias_modis_diff_corr_III )
+
+vpm <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_vpm_diff_corr_I, bias_vpm_diff_corr_IV, bias_vpm_diff_corr_III ) %>%
+                           gather( fct, vpm, bias_vpm_diff_corr_I, bias_vpm_diff_corr_IV, bias_vpm_diff_corr_III )
+
+bess_v1 <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_bess_v1_diff_corr_I, bias_bess_v1_diff_corr_IV, bias_bess_v1_diff_corr_III ) %>%
+                               gather( fct, bess_v1, bias_bess_v1_diff_corr_I, bias_bess_v1_diff_corr_IV, bias_bess_v1_diff_corr_III )
+
+## Corrected by estimated fLUE (following approach II)
+
+## pmodel
+boxplot( pmodel ~ inbin, data=pmodel, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "P-model, norm., corr. pooled", line=0.5, adj = 0, font=2 )
+
+## MODIS
+boxplot( modis ~ inbin, data=modis, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "MODIS, norm., corr. pooled", line=0.5, adj = 0, font=2 )
+
+## vpm
+boxplot( vpm ~ inbin, data=vpm, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "VPM, norm., corr. pooled", line=0.5, adj = 0, font=2 )
+
+## bess_v1
+boxplot( bess_v1 ~ inbin, data=bess_v1, xlab = "fLUE bin", ylab = "bias (mod.-obs.)", outline=FALSE, ylim=c(-6,6) )
+abline( h=0, lty=3 )
+mtext( "BESS, norm., corr. pooled", line=0.5, adj = 0, font=2 )
+```
+
+
+
+### Corrected, by stress function, pooled models
 Now, let's pool data (ratio observed over modelled) from all RS-models and check how the different approaches (I-III) perform in resolving the systematic bias.
 ```{r}
 ##------------------------------------------------
 ## Treat all different model's data as one - gather data
 ##------------------------------------------------
-tmp0 <- df_dday_8d_agg %>%  select( mysitename, date, dday, inst, fvar, inbin, ratio_obs_mod_modis, ratio_obs_mod_vpm, ratio_obs_mod_bess_v1, ratio_obs_mod_pmodel) %>% 
-                            gather( model, ratio_obs_mod, ratio_obs_mod_modis, ratio_obs_mod_vpm, ratio_obs_mod_bess_v1, ratio_obs_mod_pmodel )
+tmp  <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff, bias_vpm_diff, bias_bess_v1_diff, bias_pmodel_diff) %>% 
+                            gather( model, bias_diff, bias_modis_diff, bias_vpm_diff, bias_bess_v1_diff, bias_pmodel_diff )
 
-tmp1 <- df_dday_8d_agg %>%  select( mysitename, date, dday, inst, fvar, inbin, ratio_obs_mod_modis_corr_1, ratio_obs_mod_vpm_corr_1, ratio_obs_mod_bess_v1_corr_1, ratio_obs_mod_pmodel_corr_1 ) %>% 
-                            gather( model, ratio_obs_mod_corr_1, ratio_obs_mod_modis_corr_1, ratio_obs_mod_vpm_corr_1, ratio_obs_mod_bess_v1_corr_1, ratio_obs_mod_pmodel_corr_1 )
+tmp0 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr, bias_vpm_diff_corr, bias_bess_v1_diff_corr, bias_pmodel_diff_corr ) %>% 
+                            gather( model, bias_diff_corr, bias_modis_diff_corr, bias_vpm_diff_corr, bias_bess_v1_diff_corr, bias_pmodel_diff_corr )
 
-tmp2 <- df_dday_8d_agg %>%  select( mysitename, date, dday, inst, fvar, inbin, ratio_obs_mod_modis_corr_2, ratio_obs_mod_vpm_corr_2, ratio_obs_mod_bess_v1_corr_2, ratio_obs_mod_pmodel_corr_2 ) %>% 
-                            gather( model, ratio_obs_mod_corr_2, ratio_obs_mod_modis_corr_2, ratio_obs_mod_vpm_corr_2, ratio_obs_mod_bess_v1_corr_2, ratio_obs_mod_pmodel_corr_2 )
+tmp1 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr_I, bias_vpm_diff_corr_I, bias_bess_v1_diff_corr_I, bias_pmodel_diff_corr_I ) %>% 
+                            gather( model, bias_diff_corr_I, bias_modis_diff_corr_I, bias_vpm_diff_corr_I, bias_bess_v1_diff_corr_I, bias_pmodel_diff_corr_I )
 
-tmp3 <- df_dday_8d_agg %>%  select( mysitename, date, dday, inst, fvar, inbin, ratio_obs_mod_modis_corr_3, ratio_obs_mod_vpm_corr_3, ratio_obs_mod_bess_v1_corr_3, ratio_obs_mod_pmodel_corr_3 ) %>% 
-                            gather( model, ratio_obs_mod_corr_3, ratio_obs_mod_modis_corr_3, ratio_obs_mod_vpm_corr_3, ratio_obs_mod_bess_v1_corr_3, ratio_obs_mod_pmodel_corr_3 )
+tmp2 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr_IV, bias_vpm_diff_corr_IV, bias_bess_v1_diff_corr_IV, bias_pmodel_diff_corr_IV ) %>% 
+                            gather( model, bias_diff_corr_II, bias_modis_diff_corr_IV, bias_vpm_diff_corr_IV, bias_bess_v1_diff_corr_IV, bias_pmodel_diff_corr_IV )
 
-df_dday_8d_agg_pooled <- tmp0 %>% left_join( tmp1, by = c("mysitename", "date", "dday", "inst", "fvar", "inbin") ) %>% 
-                                  left_join( tmp2, by = c("mysitename", "date", "dday", "inst", "fvar", "inbin") ) %>% 
-                                  left_join( tmp3, by = c("mysitename", "date", "dday", "inst", "fvar", "inbin") )
+tmp3 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr_III, bias_vpm_diff_corr_III, bias_bess_v1_diff_corr_III, bias_pmodel_diff_corr_III ) %>% 
+                            gather( model, bias_diff_corr_III, bias_modis_diff_corr_III, bias_vpm_diff_corr_III, bias_bess_v1_diff_corr_III, bias_pmodel_diff_corr_III )
+
+tmp4 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr_IV, bias_vpm_diff_corr_IV, bias_bess_v1_diff_corr_IV, bias_pmodel_diff_corr_IV ) %>% 
+                            gather( model, bias_diff_corr_IV, bias_modis_diff_corr_IV, bias_vpm_diff_corr_IV, bias_bess_v1_diff_corr_IV, bias_pmodel_diff_corr_IV )
+
+tmp5 <- df_dday_8d_agg %>%  select( mysitename, date, fvar, inbin, bias_modis_diff_corr_V, bias_vpm_diff_corr_V, bias_bess_v1_diff_corr_V, bias_pmodel_diff_corr_V ) %>% 
+                            gather( model, bias_diff_corr_V, bias_modis_diff_corr_V, bias_vpm_diff_corr_V, bias_bess_v1_diff_corr_V, bias_pmodel_diff_corr_V )
 
 ##------------------------------------------------
 ## Quick plots IV:
 ##------------------------------------------------
-boxplot( ratio_obs_mod ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
+par(las=1)
+boxplot( bias_diff ~ inbin, data = tmp, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
 mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_1 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
+boxplot( bias_diff_corr ~ inbin, data = tmp0, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
+mtext( "Pooled models, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+boxplot( bias_diff_corr_I ~ inbin, data = tmp1, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
 mtext( "Pooled models, norm., corr. I", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_2 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
+boxplot( bias_diff_corr_II ~ inbin, data = tmp2, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
 mtext( "Pooled models, norm., corr. II", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr_3 ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
+boxplot( bias_diff_corr_III ~ inbin, data = tmp3, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
 mtext( "Pooled models, norm., corr. III", line=0.5, adj = 0, font=2 )
+
+boxplot( bias_diff_corr_IV ~ inbin, data = tmp4, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
+mtext( "Pooled models, norm., corr. IV", line=0.5, adj = 0, font=2 )
+
+boxplot( bias_diff_corr_V ~ inbin, data = tmp5, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
+mtext( "Pooled models, norm., corr. V", line=0.5, adj = 0, font=2 )
 ```
 
-### Corrected, pooled models, pooled stress functions
-And finally with pooling corrected data from applying all three stress functions.
-```{r}
-##------------------------------------------------
-## Additional pooling: ratios from all three soil moisture stress factors
-##------------------------------------------------
-df_dday_8d_agg_pooled2 <- df_dday_8d_agg_pooled %>% select( mysitename, inbin, ratio_obs_mod_corr_1, ratio_obs_mod_corr_2, ratio_obs_mod_corr_3 ) %>% 
-                                                    gather( level, ratio_obs_mod_corr, ratio_obs_mod_corr_1, ratio_obs_mod_corr_2, ratio_obs_mod_corr_3 )
+### Corrected, pooled models and stress function
 
+
+```{r}
+# pmodel <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_pmodel_diff_corr_I, bias_pmodel_diff_corr_IV, bias_pmodel_diff_corr_III ) %>%
+#                               gather( fct, pmodel, bias_pmodel_diff_corr_I, bias_pmodel_diff_corr_IV, bias_pmodel_diff_corr_III )
+
+# modis <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_modis_diff_corr_I, bias_modis_diff_corr_IV, bias_modis_diff_corr_III ) %>%
+#                              gather( fct, modis, bias_modis_diff_corr_I, bias_modis_diff_corr_IV, bias_modis_diff_corr_III )
+
+# vpm <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_vpm_diff_corr_I, bias_vpm_diff_corr_IV, bias_vpm_diff_corr_III ) %>%
+#                            gather( fct, vpm, bias_vpm_diff_corr_I, bias_vpm_diff_corr_IV, bias_vpm_diff_corr_III )
+
+# bess_v1 <- df_dday_8d_agg %>%  select( mysitename, date, inbin, bias_bess_v1_diff_corr_I, bias_bess_v1_diff_corr_IV, bias_bess_v1_diff_corr_III ) %>%
+#                                gather( fct, bess_v1, bias_bess_v1_diff_corr_I, bias_bess_v1_diff_corr_IV, bias_bess_v1_diff_corr_III )
+
+pooled <- select( pmodel, -fct, bias=pmodel ) %>% 
+          bind_rows( select( modis, -fct, bias=modis) ) %>% 
+          bind_rows( select( vpm, -fct, bias=vpm) ) %>% 
+          bind_rows( select( bess_v1, -fct, bias=bess_v1) )
 
 ##------------------------------------------------
 ## Quick plots V:
 ##------------------------------------------------
-boxplot( ratio_obs_mod ~ inbin, data = df_dday_8d_agg_pooled, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
-mtext( "Pooled models, norm.", line=0.5, adj = 0, font=2 )
+par(las=1)
+boxplot( bias_diff ~ inbin, data = tmp, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
+mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
 
-boxplot( ratio_obs_mod_corr ~ inbin, data = df_dday_8d_agg_pooled2, outline=FALSE, ylim=c(0,5), xlab = "fLUE bin", ylab = "ratio obs./mod." )
-abline( h=1, lty=3 )
+boxplot( bias_diff_corr ~ inbin, data = tmp0, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
+mtext( "Pooled models, norm., corr. fLUE", line=0.5, adj = 0, font=2 )
+
+boxplot( bias ~ inbin, data = pooled, outline=FALSE, ylim=c(-7,7), xlab = "fLUE bin", ylab = "ratio obs./mod." )
+abline( h=0, lty=3 )
 mtext( "Pooled models, norm., pooled corr.", line=0.5, adj = 0, font=2 )
 ```
-
-I.e., by estimating fLUE using an empirical soil moisture stress function, we should be able to resolve this systematic bias. 
 
 <!-- ## **Implications** -->
 

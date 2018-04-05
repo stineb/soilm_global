@@ -45,6 +45,7 @@ for (sitename in do.sites){
 
 }
 
+
 print("... done.")
 
 if ( length( dplyr::filter( siteinfo, successcode==1 )$mysitename ) == length( do.sites ) ){

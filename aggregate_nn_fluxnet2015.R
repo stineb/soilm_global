@@ -11,6 +11,7 @@ source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep
 source( "../utilities/init_dates_dataframe.R" )
 source("calc_flue_est_alpha.R")
 source("stress_quad_1sided.R")
+source("stress_exp.R")
 
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
@@ -42,6 +43,16 @@ verbose         = FALSE
 ##------------------------------------------------
 datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v5.Rdata" )
 load( datafilnam_flat )  # loads 'df_fluxnet'
+
+##------------------------------------------------
+## Load data for NN predictions
+##------------------------------------------------
+## load the NN model object
+load( "data/nn_caret_GRA.Rdata" )
+load( "data/rf.Rdata" )
+load( "data/ai_fluxnet2015.Rdata" )  # loads 'df_ai'
+load( "data/wtd_fluxnet2015.Rdata" )  # loads 'df_wtd'
+siteinfo <- read_csv( "data/siteinfo_fluxnet2015_sofun.csv" )
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites
@@ -160,9 +171,11 @@ for (sitename in do.sites){
     ##------------------------------------------------
     ## additional variables
     ##------------------------------------------------
-    nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs, 
+    nice <- nice %>%  mutate( bias_pmodel = gpp_pmodel / gpp_obs,
+                              bias_pmodel_diff = gpp_pmodel - gpp_obs,
                               ratio_obs_mod_pmodel = gpp_obs / gpp_pmodel, 
                               alpha = aet_pmodel / pet_pmodel ) %>% 
+
                       mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), 
                               ratio_obs_mod_pmodel = ifelse( is.infinite(ratio_obs_mod_pmodel), NA, ratio_obs_mod_pmodel ),
                               alpha = ifelse( is.infinite(alpha), NA, alpha )
@@ -189,21 +202,72 @@ for (sitename in do.sites){
     ## fLUE estimate based on current soil moisture and average AET/PET
     meanalphaval <- mean( nice$aet_pmodel / nice$pet_pmodel, na.rm=TRUE )
 
+    ## add vegetation type to dataframe
+    nice <- nice %>% left_join( select( siteinfo, mysitename, classid ), by="mysitename")
+
     ##------------------------------------------------
     ## Calculate soil moiture stress based on two alternative functions
     ##------------------------------------------------
     ## soil moisture stress factor (derived from two different fitting methods, see knit...Rmd)
+    myclassid <- unique( nice$classid )
+    mymeanalpha <- meanalphaval
     nice <- nice %>%  mutate( meanalpha=meanalphaval ) %>%
-                      mutate( flue_est_1 = calc_flue_est_alpha( soilm_mean, meanalpha, apar=0.1214, bpar=0.8855, cpar=0.125, dpar=0.75 ), ## method for s1a
-                              flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.09242, bpar = 0.79194 ),  ## when fitting to ratio_obs_mod_pmodel, method for s1b
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.1366, bpar = 0.4850 ),  ## when fitting to fLUE
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.09534, bpar = 0.49812 ),  ## when fitting to fLUE, weighted by 1-fLUE
-                              # flue_est_2 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = 0.06289, bpar = 0.50539 ),  ## when fitting to fLUE, weighted by (1-fLUE)^2
-                              # flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.1693101, bpar = 0.7650865 )  ## when fitting to directly to ratio_obs_mod_pmodel, method for s1c
-                              flue_est_3 = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0 = 0.9, apar = -0.5055405, bpar = 0.8109020  )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
+                      mutate( flue_est_I  = calc_flue_est_alpha( soilm_mean, mymeanalpha, apar=0.2617121, bpar=0.5668587, cpar=0.125, dpar=0.75 ), ## method for s1a
+                              flue_est_II = stress_quad_1sided_alpha( soilm_mean, mymeanalpha, x0 = 0.9, apar = 0.0606651, bpar = 0.5090085 ),  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
+                              flue_est_III = stress_quad_1sided_alpha( soilm_mean, mymeanalpha, x0 = 0.9, apar = 0.05151085, bpar = 0.1920844 )  ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites
                               )
 
+    nice$flue_est_IV <- rep( NA, nrow( nice ))
+    nice$flue_est_V  <- rep( NA, nrow( nice ))
+    for (idx in seq(nrow(nice))){
+      nice$flue_est_IV[idx] <- stress_quad_1sided_alpha_grasstree( nice$soilm_mean[idx], mymeanalpha, x0 = 0.9, apar = c( 0.1785247, 0.1007749 ), bpar = c(0.4501654, 0.0063069), classid=myclassid )  ## when fitting to ratio_obs_mod_pmodel, method for s1b
+      nice$flue_est_V[idx]  <- stress_exp_alpha_grasstree( nice$soilm_mean[idx], mymeanalpha, c(0.2067347, 0.0056745), c( 0.5543440, 0.4116154), 6.170356, -3.797436, classid=myclassid ) ## when fitting to directly to ratio_obs_mod_pmodel, subset of notoriously sensitive sites)
+    }
 
+
+    # ##------------------------------------------------
+    # ## Add NN-based fLUE estimate
+    # ##------------------------------------------------
+    # ## add mean aridity index (P/PET) to dataframe
+    # nice <- nice %>% left_join( select( df_ai, mysitename, ai ), by="mysitename" )
+
+    # ## add water table depth to dataframe
+    # nice <- nice %>% left_join( df_wtd, by="mysitename" )
+
+    # ## predict the values
+    # tmp <- select( nice, mysitename, date, soilm_splash, classid, ai, wtd, fpar) %>%
+    #        mutate( GRA = ifelse( classid=="GRA", TRUE, FALSE ),
+    #                SAV = ifelse( classid=="SAV", TRUE, FALSE ),
+    #                ENF = ifelse( classid=="ENF", TRUE, FALSE ),
+    #                WET = ifelse( classid=="WET", TRUE, FALSE ),
+    #                WSA = ifelse( classid=="WSA", TRUE, FALSE ),
+    #                EBF = ifelse( classid=="EBF", TRUE, FALSE ),
+    #                DBF = ifelse( classid=="DBF", TRUE, FALSE ),
+    #                CSH = ifelse( classid=="CSH", TRUE, FALSE )
+    #               ) %>%
+    #        mutate(  classid = as.factor(classid), 
+    #                 GRA = as.factor(GRA),
+    #                 SAV = as.factor(SAV),
+    #                 ENF = as.factor(ENF),
+    #                 WET = as.factor(WET),
+    #                 WSA = as.factor(WSA),
+    #                 EBF = as.factor(EBF),
+    #                 DBF = as.factor(DBF),
+    #                 CSH = as.factor(CSH)
+    #                 )
+    # na_idxs <- apply( tmp, 2, FUN=function (x) which(is.na(x)) ) %>% unlist() %>% unique()
+    # tmp <- tmp[-na_idxs,]
+    # print(  apply( tmp, 2, FUN=function (x) sum(is.na(x)) ) )
+    
+    # ## predict
+    # vals <- as.vector( predict( rf, tmp ) )
+    # tmp <- tmp %>% mutate( flue_est_nn = vals )
+    # nice <- nice %>% left_join( select( tmp, mysitename, date, flue_est_nn ), by = c("mysitename", "date") )
+
+    # ## test plot
+    # with(nice, plot(date, fvar, type="l", main=sitename, ylim=c(0,1)))
+    # with(nice, lines(date, flue_est_nn, col="red"))
+    
     ##------------------------------------------------
     ## Add BESS-GPP for this site to daily dataframe 'nice'
     ##------------------------------------------------
@@ -224,9 +288,9 @@ for (sitename in do.sites){
         
           ## merge into nice dataframe
           nice <- nice %>%  left_join( bess, by = "date" ) %>% 
-                            mutate( bias_bess_v1 = gpp_bess_v1 / gpp_obs ) %>% mutate( bias_bess_v1 = ifelse( is.infinite( bias_bess_v1 ), NA, bias_bess_v1 ) ) %>% 
+                            mutate( bias_bess_v1 = gpp_bess_v1 / gpp_obs, bias_bess_v1_diff = gpp_bess_v1 - gpp_obs ) %>% mutate( bias_bess_v1 = ifelse( is.infinite( bias_bess_v1 ), NA, bias_bess_v1 ) ) %>% 
                             mutate( ratio_obs_mod_bess_v1 = gpp_obs / gpp_bess_v1 ) %>% mutate( ratio_obs_mod_bess_v1=ifelse( is.infinite( bias_bess_v1 ), NA, ratio_obs_mod_bess_v1 ) )  %>%
-                            mutate( bias_bess_v2 = gpp_bess_v2 / gpp_obs ) %>% mutate( bias_bess_v2 = ifelse( is.infinite( bias_bess_v2 ), NA, bias_bess_v2 ) ) %>% 
+                            mutate( bias_bess_v2 = gpp_bess_v2 / gpp_obs, bias_bess_v2_diff = gpp_bess_v2 - gpp_obs ) %>% mutate( bias_bess_v2 = ifelse( is.infinite( bias_bess_v2 ), NA, bias_bess_v2 ) ) %>% 
                             mutate( ratio_obs_mod_bess_v2 = gpp_obs / gpp_bess_v2 ) %>% mutate( ratio_obs_mod_bess_v2=ifelse( is.infinite( bias_bess_v2 ), NA, ratio_obs_mod_bess_v2 ) )
 
         }
@@ -256,9 +320,11 @@ for (sitename in do.sites){
                 "gpp_nn_pot",
                 "fvar",
                 "fvar_smooth",
-                "flue_est_1",
-                "flue_est_2",
-                "flue_est_3",
+                "flue_est_I",
+                "flue_est_II",
+                "flue_est_III",
+                "flue_est_IV",
+                "flue_est_V",
                 "is_drought_byvar", 
                 "gpp_pmodel",
                 "aet_pmodel",
@@ -273,12 +339,14 @@ for (sitename in do.sites){
                 "soilm_mean",
                 "soilm_obs_mean",
                 "bias_pmodel", 
+                "bias_pmodel_diff", 
                 "ratio_obs_mod_pmodel", 
                 "lue_obs_evi", 
                 "lue_obs_fpar",
                 "dry",
                 "gpp_bess_v1", "gpp_bess_v2",
                 "bias_bess_v1", "bias_bess_v2",
+                "bias_bess_v1_diff", "bias_bess_v2_diff",
                 "ratio_obs_mod_bess_v1", "ratio_obs_mod_bess_v2"
                 )
 
@@ -327,7 +395,7 @@ for (sitename in do.sites){
       nice_8d <- nice_8d %>% select( date_start, one_of( usecols ) ) %>% left_join( select( modis, -date_end ), by=c( "date_start" ) )
       
       ## get additional variables
-      nice_8d <- nice_8d %>% mutate( bias_modis = gpp_modis / gpp_obs ) %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
+      nice_8d <- nice_8d %>% mutate( bias_modis = gpp_modis / gpp_obs, bias_modis_diff = gpp_modis - gpp_obs ) %>% mutate( bias_modis=ifelse( is.infinite( bias_modis ), NA, bias_modis ) ) %>% 
                              mutate( ratio_obs_mod_modis = gpp_obs / gpp_modis ) %>% mutate( ratio_obs_mod_modis=ifelse( is.infinite( ratio_obs_mod_modis ), NA, ratio_obs_mod_modis ) ) %>%
                              mutate( mysitename = sitename )
 
@@ -357,10 +425,10 @@ for (sitename in do.sites){
         nice_8d <- nice_8d %>% left_join( select( mte, -date_end ), by = c("date_start", "mysitename") ) %>%
 
           ## get additional variables
-          mutate( bias_mte = gpp_mte / gpp_obs )          %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
-          mutate( ratio_obs_mod_mte = gpp_obs / gpp_mte ) %>% mutate( ratio_obs_mod_mte=ifelse( is.infinite( ratio_obs_mod_mte ), NA, ratio_obs_mod_mte ) ) %>%  
-          mutate( bias_rf = gpp_rf / gpp_obs )            %>% mutate( bias_rf=ifelse( is.infinite( bias_rf ), NA, bias_rf ) )  %>%  
-          mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )   %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( ratio_obs_mod_rf ), NA, ratio_obs_mod_rf ) )
+          mutate( bias_mte = gpp_mte / gpp_obs, bias_mte_diff = gpp_mte - gpp_obs ) %>% mutate( bias_mte=ifelse( is.infinite( bias_mte ), NA, bias_mte ) ) %>% 
+          mutate( ratio_obs_mod_mte = gpp_obs / gpp_mte )                           %>% mutate( ratio_obs_mod_mte=ifelse( is.infinite( ratio_obs_mod_mte ), NA, ratio_obs_mod_mte ) ) %>%  
+          mutate( bias_rf = gpp_rf / gpp_obs, bias_rf_diff = gpp_rf - gpp_obs )     %>% mutate( bias_rf=ifelse( is.infinite( bias_rf ), NA, bias_rf ) )  %>%  
+          mutate( ratio_obs_mod_rf = gpp_obs / gpp_rf )                             %>% mutate( ratio_obs_mod_rf=ifelse( is.infinite( ratio_obs_mod_rf ), NA, ratio_obs_mod_rf ) )
 
       } else {
 
@@ -390,7 +458,7 @@ for (sitename in do.sites){
         nice_8d <- nice_8d %>% left_join( select( vpm, -date, -date_end, -year, -doy ), by = c("date_start", "mysitename") ) %>%
 
           ## get additional variables
-          mutate( bias_vpm = gpp_vpm / gpp_obs )          %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
+          mutate( bias_vpm = gpp_vpm / gpp_obs, bias_vpm_diff = gpp_vpm - gpp_obs ) %>% mutate( bias_vpm=ifelse( is.infinite( bias_vpm ), NA, bias_vpm ) ) %>% 
           mutate( ratio_obs_mod_vpm = gpp_obs / gpp_vpm ) %>% mutate( ratio_obs_mod_vpm=ifelse( is.infinite( ratio_obs_mod_vpm ), NA, ratio_obs_mod_vpm ) )
       
       } else {

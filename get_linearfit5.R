@@ -1,6 +1,6 @@
 ## This works like get_linearfit5.R but with a different functional form of the soil moisture stress function: 2-parameter exponential instead of parabolic
 
-get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
+get_yintersect <- function( df, target="fvar", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
 
   require(dplyr)
   require(tidyr)
@@ -58,7 +58,7 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
                       eq,
                       data=df_tmp,
                       start=list( y0=0.0, curve=3.0 ),
-                      lower=c( -10.0,  1.0 ),
+                      lower=c( -5,  1.0 ),
                       upper=c( 1.0, 99.0  ),
                       algorithm="port"
                       )
@@ -99,6 +99,8 @@ get_linearfit5 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   
   require(dplyr)
   require(tidyr)
+  
+  siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
 
   beta_min <- 0.01
 
@@ -135,10 +137,13 @@ get_linearfit5 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   ##------------------------------------------------------------------------
   ## Fit linear models
   ##------------------------------------------------------------------------
-  linmod_y0 <- lm( y0 ~ meanalpha, data=out )
-  # linmod_curve <- lm( curve ~ y0, data=out )
-  linmod_curve <- lm( curve ~ meanalpha, data=out )
+  out <- out %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
+
+  linmod_y0_tree  <- lm( y0 ~ meanalpha, data=dplyr::filter( out, !(classid %in% c("GRA", "CSH") ) ) )
+  linmod_y0_grass <- lm( y0 ~ meanalpha, data=dplyr::filter( out,   classid %in% c("GRA", "CSH") ) )
+
+  linmod_curve   <- lm( curve ~ meanalpha, data=out )
   
-  return( list( linmod_curve=linmod_curve, linmod_y0=linmod_y0, data=out ) )
+  return( list( linmod_curve=linmod_curve, linmod_y0_tree=linmod_y0_tree, linmod_y0_grass=linmod_y0_grass, data=out ) )
 
 }
