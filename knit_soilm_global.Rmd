@@ -165,7 +165,7 @@ source("stress_quad_1sided.R")
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
 # linearfit2 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 ), target="ratio_obs_mod_pmodel", monthly = FALSE, bin = FALSE, x0_fix = x0_fix, useweights = FALSE, doplot = TRUE)
-linearfit2 <- get_linearfit2( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = TRUE )
+linearfit2 <- get_linearfit2( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
 save( linearfit2, file="data/linearfit2_ratio.Rdata" )
 ```
 
@@ -255,7 +255,7 @@ notorious.sites <- c("IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM",
 
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
-linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE, doplot = TRUE )
+linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="ratio_obs_mod_pmodel", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE, doplot = FALSE )
 # linearfit3 <- get_linearfit2( filter( ddf, ratio_obs_mod_pmodel<5 & dday >=0 & mysitename %in% notorious.sites ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = FALSE, doplot = TRUE )
 save( linearfit3, file="data/linearfit3_ratio.Rdata" )
 ```
@@ -309,7 +309,7 @@ source("stress_quad_1sided.R")
 
 ## Use fixed point (soil moisture) above which stress function is 1 (no stress)
 x0_fix <- 0.9
-linearfit5 <- get_linearfit5( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = TRUE )
+linearfit5 <- get_linearfit5( filter( ddf, dday >=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE )
 save( linearfit5, file="data/linearfit5.Rdata" )
 ```
 
