@@ -48,11 +48,11 @@ load( datafilnam_flat )  # loads 'df_fluxnet'
 ## Load data for NN predictions
 ##------------------------------------------------
 ## load the NN model object
-load( "data/nn_caret_GRA.Rdata" )
-load( "data/rf.Rdata" )
-load( "data/ai_fluxnet2015.Rdata" )  # loads 'df_ai'
-load( "data/wtd_fluxnet2015.Rdata" )  # loads 'df_wtd'
-siteinfo <- read_csv( "data/siteinfo_fluxnet2015_sofun.csv" )
+# load( "data/nn_caret_GRA.Rdata" )
+# load( "data/rf.Rdata" )
+load( "data/ai_fluxnet2015.Rdata" )  # loads 'df_ai' (aridity index)
+load( "data/wtd_fluxnet2015.Rdata" )  # loads 'df_wtd' (water table depth)
+siteinfo <- read_csv( "data/siteinfo_fluxnet2015_sofun.csv" ) # needed for vegetation type
 
 ##------------------------------------------------
 ## Get MTE-GPP for all sites

@@ -3,21 +3,21 @@ library(dplyr)
 library(abind)
 source("~/.Rprofile")
 
-overwrite <- FALSE
+overwrite <- TRUE
 outfiln <- "data/ampl_jung.Rdata"
 
 vec_res <- c( 0.5, 1.0, 1.5, 2.5, 3, 4, 4.5, 5, 6, 7.5, 9, 10, 12, 15, 18, 20, 22.5, 30, 36, 45, 60, 90, 180, 360 )
 
-filpath_detr <- c(  paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s0_DETR.nc" ), 
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1a_DETR.nc" ),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1b_DETR.nc" ),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1c_DETR.nc" )
+filpath_detr <- c(  paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s0_DETR.nc" ), 
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_DETR.nc" ),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_DETR.nc" ),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_DETR.nc" )
                     )
 
-filpath_nice <- c(  paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s0_ANN.nc" ), 
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1a_ANN.nc" ),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1b_ANN.nc" ),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1c_ANN.nc" )
+filpath_nice <- c(  paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s0_ANN.nc" ), 
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_ANN.nc" ),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_ANN.nc" ),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_ANN.nc" )
                     )
 
 modl <- c( "Pmodel_S0", "Pmodel_S1a", "Pmodel_S1b", "Pmodel_S1c")
@@ -162,12 +162,14 @@ ampl_agg_1c <- ampl_1c %>%  group_by( resnr ) %>%
 																				relvar_q75 = quantile( relvar, probs=0.75 )
 																				) 																																		
 
-ampl_agg <- abind( ampl_agg_1a, ampl_agg_1b, ampl_agg_1c, along = 3 ) %>%
-						apply( c(1,2), FUN = mean ) %>%
-            as_tibble()
+# ## take mean across ensembles
+# ampl_agg <- abind( ampl_agg_1a, ampl_agg_1b, ampl_agg_1c, along = 3 ) %>%
+# 						apply( c(1,2), FUN = mean ) %>%
+#             as_tibble()
+# save( ampl_agg, file="data/ampl_agg_jung.Rdata" )
 
-
-save( ampl_agg, file="data/ampl_agg_jung.Rdata" )
+## use s1b as standard
+ampl_agg <- ampl_agg_1b
 
 ## Plot scale dependence of soil moisture effect on GPP interannual variance
 pdf("fig/plot_jung.pdf", width = 5, height = 4 )

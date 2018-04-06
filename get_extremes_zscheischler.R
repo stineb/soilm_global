@@ -5,6 +5,10 @@ library(igraph)
 library(fields) ## for image.plot() function
 library(dplyr)
 
+myboxplot <- function( ... ){
+  boxplot( ..., staplewex=0, whisklty=1, outline=FALSE )
+}
+
 ##-----------------------
 overwrite <- FALSE
 ##-----------------------
@@ -36,10 +40,10 @@ if (!file.exists(outfile)||overwrite){
 
   ## load monthly anomalies created beforehand with 'proc_nc_fields.sh'
   print("loading anomaly files...")
-  ANOM_s0_all  <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s0_MON_ANOM.nc")
-  ANOM_s1a_all <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s1a_MON_ANOM.nc")
-  ANOM_s1b_all <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s1b_MON_ANOM.nc")
-  ANOM_s1c_all <- brick("~/data/pmodel_fortran_output/gpp_pmodel_s1c_MON_ANOM.nc")
+  ANOM_s0_all  <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc")
+  ANOM_s1a_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_MON_ANOM.nc")
+  ANOM_s1b_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_MON_ANOM.nc")
+  ANOM_s1c_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_MON_ANOM.nc")
 
   ## reorder dimensions and multiply with gridcell surface area
   print("reorder dimensions...")
@@ -116,16 +120,27 @@ if (!file.exists(outfile)||overwrite){
 ## Plot PDF of x>X
 cont <- c("NA", "SA", "EU", "AF", "RU", "AU")
 continent <- c("North America", "South America", "Europe", "Africa", "Russia", "Australia")
-pdf( "fig/extremes.pdf", width=10, height = 3.5 )
-# par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-# for (k in c(1,3,5,2,4,6)) {
-par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-for (k in c(2,4,6)) {
+pdf( "fig/extremes.pdf", width=10, height = 7 )
+par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+for (k in c(1,3,5,2,4,6)) {
+# par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+# for (k in c(2,4,6)) {
+
+  # df <- tibble( prob=(1:n)/sum(1:n), 
+  #   s1a=sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, 
+  #   s1b=sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, 
+  #   s1c=sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9
+  #   )
+
   n0 <- length(IMPACT_s0[[k]])
   n1 <- length(IMPACT_s1c[[k]])
   n <- min(n0,n1)
   plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = rgb(1,0,0,1), axes=FALSE )
-  polygon( c( sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, rev(sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
+
+  points(   sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
+  points(   sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
+
+  # polygon( c( sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, rev(sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
   points( sort( -1 * IMPACT_s0[[k]][1:n],  decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
   mtext( bquote( alpha["s1b"] == .(format( fit_s1b[[k]]$alpha, digits = 3) ) ), side=1, line=-4, adj=0.1 )
   mtext( bquote( alpha["s0"]  == .(format( fit_s0[[k]]$alpha,  digits = 3) ) ), side=1, line=-2, adj=0.1 )
@@ -176,7 +191,7 @@ dev.off()
 pdf("fig/extremes_s1-s0_rel.pdf",width=10)
 par( mfrow=c(2,3), las=1 )
 for (k in c(1,3,5,2,4,6)) {
-  boxplot( list_impacts[[k]]$ampl_mean, ylim=c(0,3), ylab="ratio s1b/s0" )
+  myboxplot( list_impacts[[k]]$ampl_mean, ylim=c(0,3), ylab="ratio s1b/s0" )
   mtext( continent[k], line=1, font=2, adj=0 )
   abline( h=1, lty=3 )
 }

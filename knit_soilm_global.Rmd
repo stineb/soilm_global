@@ -50,7 +50,7 @@ source("aggregate_nn_fluxnet2015.R")
 ```
 
 Then align data along the start of "fLUE droughts". This also aggregates across drought events for each site and thereby quantifies the mean course of variables through drought events (not shown). Furthermore, this retains only datapoints that are either 20 days before the onset of a drought or during droughts and thereby allows us to focus on model bias associated with soil dryness. This uses only data with successcode 1, i.e. where a certain minimum number of days in the data were classified as *fLUE drought* in Stocker et al. (subm.).
-```{r align, warning=FALSE, eval=FALSE}
+```{r align, warning=FALSE, eval=TRUE}
 source("execute_reshape_align_nn_fluxnet2015.R")
 ```
 For all GPP models, this shows a clear relationship between the apparent fractional reduction in light use efficiency (fLUE) and the model bias. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations.  The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. Small boxes with horizontal red lines show the most frequent value from a kernel density within fLUE bins and the vertical extent of the boxes the range of values where the kernel density lies above half its peak. The boxes to the right of each plot represent model bias (median, IQR) during the 20 days before fLUE drought onset.
@@ -787,115 +787,115 @@ abline( h=0, lty=3 )
 mtext( "Pooled models, norm., pooled corr.", line=0.5, adj = 0, font=2 )
 ```
 
-<!-- ## **Implications** -->
+## **Implications**
 
-<!-- After deriving an empirical correction function to remove the bias in the P-model during dry soil conditions, I applied this function (with $a$ and $b$ fitted using approach II) for global P-model simulations. Two simulations were carried out: -->
+After deriving an empirical correction function to remove the bias in the P-model during dry soil conditions, I applied this function (with $a$ and $b$ fitted using approach II) for global P-model simulations. Two simulations were carried out:
 
-<!-- - `s0`: no additional soil moisture stress on GPP considered (original model version) -->
-<!-- - `s1a`: with additional soil moisture stress, following parametrisation I -->
-<!-- - `s1b`: with additional soil moisture stress, following parametrisation II -->
-<!-- - `s1c`: with additional soil moisture stress, following parametrisation III -->
+- `s0`: no additional soil moisture stress on GPP considered (original model version)
+- `s1a`: with additional soil moisture stress, following parametrisation I
+- `s1b`: with additional soil moisture stress, following parametrisation IV
+- `s1c`: with additional soil moisture stress, following parametrisation III
 
-<!-- Using P-model results, I am visualising the soil moisture effects on the mean GPP and its interannual variability. -->
+Using P-model results, I am visualising the soil moisture effects on the mean GPP and its interannual variability.
 
-<!-- ### Processing output files. -->
-<!-- The following bash script uses CDO commands to derive statistics (mean, variance, relative variance) at the global and at the gridcell levels. -->
-<!-- ```{r, eval=FALSE} -->
-<!-- system( "./proc_nc_fields.sh" ) -->
-<!-- ``` -->
+### Processing output files.
+The following bash script uses CDO commands to derive statistics (mean, variance, relative variance) at the global and at the gridcell levels.
+```{r, eval=FALSE}
+system( "./proc_nc_fields.sh" )
+```
 
-<!-- ### Soil moisture reduction of mean annual GPP -->
+### Soil moisture reduction of mean annual GPP
 
-<!-- ```{r map_effects_gpp_mean, echo=FALSE, warning=FALSE, message=FALSE} -->
-<!-- source("map_effects_gpp_mean.R") -->
-<!-- ``` -->
+```{r map_effects_gpp_mean, echo=FALSE, warning=FALSE, message=FALSE}
+source("map_effects_gpp_mean.R")
+```
 
-<!-- ### Soil moisture effect on variance in annual GPP -->
-<!-- ```{r map_effects_gpp_var, echo=FALSE, warning=FALSE, message=FALSE} -->
-<!-- source("map_effects_gpp_var.R") -->
-<!-- ``` -->
+### Soil moisture effect on variance in annual GPP
+```{r map_effects_gpp_var, echo=FALSE, warning=FALSE, message=FALSE}
+source("map_effects_gpp_var.R")
+```
 
-<!-- ### Soil moisture effect on relative variance in annual GPP -->
-<!-- Relative variance is the absolute variance divided by the mean. I'm quantifying the **amplification factor** ($A$) of the relative variance in annual GPP, quantified as: -->
-<!-- $$ -->
-<!-- A=\frac{\text{var}(GPP_{s1})\;\overline{GPP_{s0}}}{\text{var}(GPP_{s0})\;\overline{GPP_{s1}}} -->
-<!-- $$ -->
-<!-- ```{r map_effects_gpp_relvar, echo=FALSE, warning=FALSE, message=FALSE} -->
-<!-- source("map_effects_gpp_relvar.R") -->
-<!-- ``` -->
+### Soil moisture effect on relative variance in annual GPP
+Relative variance is the absolute variance divided by the mean. I'm quantifying the **amplification factor** ($A$) of the relative variance in annual GPP, quantified as:
+$$
+A=\frac{\text{var}(GPP_{s1})\;\overline{GPP_{s0}}}{\text{var}(GPP_{s0})\;\overline{GPP_{s1}}}
+$$
+```{r map_effects_gpp_relvar, echo=FALSE, warning=FALSE, message=FALSE}
+source("map_effects_gpp_relvar.R")
+```
 
-<!-- This shows that... -->
+This shows that...
 
-<!-- - Soil moisture effects on light use efficiency substantially reduce annual GPP. At the global level this is by around 15%. -->
-<!-- - Additionally accounting for soil moisture limitation drastically increases the relative variance of annual GPP at the gridcell level. Below are the quantiles of the amplification factor of relative variance, shown also on the map above (see inset: empirical cumulative distribution function of the amplification factor on log scale axes). -->
+- Soil moisture effects on light use efficiency substantially reduce annual GPP. At the global level this is by around 15%.
+- Additionally accounting for soil moisture limitation drastically increases the relative variance of annual GPP at the gridcell level. Below are the quantiles of the amplification factor of relative variance, shown also on the map above (see inset: empirical cumulative distribution function of the amplification factor on log scale axes).
 
-<!-- - Accounting for soil moisture effects increases variability in annual GPP especially in semi-arid regions. These are the dominant drivers of carbon cycle variability at global and annual scales. How is global variability affected? (see below) -->
+- Accounting for soil moisture effects increases variability in annual GPP especially in semi-arid regions. These are the dominant drivers of carbon cycle variability at global and annual scales. How is global variability affected? (see below)
 
-<!-- The mean amplification is: -->
-<!-- ```{r echo=FALSE} -->
-<!-- load("data/ampl_relvar.Rdata") -->
-<!-- print( paste( mean( vec )) ) -->
-<!-- ``` -->
+The mean amplification is:
+```{r echo=FALSE}
+load("data/ampl_relvar.Rdata")
+print( paste( mean( vec )) )
+```
 
-<!-- The quantiles of the amplification factor are: -->
-<!-- ```{r echo=FALSE} -->
-<!-- print( quantile( vec, probs=( c(0.5,0.75, 0.9, 0.95, 0.99, 0.999 ) ) ) ) -->
-<!-- ``` -->
-<!-- This is also illustrated by the inset in the previous plot which shows the empirical cumulative distribution function of the amplification factor $A$. -->
+The quantiles of the amplification factor are:
+```{r echo=FALSE}
+print( quantile( vec, probs=( c(0.5,0.75, 0.9, 0.95, 0.99, 0.999 ) ) ) )
+```
+This is also illustrated by the inset in the previous plot which shows the empirical cumulative distribution function of the amplification factor $A$.
 
-<!-- ### Implications for IAV of global GPP -->
-<!-- Next, I'm assessing the effect of the soil moisture correction for interannual variability in GPP. Analysis shown above shows that the at the gridcell level, variance in annual GPP is substantially enhanced by soil moisture effects. Does this translate into an enhancement of the variance in global GPP? -->
+### Implications for IAV of global GPP
+Next, I'm assessing the effect of the soil moisture correction for interannual variability in GPP. Analysis shown above shows that the at the gridcell level, variance in annual GPP is substantially enhanced by soil moisture effects. Does this translate into an enhancement of the variance in global GPP?
 
-<!-- Here, using the P-model, $A$ at the global scale is calculated to be: -->
-<!-- ```{r echo=FALSE} -->
-<!-- nc <- nc_open( paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s0_RELVAR_GLOB.nc" ) ) -->
-<!-- relvar_s0 <- ncvar_get( nc, varid="gpp" ) -->
-<!-- nc_close(nc) -->
+Here, using the P-model, $A$ at the global scale is calculated to be:
+```{r echo=FALSE}
+nc <- nc_open( paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s0_RELVAR_GLOB.nc" ) )
+relvar_s0 <- ncvar_get( nc, varid="gpp" )
+nc_close(nc)
 
-<!-- nc <- nc_open( paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1_RELVAR_GLOB.nc" ) ) -->
-<!-- relvar_s1 <- ncvar_get( nc, varid="gpp" ) -->
-<!-- nc_close(nc) -->
+nc <- nc_open( paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1_RELVAR_GLOB.nc" ) )
+relvar_s1 <- ncvar_get( nc, varid="gpp" )
+nc_close(nc)
 
-<!-- print(relvar_s1/relvar_s0) -->
-<!-- ``` -->
-<!-- Hence, the relative variance (variance in global total annual GPP divided by its mean) does not increase. The contrary is the case: it even decreases slightly. How can this be understood? The suspicion is that this is the scale dependence, also found by Jung et al. (2017). This is investigated below. -->
+print(relvar_s1/relvar_s0)
+```
+Hence, the relative variance (variance in global total annual GPP divided by its mean) does not increase. The contrary is the case: it even decreases slightly. How can this be understood? The suspicion is that this is the scale dependence, also found by Jung et al. (2017). This is investigated below.
 
-<!-- #### Ahlstroem plot -->
-<!-- First analysis, I quantified the "Ahlstroem-f" (see Eq. 1 in Ahlstroem et al., 2015). This index quantifies for each gridcell its contribution to global interannual variability. If it's positive, then the gridcell's variability is in sync with global anomalies, i.e. has a positive contribution to global anomalies - the bigger the value the bigger its contribution. If positive and negative values are equally frequent and big, they cancel each other out, leaving zero global interannual variability. It is defined as: -->
-<!-- $$ -->
-<!-- f_j = \frac{\sum_t \frac{x_{jt}|X_t|}{X_t}}{\sum_t |X_t|} -->
-<!-- $$ -->
-<!-- where $x_{jt}$ is the flux anomaly (departure from a long-term trend) for region $j$ at time $t$ (in years), and $X_t$ is the global flux anomaly, so that $X_t=\sum_j x_{jt}$. By this definition $f_j$ is the average relative anomaly $x_{jt}/X_t$ for region $j$, weighted with the absolute global anomaly $|X_t|$ (text copied from Ahlstroem et al., 2015). -->
+#### Ahlstroem plot
+First analysis, I quantified the "Ahlstroem-f" (see Eq. 1 in Ahlstroem et al., 2015). This index quantifies for each gridcell its contribution to global interannual variability. If it's positive, then the gridcell's variability is in sync with global anomalies, i.e. has a positive contribution to global anomalies - the bigger the value the bigger its contribution. If positive and negative values are equally frequent and big, they cancel each other out, leaving zero global interannual variability. It is defined as:
+$$
+f_j = \frac{\sum_t \frac{x_{jt}|X_t|}{X_t}}{\sum_t |X_t|}
+$$
+where $x_{jt}$ is the flux anomaly (departure from a long-term trend) for region $j$ at time $t$ (in years), and $X_t$ is the global flux anomaly, so that $X_t=\sum_j x_{jt}$. By this definition $f_j$ is the average relative anomaly $x_{jt}/X_t$ for region $j$, weighted with the absolute global anomaly $|X_t|$ (text copied from Ahlstroem et al., 2015).
 
-<!-- Here, the flux anomaly $x_{jt}$ is the diference in detrended GPP from simulations `s1` and `s0`: -->
-<!-- $$ -->
-<!-- x_{jt} = \Delta\text{GPP}_{s0} - \Delta\text{GPP}_{s1} -->
-<!-- $$ -->
-<!-- where $\Delta\text{GPP}$ the annual anomaly from its mean linear trend over 1982-2011. -->
+Here, the flux anomaly $x_{jt}$ is the diference in detrended GPP from simulations `s1` and `s0`:
+$$
+x_{jt} = \Delta\text{GPP}_{s0} - \Delta\text{GPP}_{s1}
+$$
+where $\Delta\text{GPP}$ the annual anomaly from its mean linear trend over 1982-2011.
 
-<!-- ```{r plot_ahlstroem, warning=FALSE, message=FALSE} -->
-<!-- source("plot_ahlstroem.R") -->
-<!-- ``` -->
+```{r plot_ahlstroem, warning=FALSE, message=FALSE}
+source("plot_ahlstroem.R")
+```
 
-<!-- This shows that Australia, sub-tropical southern Africa, and other red-colored regions are counteracted by blue-colored regions. Regional responses are becoming decoupledat scales of 10-20 degrees. This becomes even more evident by the analysis below: -->
+This shows that Australia, sub-tropical southern Africa, and other red-colored regions are counteracted by blue-colored regions. Regional responses are becoming decoupledat scales of 10-20 degrees. This becomes even more evident by the analysis below:
 
-<!-- #### Jung plot -->
-<!-- To look at the spatial scale-dependence of the amplification factor, I did a similar analysis as in Jung et al. (2017). -->
+#### Jung plot
+To look at the spatial scale-dependence of the amplification factor, I did a similar analysis as in Jung et al. (2017).
 
-<!-- First, create grid definition files for remapping with CDO. These are stored in `./grids/` as text files. -->
-<!-- ```{r do_jung, warning=FALSE, eval=FALSE, message=FALSE, echo = FALSE} -->
-<!-- source("define_grids.R") -->
-<!-- source("regrid_jung.R") -->
-<!-- ``` -->
+First, create grid definition files for remapping with CDO. These are stored in `./grids/` as text files.
+```{r do_jung, warning=FALSE, eval=FALSE, message=FALSE, echo = FALSE}
+source("define_grids.R")
+source("regrid_jung.R")
+```
 
-<!-- Then evaluate the amplification of relative variance of annual GPP as a function of spatial resolution. -->
-<!-- ```{r plot_jung, warning=FALSE, message=FALSE} -->
-<!-- source("plot_jung.R") -->
-<!-- ``` -->
+Then evaluate the amplification of relative variance of annual GPP as a function of spatial resolution.
+```{r plot_jung, warning=FALSE, message=FALSE}
+source("plot_jung.R")
+```
 
-<!-- This figure shows the amplification factor with the solid line as the mean, and shaded areas as the 1%/99%, 5%/95%, 10%/90%, and 25%/75% quantile ranges. Apparently, **the soil moisture-related amplification of relative variance in annual GPP is scale dependent.** (I'll have to think of more human-friendly words to describe this result). The bias of common remote-sensing based GPP estimates under dry conditions does not translate into an underestimation of the IAV of global GPP. However, at the smaller scales, IAV is drastically underestimated when not accounting for soil moisture effects. -->
+This figure shows the amplification factor with the solid line as the mean, and shaded areas as the 1%/99%, 5%/95%, 10%/90%, and 25%/75% quantile ranges. Apparently, **the soil moisture-related amplification of relative variance in annual GPP is scale dependent.** (I'll have to think of more human-friendly words to describe this result). The bias of common remote-sensing based GPP estimates under dry conditions does not translate into an underestimation of the IAV of global GPP. However, at the smaller scales, IAV is drastically underestimated when not accounting for soil moisture effects.
 
-<!-- For most gridcells (within the lower and upper quartiles), the amplification factor only starts to decline around 20 degrees. This reflects the spatial scale of the patterns in the Ahlstroem plot above. -->
+For most gridcells (within the lower and upper quartiles), the amplification factor only starts to decline around 20 degrees. This reflects the spatial scale of the patterns in the Ahlstroem plot above.
 
 ## Additional analyses
 

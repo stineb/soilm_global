@@ -146,7 +146,7 @@ myhome=~
 ##----------------------------------------------------
 ## P-model S0
 ##----------------------------------------------------
-cd $myhome/data/pmodel_fortran_output/
+cd $myhome/data/pmodel_fortran_output/v2/
 
 ## reduce to 30 years and get annual total
 echo "get annual totals..."
@@ -167,7 +167,7 @@ cd $here
 ##----------------------------------------------------
 ## P-model S1a, S1b, S1c
 ##----------------------------------------------------
-cd $myhome/data/pmodel_fortran_output/
+cd $myhome/data/pmodel_fortran_output/v2/
 
 ## reduce to 30 years and get annual total
 echo "get annual totals..."

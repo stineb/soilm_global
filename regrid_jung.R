@@ -1,15 +1,15 @@
 vec_res <- c( 0.5, 1.0, 1.5, 2.5, 3, 4, 4.5, 5, 6, 7.5, 9, 10, 12, 15, 18, 20, 22.5, 30, 36, 45, 60, 90, 180, 360 )
 
-filpath_DETR <- c(  "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s0_DETR.nc", 
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1a_DETR.nc",
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1b_DETR.nc",
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1c_DETR.nc"
+filpath_DETR <- c(  "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s0_DETR.nc", 
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_DETR.nc",
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_DETR.nc",
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_DETR.nc"
                     )
 
-filpath_ANN <- c(  "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s0_ANN.nc", 
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1a_ANN.nc",
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1b_ANN.nc",
-                    "/Users/benjaminstocker/data/pmodel_fortran_output/gpp_pmodel_s1c_ANN.nc"
+filpath_ANN <- c(  "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s0_ANN.nc", 
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_ANN.nc",
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_ANN.nc",
+                    "/Users/benjaminstocker/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_ANN.nc"
                     )
 
 ## regrid using 'cdo remapbil'

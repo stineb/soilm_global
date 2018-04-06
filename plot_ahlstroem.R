@@ -4,10 +4,10 @@ library(abind)
 source("get_ahlstroem_f.R")
 source("../utilities/plot_map.R")
 
-filpath_detr <- c(  paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s0_DETR.nc"), 
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1a_DETR.nc"),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1b_DETR.nc"),
-                    paste0( myhome, "/data/pmodel_fortran_output/gpp_pmodel_s1c_DETR.nc")
+filpath_detr <- c(  paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s0_DETR.nc"), 
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_DETR.nc"),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_DETR.nc"),
+                    paste0( myhome, "/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_DETR.nc")
                     )
 
 modl <- c( "Pmodel_S0", "Pmodel_S1a", "Pmodel_S1b", "Pmodel_S1c")

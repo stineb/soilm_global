@@ -15,7 +15,7 @@ fil_s1a <- "gpp_pmodel_s1a_RELVAR.nc"
 fil_s1b <- "gpp_pmodel_s1b_RELVAR.nc"
 fil_s1c <- "gpp_pmodel_s1c_RELVAR.nc"
 
-dir <- paste0( myhome, "/data/pmodel_fortran_output/")
+dir <- paste0( myhome, "/data/pmodel_fortran_output/v2/")
 
 ## S0
 nc <- nc_open( paste0( dir, fil_s0 ) )

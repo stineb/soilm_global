@@ -9,7 +9,7 @@ source("~/.Rprofile")
   fil_s0 <- "gpp_pmodel_s0_MEAN.nc"
   fil_s1 <- "gpp_pmodel_s1_MEAN.nc"
 
-  dir <- paste0( myhome, "/data/pmodel_fortran_output/")
+  dir <- paste0( myhome, "/data/pmodel_fortran_output/v2/")
 
   nc <- nc_open( paste0( dir, fil_s0 ) )
   gpp_s0 <- ncvar_get( nc, varid="gpp" )
