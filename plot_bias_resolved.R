@@ -461,6 +461,25 @@ pdf("fig/bias_pmodel_resolved.pdf", width = 7, height = 6)
 dev.off()
 system("open fig/bias_pmodel_resolved.pdf")
 
+rmse_orig <- sqrt(mean((df_dday_8d_agg$bias_pmodel_diff)^2, na.rm=TRUE))
+print(paste("RMSE of P-model", rmse_orig))
+
+rmse_corr <- sqrt(mean((df_dday_8d_agg$bias_pmodel_diff_corr)^2, na.rm=TRUE))
+print(paste("RMSE of P-model", rmse_corr))
+
+rmse_orig <- mean(df_dday_8d_agg$bias_pmodel_diff, na.rm=TRUE)
+print(paste("RMSE of P-model", rmse_orig))
+
+rmse_corr <- mean(df_dday_8d_agg$bias_pmodel_diff_corr, na.rm=TRUE)
+print(paste("RMSE of P-model", rmse_corr))
+
+rmse_corr_I <- mean(df_dday_8d_agg$bias_pmodel_diff_corr_I, na.rm=TRUE)
+print(paste("RMSE of P-model", rmse_corr_I))
+rmse_corr_IV <- mean(df_dday_8d_agg$bias_pmodel_diff_corr_IV, na.rm=TRUE)
+print(paste("RMSE of P-model", rmse_corr_IV))
+rmse_corr_III <- mean(df_dday_8d_agg$bias_pmodel_diff_corr_III, na.rm=TRUE)
+print(paste("RMSE of P-model", rmse_corr_III))
+
 
 ##------------------------------------------------
 ## Final plot: bias (the problem)
