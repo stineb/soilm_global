@@ -1,9 +1,9 @@
 # make anomalies
-library(raster)
-library(neuroim)
-library(igraph)
-library(fields) ## for image.plot() function
-library(dplyr)
+require(raster)
+require(neuroim)
+require(igraph)
+require(fields) ## for image.plot() function
+require(dplyr)
 
 myboxplot <- function( ... ){
   boxplot( ..., staplewex=0, whisklty=1, outline=FALSE )
@@ -79,6 +79,7 @@ if (!file.exists(outfile)||overwrite){
     CC_s1$index[CC_s1$size < 200] <- 0
     
     # make list with indices pointing to equal index
+    # CC_s1$list are the indeces pointing to respective events, it's a list with length equal number of events
     CC_s1$list <- sapply( 1:max(CC_s1$index), function(x) which(CC_s1$index == x) )
     
     # find largest extremes defined by impact
@@ -86,6 +87,8 @@ if (!file.exists(outfile)||overwrite){
     impact_s1a <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1a.a[x])) )
     impact_s1b <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1b.a[x])) )
     impact_s1c <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1c.a[x])) )
+    
+
     
     # pdf("fig/extremes.pdf")
     # plot(   sort( -1*impact_s0,  decreasing=TRUE ) * 1e-9, log="xy", ylab="PgC/yr", xlab="rank" )
@@ -101,11 +104,18 @@ if (!file.exists(outfile)||overwrite){
     IMPACT_s1b[[j]] <- impact_s1b
     IMPACT_s1c[[j]] <- impact_s1c
     
-    fit_s0 [[j]] <- fit_power_law( sort(-1*impact_s0,  decreasing=TRUE )*1e-9 )
+    tmp <- sort(-1*impact_s0, decreasing=TRUE, index.return = TRUE )
+    idx_largest <-tmp$ix[1]
+
+    fit_s0 [[j]] <- fit_power_law( tmp$x*1e-9 )
     fit_s1a[[j]] <- fit_power_law( sort(-1*impact_s1a, decreasing=TRUE )*1e-9 )
     fit_s1b[[j]] <- fit_power_law( sort(-1*impact_s1b, decreasing=TRUE )*1e-9 )
     fit_s1c[[j]] <- fit_power_law( sort(-1*impact_s1c, decreasing=TRUE )*1e-9 )
       
+    LargestE <- 0 * ANOM_s0.a
+    LargestE[CC_s1$list[[idx_largest]]] <- ANOM_s0.a[CC_s1$list[[idx_largest]]]
+    event_lonlat <- apply( LargestE, 1:2, sum )
+    event_time   <- apply( LargestE, 3, sum )
   }
 
   save( IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file=outfile )
@@ -120,11 +130,11 @@ if (!file.exists(outfile)||overwrite){
 ## Plot PDF of x>X
 cont <- c("NA", "SA", "EU", "AF", "RU", "AU")
 continent <- c("North America", "South America", "Europe", "Africa", "Russia", "Australia")
-pdf( "fig/extremes.pdf", width=10, height = 7 )
-par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-for (k in c(1,3,5,2,4,6)) {
-# par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-# for (k in c(2,4,6)) {
+pdf( "fig/extremes.pdf", width=10, height = 3.5 )
+# par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+# for (k in c(1,3,5,2,4,6)) {
+par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+for (k in c(1,3,5)) {
 
   # df <- tibble( prob=(1:n)/sum(1:n), 
   #   s1a=sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, 
@@ -160,7 +170,7 @@ for (k in 1:6){
   df_impacts <- tibble( s0 = IMPACT_s0[[k]], s1a = IMPACT_s1a[[k]], s1b = IMPACT_s1b[[k]], s1c = IMPACT_s1c[[k]] ) %>%
     arrange( s1c ) %>% 
     mutate( ampl_s1a = s1a / s0, ampl_s1b = s1b / s0, ampl_s1c = s1c / s0 ) %>%
-    mutate( ampl_mean = rowMeans( select(., starts_with("ampl")) ) )
+    mutate( ampl_mean = rowMeans( dplyr::select(., starts_with("ampl")) ) )
   list_impacts[[k]] <- df_impacts
 }
 
@@ -171,10 +181,10 @@ for (k in c(1,3,5,2,4,6)) {
 }
 
 
-largestExtreme <- 0 * CC_s1$index
-largestExtreme[IMPACT_s1a[[1]]] <- 1
-apply(largestExtreme, 3, sum)
-apply(largestExtreme, 1:2, sum)
+# largestExtreme <- 0 * CC_s1$index
+# largestExtreme[IMPACT_s1a[[1]]] <- 1
+# apply(largestExtreme, 3, sum)
+# apply(largestExtreme, 1:2, sum)
 
 
 ## Plot difference s1 - s0, absolute
@@ -191,7 +201,7 @@ dev.off()
 pdf("fig/extremes_s1-s0_rel.pdf",width=10)
 par( mfrow=c(2,3), las=1 )
 for (k in c(1,3,5,2,4,6)) {
-  myboxplot( list_impacts[[k]]$ampl_mean, ylim=c(0,3), ylab="ratio s1b/s0" )
+  myboxplot( list_impacts[[k]]$ampl_mean, ylim=c(0,3), ylab="ratio s1b/s0", col="grey70" )
   mtext( continent[k], line=1, font=2, adj=0 )
   abline( h=1, lty=3 )
 }

@@ -6,6 +6,8 @@ library(lubridate)
 source("get_fluxdata_fluxnet2015_annual.R")
 source("remove_outliers.R")
 
+do.siteplot <- FALSE
+
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
@@ -44,9 +46,9 @@ number <- ddf %>%   mutate(  year = year(date) ) %>%  group_by( mysitename, year
                              )
 
 adf <- ddf %>%  mutate(  year = year(date),
-                         gpp_pmodel_s1b        = gpp_pmodel * flue_est_2 ,
-                         gpp_bess_v1_s1b       = gpp_bess_v1 * flue_est_2 ,
-                         gpp_bess_v2_s1b       = gpp_bess_v2 * flue_est_2 ) %>%
+                         gpp_pmodel_s1b        = gpp_pmodel  * flue_est_IV ,
+                         gpp_bess_v1_s1b       = gpp_bess_v1 * flue_est_IV ,
+                         gpp_bess_v2_s1b       = gpp_bess_v2 * flue_est_IV ) %>%
                 group_by( mysitename, year ) %>% 
                 summarise( gpp_obs_fromdaily     = sum(gpp_obs),
                            gpp_pmodel            = sum(gpp_pmodel, na.rm=TRUE),
@@ -57,8 +59,8 @@ adf <- ddf %>%  mutate(  year = year(date),
                            gpp_bess_v2_s1b       = sum(gpp_bess_v2_s1b)
                          ) %>%
                 left_join( number, by=c("mysitename", "year") ) %>%
-                mutate(  gpp_pmodel     = ifelse( number_pmodel < 364, NA, gpp_pmodel ),
-                         gpp_pmodel_s1b = ifelse( number_pmodel < 364, NA, gpp_pmodel_s1b ),
+                mutate(  gpp_pmodel     = ifelse( number_pmodel  < 364, NA, gpp_pmodel ),
+                         gpp_pmodel_s1b = ifelse( number_pmodel  < 364, NA, gpp_pmodel_s1b ),
                          gpp_bess_v1    = ifelse( number_bess_v1 < 364, NA, gpp_bess_v1 ),
                          gpp_bess_v2    = ifelse( number_bess_v2 < 364, NA, gpp_bess_v2 )
                          )
@@ -72,8 +74,8 @@ number8 <- ddf8 %>%  mutate( year = year(date) ) %>%  group_by( mysitename, year
 
 adf <- ddf8 %>%  mutate( year = year(date),
                           date_end = lead( date_start ),
-                          gpp_modis_s1b   = gpp_modis * flue_est_2 ,
-                          gpp_vpm_s1b     = gpp_vpm * flue_est_2 ) %>%
+                          gpp_modis_s1b   = gpp_modis * flue_est_IV ,
+                          gpp_vpm_s1b     = gpp_vpm   * flue_est_IV ) %>%
                   mutate( ndays = ifelse( lead(mysitename)==mysitename, as.numeric( as.duration( interval( date_start, date_end ) ), "days" ), 8 ) ) %>%
                   mutate( gpp_modis     = gpp_modis     * ndays,
                           gpp_vpm       = gpp_vpm       * ndays,
@@ -115,14 +117,14 @@ rm("adf_agg")
 ## Get statistics of annual values
 ##------------------------------------------------
 ## Calculate RMSE of pooled annual values 
-stats_adf <- list(  pmodel_s0   = list( rmse = sqrt( mean( (adf$gpp_pmodel - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    pmodel_s1b  = list( rmse = sqrt( mean( (adf$gpp_pmodel_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    bess_v1_s0  = list( rmse = sqrt( mean( (adf$gpp_bess_v1 - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    bess_v1_s1b = list( rmse = sqrt( mean( (adf$gpp_bess_v1_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    modis_s0    = list( rmse = sqrt( mean( (adf$gpp_modis - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    vpm_s0      = list( rmse = sqrt( mean( (adf$gpp_vpm - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    modis_s1b   = list( rmse = sqrt( mean( (adf$gpp_modis_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                    vpm_s1b     = list( rmse = sqrt( mean( (adf$gpp_vpm_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) )
+stats_adf <- list(  pmodel_s0   = list( rsq = summary( lm( adf$gpp_pmodel ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_pmodel - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    pmodel_s1b  = list( rsq = summary( lm( adf$gpp_pmodel_s1b ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_pmodel_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    bess_v1_s0  = list( rsq = summary( lm( adf$gpp_bess_v1 ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_bess_v1 - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    bess_v1_s1b = list( rsq = summary( lm( adf$gpp_bess_v1_s1b ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_bess_v1_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    modis_s0    = list( rsq = summary( lm( adf$gpp_modis ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_modis - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    vpm_s0      = list( rsq = summary( lm( adf$gpp_vpm ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_vpm - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    modis_s1b   = list( rsq = summary( lm( adf$gpp_modis_s1b ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_modis_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                    vpm_s1b     = list( rsq = summary( lm( adf$gpp_vpm_s1b ~ adf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (adf$gpp_vpm_s1b - adf$gpp_obs)^2, na.rm = TRUE ) ) )
                  )
 
 
@@ -149,17 +151,17 @@ meandf <- adf %>% group_by( mysitename ) %>%
                   )
 
 ## Calculate RMSE of site mean values 
-stats_meandf <- list(  pmodel_s0  = list( rmse = sqrt( mean( (meandf$gpp_pmodel - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                       pmodel_s1b = list( rmse = sqrt( mean( (meandf$gpp_pmodel_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+stats_meandf <- list(  pmodel_s0  = list( rsq = summary( lm( meandf$gpp_pmodel ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_pmodel - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       pmodel_s1b = list( rsq = summary( lm( meandf$gpp_pmodel_s1b ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_pmodel_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
                        
-                       bess_v1_s0  = list( rmse = sqrt( mean( (meandf$gpp_bess_v1 - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                       bess_v1_s1b = list( rmse = sqrt( mean( (meandf$gpp_bess_v1_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       bess_v1_s0  = list( rsq = summary( lm( meandf$gpp_bess_v1 ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_bess_v1 - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       bess_v1_s1b = list( rsq = summary( lm( meandf$gpp_bess_v1_s1b ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_bess_v1_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
                        
-                       modis_s0  = list( rmse = sqrt( mean( (meandf$gpp_modis - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                       modis_s1b = list( rmse = sqrt( mean( (meandf$gpp_modis_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       modis_s0  = list( rsq = summary( lm( meandf$gpp_modis ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_modis - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       modis_s1b = list( rsq = summary( lm( meandf$gpp_modis_s1b ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_modis_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
                        
-                       vpm_s0  = list( rmse = sqrt( mean( (meandf$gpp_vpm - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
-                       vpm_s1b = list( rmse = sqrt( mean( (meandf$gpp_vpm_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) )
+                       vpm_s0  = list( rsq = summary( lm( meandf$gpp_vpm ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_vpm - meandf$gpp_obs)^2, na.rm = TRUE ) ) ),
+                       vpm_s1b = list( rsq = summary( lm( meandf$gpp_vpm_s1b ~ meandf$gpp_obs ) )$adj.r.squared, rmse = sqrt( mean( (meandf$gpp_vpm_s1b - meandf$gpp_obs)^2, na.rm = TRUE ) ) )
                                             
                     )                  
 
@@ -206,14 +208,16 @@ for (sitename in unique(adf$mysitename)){
     
     if (length(linmod_list_pmodel_s0[[ sitename ]]$fitted.values)>2){
 
-      par(las=1)
-      with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_pmodel, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
-      with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_pmodel_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_pmodel_s0[[ sitename ]]$fitted.values)) ],  linmod_list_pmodel_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_pmodel_s1b[[ sitename ]]$fitted.values)) ], linmod_list_pmodel_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
-      lines( c(0,5000), c(0,5000), lty=3 )
-      mtext( sitename, line = 0.5, adj = 0, font = 2 )
-      mtext( "P-model", line = 1, font = 2 )
+      if (do.siteplot){
+        par(las=1)
+        with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_pmodel, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
+        with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_pmodel_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_pmodel_s0[[ sitename ]]$fitted.values)) ],  linmod_list_pmodel_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_pmodel_s1b[[ sitename ]]$fitted.values)) ], linmod_list_pmodel_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
+        lines( c(0,5000), c(0,5000), lty=3 )
+        mtext( sitename, line = 0.5, adj = 0, font = 2 )
+        mtext( "P-model", line = 1, font = 2 )        
+      }
       
     } else {
 
@@ -234,14 +238,16 @@ for (sitename in unique(adf$mysitename)){
     
     if (length(linmod_list_bess_v1_s0[[ sitename ]]$fitted.values)>2){
 
-      par(las=1)
-      with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_bess_v1, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
-      with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_bess_v1_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_bess_v1_s0[[ sitename ]]$fitted.values)) ],  linmod_list_bess_v1_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_bess_v1_s1b[[ sitename ]]$fitted.values)) ], linmod_list_bess_v1_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
-      lines( c(0,5000), c(0,5000), lty=3 )
-      mtext( sitename, line = 0.5, adj = 0, font = 2 )
-      mtext( "BESS v1", line = 1, font = 2 )
+      if (do.siteplot){
+        par(las=1)
+        with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_bess_v1, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
+        with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_bess_v1_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_bess_v1_s0[[ sitename ]]$fitted.values)) ],  linmod_list_bess_v1_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_bess_v1_s1b[[ sitename ]]$fitted.values)) ], linmod_list_bess_v1_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
+        lines( c(0,5000), c(0,5000), lty=3 )
+        mtext( sitename, line = 0.5, adj = 0, font = 2 )
+        mtext( "BESS v1", line = 1, font = 2 )
+      }
       
     } else {
 
@@ -262,14 +268,16 @@ for (sitename in unique(adf$mysitename)){
     
     if (length(linmod_list_modis_s0[[ sitename ]]$fitted.values)>2){
 
-      par(las=1)
-      with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_modis, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
-      with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_modis_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_modis_s0[[ sitename ]]$fitted.values)) ],  linmod_list_modis_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_modis_s1b[[ sitename ]]$fitted.values)) ], linmod_list_modis_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
-      lines( c(0,5000), c(0,5000), lty=3 )
-      mtext( sitename, line = 0.5, adj = 0, font = 2 )
-      mtext( "MODIS", line = 1, font = 2 )
+      if (do.siteplot){
+        par(las=1)
+        with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_modis, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
+        with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_modis_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_modis_s0[[ sitename ]]$fitted.values)) ],  linmod_list_modis_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_modis_s1b[[ sitename ]]$fitted.values)) ], linmod_list_modis_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
+        lines( c(0,5000), c(0,5000), lty=3 )
+        mtext( sitename, line = 0.5, adj = 0, font = 2 )
+        mtext( "MODIS", line = 1, font = 2 )
+      }
       
     } else {
 
@@ -290,14 +298,16 @@ for (sitename in unique(adf$mysitename)){
     
     if (length(linmod_list_vpm_s0[[ sitename ]]$fitted.values)>2){
 
-      par(las=1)
-      with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_vpm, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
-      with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_vpm_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_vpm_s0[[ sitename ]]$fitted.values)) ],  linmod_list_vpm_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
-      lines( tmp$gpp_obs[ as.numeric(names(linmod_list_vpm_s1b[[ sitename ]]$fitted.values)) ], linmod_list_vpm_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
-      lines( c(0,5000), c(0,5000), lty=3 )
-      mtext( sitename, line = 0.5, adj = 0, font = 2 )
-      mtext( "VPM", line = 1, font = 2 )
+      if (do.siteplot){
+        par(las=1)
+        with( filter( adf, mysitename==sitename ), plot(   gpp_obs, gpp_vpm, xlim = c(0,3000), ylim = c(0,3000), pch=1, col=rgb(0,0,0,0.5) ) )
+        with( filter( adf, mysitename==sitename ), points( gpp_obs, gpp_vpm_s1b, pch=16, col=rgb(0,0,0,0.5) ) )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_vpm_s0[[ sitename ]]$fitted.values)) ],  linmod_list_vpm_s0[[ sitename ]]$fitted.values,  col=rgb(1,0,0,1), lty=3 )
+        lines( tmp$gpp_obs[ as.numeric(names(linmod_list_vpm_s1b[[ sitename ]]$fitted.values)) ], linmod_list_vpm_s1b[[ sitename ]]$fitted.values, col=rgb(1,0,0,1) )
+        lines( c(0,5000), c(0,5000), lty=3 )
+        mtext( sitename, line = 0.5, adj = 0, font = 2 )
+        mtext( "VPM", line = 1, font = 2 )
+      }
 
     } else {
 
@@ -346,10 +356,15 @@ pdf("fig/modobs_ann_spatial_temporal_pmodel_s0.pdf", width = 8, height = 6)
   }
   lines( c(0,5000), c(0,5000), lty=3 )
   mtext( "P-model, s0", line = 1, font = 2 )
-  mtext( paste0( "RMSE = ", format( stats_adf$pmodel_s0$rmse, digits = 3 ) ), adj = 1, cex = 0.8, line=1 )
+
+    bquote( italic(R)^2 == .(format( stats_adf$pmodel_s0$rsq, digits = 2) ) )
+
+  mtext( bquote( italic(R)^2 == .(format( stats_adf$pmodel_s0$rsq, digits = 2) ) ), adj = 1, cex = 0.8, line=2 )
+  mtext( paste0( "RMSE = ",  format( stats_adf$pmodel_s0$rmse, digits = 3 ) ), adj = 1, cex = 0.8, line=1 )
   mtext( paste0( "slope = ", format( stats_adf$pmodel_s0$meanslope, digits = 3 ) ), adj = 1, cex = 0.8 )
 
-  mtext( paste0( "RMSE = ", format( stats_meandf$pmodel_s0$rmse, digits = 3 ) ), adj = 0, cex = 0.8, line=1, col="red" )
+  mtext( bquote( italic(R)^2 == .(format( stats_meandf$pmodel_s0$rsq, digits = 2) ) ), adj = 0, cex = 0.8, line=2, col="red" )
+  mtext( paste0( "RMSE = ",  format( stats_meandf$pmodel_s0$rmse, digits = 3 ) ), adj = 0, cex = 0.8, line=1, col="red" )
   mtext( paste0( "slope = ", format( stats_meandf$pmodel_s0$meanslope, digits = 3 ) ), adj = 0, cex = 0.8, col="red" )
 dev.off()
 
@@ -376,9 +391,11 @@ pdf("fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf", width = 8, height = 6)
   }
   lines( c(0,5000), c(0,5000), lty=3 )
   mtext( "P-model, s1b", line = 1, font = 2 )
+  mtext( bquote( italic(R)^2 == .(format( stats_adf$pmodel_s1b$rsq, digits = 2) ) ), adj = 1, cex = 0.8, line=2 )
   mtext( paste0( "RMSE = ", format( stats_adf$pmodel_s1b$rmse, digits = 3 ) ), adj = 1, cex = 0.8, line=1 )
   mtext( paste0( "slope = ", format( stats_adf$pmodel_s1b$meanslope, digits = 3 ) ), adj = 1, cex = 0.8 )
 
+  mtext( bquote( italic(R)^2 == .(format( stats_meandf$pmodel_s1b$rsq, digits = 2) ) ), adj = 0, cex = 0.8, line=2, col="red" )
   mtext( paste0( "RMSE = ", format( stats_meandf$pmodel_s1b$rmse, digits = 3 ) ), adj = 0, cex = 0.8, line=1, col="red" )
   mtext( paste0( "slope = ", format( stats_meandf$pmodel_s1b$meanslope, digits = 3 ) ), adj = 0, cex = 0.8, col="red" )
 dev.off()
@@ -541,9 +558,9 @@ pdf("fig/modobs_ann_spatial_temporal_vpm_s1b.pdf", width = 8, height = 6)
   stats_meandf$vpm_s1b$meanslope <- coef(linmod_mean_vpm_s1b)[2]
   par(las=1)
 
-  with( adf, plot(   gpp_obs, gpp_vpm_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5) ) )
-  abline( linmod_mean_vpm_s1b, col="red")
-  lines( c(0,5000), c(0,5000), lty=3 )
+  # with( adf, plot(   gpp_obs, gpp_vpm_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5) ) )
+  # abline( linmod_mean_vpm_s1b, col="red")
+  # lines( c(0,5000), c(0,5000), lty=3 )
 
   with( meandf, plot( gpp_obs, gpp_vpm_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
   abline( linmod_mean_vpm_s1b, col="red")

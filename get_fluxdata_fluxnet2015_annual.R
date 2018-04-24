@@ -22,7 +22,7 @@ get_fluxdata_fluxnet2015_annual <- function( sitename, add_swcvars=FALSE ){
 
   myhome <- "/alphadata01/bstocker/"
 
-  print( paste( "getting FLUXNET 2015 data for site", sitename ) )
+  # print( paste( "getting FLUXNET 2015 data for site", sitename ) )
   dirnam_obs <- paste0( myhome, "data/FLUXNET-2015_Tier1/20160128/point-scale_none_1y/original/unpacked/" )
   allfiles <- list.files( dirnam_obs )
   allfiles <- allfiles[ which( grepl( "FULLSET", allfiles ) ) ]

@@ -14,7 +14,7 @@ df_dday_agg    <- df_dday_agg    %>% select( -dday, -inst ) %>% unique()
 df_dday_8d_agg <- df_dday_8d_agg %>% select( -dday, -inst ) %>% unique()
 
 
-df_dday_8d_agg <- filter( df_dday_8d_agg, mysitename!="US-Var")
+# df_dday_8d_agg <- filter( df_dday_8d_agg, mysitename!="US-Var")
 
 ##------------------------------------------------
 ## bin data
@@ -434,32 +434,52 @@ system("open fig/bias_pooledmodels.pdf")
 ## - corrected by I, IV, and III, normalised, pooled models
 ## - corrected by fLUE, normalised, pooled models
 ##------------------------------------------------
+xlim <- c(0.5,5.5)
+ylim <- c(-5,6.5)
+
+# ## pooled
+# if (makepdf) pdf("fig/bias_resolved_fLUE.pdf", width = 7, height = 6)
+#   par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+#   plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+#   rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+#   myboxplot( bias_diff ~ infbin, data = tmp, at=1:5-0.15, col="tomato", boxwex=0.3, add=TRUE )
+#   myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=1:5+0.15, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.3 )
+#   abline( h=0, lty=3 )
+#   legend("bottomleft", c("pooled models, normalised", "pooled models, normalised, corrected by fLUE"), fill=c("tomato", "royalblue3"), bty="n")
+# if (makepdf) dev.off()
+
+
 pdf("fig/bias_pmodel_resolved.pdf", width = 7, height = 6)
-  par(las=1)
   space <- 0.1
   soff <- 0.017
   off <- 0.0475
+
+  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+  plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
               
   ## uncorrected
-  par(las=1)
-  myboxplot( bias_pmodel_diff ~ infbin, data=df_dday_8d_agg, at=(bins[1:nbins]+1/nbins*space-0.02), xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), ylim=c(-6,6), col="tomato", boxwex=0.05, xlim=c(-0.05,0.95) )
+  myboxplot( bias_pmodel_diff ~ infbin, data=df_dday_8d_agg, at=1:5-0.2, add=TRUE, col="tomato", boxwex=0.2 )
 
   ## corrected by fLUE
-  myboxplot( bias_pmodel_diff_corr ~ infbin, data=df_dday_8d_agg, at=(bins[1:nbins]+1/nbins*space+0.03), add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.05 )
+  myboxplot( bias_pmodel_diff_corr ~ infbin, data=df_dday_8d_agg, at=1:5+0.0, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.2 )
 
   ## corrected by I
-  myboxplot( bias_pmodel_diff_corr_I ~ infbin, data=df_dday_8d_agg, at=(bins[1:nbins]+1/nbins*space+soff*1+0.05), add=TRUE, col="springgreen1", boxwex=0.016, axes=FALSE )
+  myboxplot( bias_pmodel_diff_corr_I ~ infbin, data=df_dday_8d_agg, at=1:5+0.15, add=TRUE, col="springgreen1", boxwex=0.1, axes=FALSE )
 
   ## corrected by IV
-  myboxplot( bias_pmodel_diff_corr_IV ~ infbin, data=df_dday_8d_agg, at=(bins[1:nbins]+1/nbins*space+soff*2+0.05), add=TRUE, col="springgreen3", boxwex=0.016, axes=FALSE )
+  myboxplot( bias_pmodel_diff_corr_IV ~ infbin, data=df_dday_8d_agg, at=1:5+0.25, add=TRUE, col="springgreen3", boxwex=0.1, axes=FALSE )
 
   ## corrected by III
-  myboxplot( bias_pmodel_diff_corr_III ~ infbin, data=df_dday_8d_agg, at=(bins[1:nbins]+1/nbins*space+soff*3+0.05), add=TRUE, col="springgreen4", boxwex=0.016, axes=FALSE )
+  myboxplot( bias_pmodel_diff_corr_III ~ infbin, data=df_dday_8d_agg, at=1:5+0.35, add=TRUE, col="springgreen4", boxwex=0.1, axes=FALSE )
 
   abline( h=0, lty=3 )
   mtext( "", line=0.5, adj = 0, font=2 )
 dev.off()
 system("open fig/bias_pmodel_resolved.pdf")
+
+
+
 
 rmse_orig <- sqrt(mean((df_dday_8d_agg$bias_pmodel_diff)^2, na.rm=TRUE))
 print(paste("RMSE of P-model", rmse_orig))
