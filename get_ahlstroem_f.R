@@ -1,11 +1,11 @@
 get_ahlstroem_f <- function( arr, isabs=FALSE ){
   ##---------------------------------------------------
   ## requires as input a 3D array with lon x lat x time
-  ## and values being some interannual variability 
+  ## and values being annual detrended anomalies 
   ## index quantifies the degree to which each gridcell contributes to the global signal
   ##---------------------------------------------------
 
-  ## use gridcell totals not per unit area
+  ## use gridcell total not per unit area
   if (isabs==FALSE){
     source( "integrate_gridcell.R" )
     arr_abs <- integrate_gridcell( arr, global=FALSE, overwrite=TRUE )

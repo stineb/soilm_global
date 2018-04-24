@@ -203,8 +203,8 @@ for (sitename in unique(adf$mysitename)){
     linmod_list_pmodel_s0[[ sitename ]]  <- lm( gpp_pmodel ~ gpp_obs, data = tmp )
     linmod_list_pmodel_s1b[[ sitename ]] <- lm( gpp_pmodel_s1b ~ gpp_obs, data = tmp )
 
-    slope_wgt_pmodel_s0  <- slope_wgt_pmodel_s0  %>% bind_rows( tibble( slope = coef(linmod_list_pmodel_s0 [[ sitename ]])[2], wgt = sd( linmod_list_pmodel_s0 [[ sitename ]]$residuals ) ) )
-    slope_wgt_pmodel_s1b <- slope_wgt_pmodel_s1b %>% bind_rows( tibble( slope = coef(linmod_list_pmodel_s1b[[ sitename ]])[2], wgt = sd( linmod_list_pmodel_s1b[[ sitename ]]$residuals ) ) )
+    slope_wgt_pmodel_s0  <- slope_wgt_pmodel_s0  %>% bind_rows( tibble( slope = coef(linmod_list_pmodel_s0 [[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
+    slope_wgt_pmodel_s1b <- slope_wgt_pmodel_s1b %>% bind_rows( tibble( slope = coef(linmod_list_pmodel_s1b[[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
     
     if (length(linmod_list_pmodel_s0[[ sitename ]]$fitted.values)>2){
 
@@ -233,8 +233,8 @@ for (sitename in unique(adf$mysitename)){
     linmod_list_bess_v1_s0[[ sitename ]]  <- lm( gpp_bess_v1 ~ gpp_obs, data = tmp )
     linmod_list_bess_v1_s1b[[ sitename ]] <- lm( gpp_bess_v1_s1b ~ gpp_obs, data = tmp )
 
-    slope_wgt_bess_v1_s0  <- slope_wgt_bess_v1_s0  %>% bind_rows( tibble( slope = coef(linmod_list_bess_v1_s0 [[ sitename ]])[2], wgt = sd( linmod_list_bess_v1_s0 [[ sitename ]]$residuals ) ) )
-    slope_wgt_bess_v1_s1b <- slope_wgt_bess_v1_s1b %>% bind_rows( tibble( slope = coef(linmod_list_bess_v1_s1b[[ sitename ]])[2], wgt = sd( linmod_list_bess_v1_s1b[[ sitename ]]$residuals ) ) )
+    slope_wgt_bess_v1_s0  <- slope_wgt_bess_v1_s0  %>% bind_rows( tibble( slope = coef(linmod_list_bess_v1_s0 [[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
+    slope_wgt_bess_v1_s1b <- slope_wgt_bess_v1_s1b %>% bind_rows( tibble( slope = coef(linmod_list_bess_v1_s1b[[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
     
     if (length(linmod_list_bess_v1_s0[[ sitename ]]$fitted.values)>2){
 
@@ -263,8 +263,8 @@ for (sitename in unique(adf$mysitename)){
     linmod_list_modis_s0[[ sitename ]]  <- lm( gpp_modis ~ gpp_obs, data = tmp )
     linmod_list_modis_s1b[[ sitename ]] <- lm( gpp_modis_s1b ~ gpp_obs, data = tmp )
 
-    slope_wgt_modis_s0  <- slope_wgt_modis_s0  %>% bind_rows( tibble( slope = coef(linmod_list_modis_s0 [[ sitename ]])[2], wgt = sd( linmod_list_modis_s0 [[ sitename ]]$residuals ) ) )
-    slope_wgt_modis_s1b <- slope_wgt_modis_s1b %>% bind_rows( tibble( slope = coef(linmod_list_modis_s1b[[ sitename ]])[2], wgt = sd( linmod_list_modis_s1b[[ sitename ]]$residuals ) ) )
+    slope_wgt_modis_s0  <- slope_wgt_modis_s0  %>% bind_rows( tibble( slope = coef(linmod_list_modis_s0 [[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
+    slope_wgt_modis_s1b <- slope_wgt_modis_s1b %>% bind_rows( tibble( slope = coef(linmod_list_modis_s1b[[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
     
     if (length(linmod_list_modis_s0[[ sitename ]]$fitted.values)>2){
 
@@ -293,8 +293,8 @@ for (sitename in unique(adf$mysitename)){
     linmod_list_vpm_s0[[ sitename ]]  <- lm( gpp_vpm ~ gpp_obs, data = tmp )
     linmod_list_vpm_s1b[[ sitename ]] <- lm( gpp_vpm_s1b ~ gpp_obs, data = tmp )
 
-    slope_wgt_vpm_s0  <- slope_wgt_vpm_s0  %>% bind_rows( tibble( slope = coef(linmod_list_vpm_s0 [[ sitename ]])[2], wgt = sd( linmod_list_vpm_s0 [[ sitename ]]$residuals ) ) )
-    slope_wgt_vpm_s1b <- slope_wgt_vpm_s1b %>% bind_rows( tibble( slope = coef(linmod_list_vpm_s1b[[ sitename ]])[2], wgt = sd( linmod_list_vpm_s1b[[ sitename ]]$residuals ) ) )
+    slope_wgt_vpm_s0  <- slope_wgt_vpm_s0  %>% bind_rows( tibble( slope = coef(linmod_list_vpm_s0 [[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
+    slope_wgt_vpm_s1b <- slope_wgt_vpm_s1b %>% bind_rows( tibble( slope = coef(linmod_list_vpm_s1b[[ sitename ]])[2], wgt = sd( tmp$gpp_obs ) ) )
     
     if (length(linmod_list_vpm_s0[[ sitename ]]$fitted.values)>2){
 

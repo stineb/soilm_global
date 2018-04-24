@@ -20,7 +20,8 @@ get_fluxdata_fluxnet2015_annual <- function( sitename, add_swcvars=FALSE ){
   # add_swcvars = TRUE
   # ## -----------------------
 
-  myhome <- "/alphadata01/bstocker/"
+  # myhome <- "/alphadata01/bstocker/"
+  myhome <- "~/"
 
   # print( paste( "getting FLUXNET 2015 data for site", sitename ) )
   dirnam_obs <- paste0( myhome, "data/FLUXNET-2015_Tier1/20160128/point-scale_none_1y/original/unpacked/" )

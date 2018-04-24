@@ -22,7 +22,7 @@ bibliography: bibliography.bib
 ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem}
 source("plot_bias_problem.R")
 ```
-![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Data is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).](./fig/bias_bymodels_norm.pdf){ width=65% }
+![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Simulated GPP is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).](./fig/bias_bymodels_norm.pdf){ width=65% }
 
 
 ### S2
@@ -30,7 +30,7 @@ source("plot_bias_problem.R")
 ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_nn}
 source("plot_bias_nn.R")
 ```
-<!-- ![Ratio of observed over modelled GPP versus fLUE during drought days. Colors in scatterplots show density of overlaying points. Model names are given on top-left of each panel.](./fig/bias_vs_fvar.pdf) -->
+![Ratio of observed over modelled GPP versus fLUE during drought days. Colors in scatterplots show density of overlaying points. Model names are given on top-left of each panel.](./fig/bias_vs_fvar.pdf)
 
 ### S3
 
@@ -85,9 +85,9 @@ plot_fit_vs_soilmoist( linearfit_I, linearfit_IV, linearfit_III, ddf, makepdf = 
 ## Get annual values and evaluate power of getting spatial and annual variations
 source("aggregate_nn_fluxnet2015_annual.R")
 ```
-![Spatial/annual](./fig/modobs_ann_spatial_temporal_pmodel_s0.pdf){ width=75% }
+![Modelled and observed annual GPP in the simulation ignoring direct soil moisture effects. Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites.](./fig/modobs_ann_spatial_temporal_pmodel_s0.pdf){ width=75% }
 
-![Spatial/annual, corrected](./fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf){ width=75% }
+![Modelled and observed annual GPP in the simulation ignoring accounting for soil moisture effects (method IV). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites.](./fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf){ width=75% }
 
 
 
@@ -106,4 +106,10 @@ tmp <- ddf %>%
   select( fvar, lo, hi ) %>%
   mutate( within = ifelse( fvar>=lo & fvar<=hi, TRUE, FALSE ) )
 print( sum(tmp$within, na.rm = TRUE)/sum(!is.na(tmp$within)) )
+```
+
+Mean amplification of relative variance across 0.5 degree gridcells:
+```{r echo=FALSE}
+load("data/ampl_relvar.Rdata")
+print( paste( mean( vec )) )
 ```
