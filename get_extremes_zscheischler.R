@@ -10,7 +10,7 @@ myboxplot <- function( ... ){
 }
 
 ##-----------------------
-overwrite <- FALSE
+overwrite <- TRUE
 ##-----------------------
 
 outfile <- "data/extremes.Rdata"
@@ -53,10 +53,11 @@ if (!file.exists(outfile)||overwrite){
   ANOM_s1c.a <- aperm(as.array(ANOM_s1c_all * area(ANOM_s1c_all)),c(2,1,3))[,360:1,]
 
   ## Loop over continents
+  CC_list <- list()
   latx <- 360
   for (j in 1:6) {
     
-    print(paste("continent",as.character(j),"/6"))
+    print(paste("continent",as.character(j),"/ 6"))
     
     # define mask for only 1 continent
     Na <- SREX %in% subsets[[j]]
@@ -106,9 +107,13 @@ if (!file.exists(outfile)||overwrite){
     fit_s1b[[j]] <- fit_power_law( sort(-1*impact_s1b, decreasing=TRUE )*1e-9 )
     fit_s1c[[j]] <- fit_power_law( sort(-1*impact_s1c, decreasing=TRUE )*1e-9 )
       
+
+    # attach to list
+    CC_list[[j]] <- CC_s1
+
   }
 
-  save( IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file=outfile )
+  save( CC_list, IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file=outfile )
 
 } else {
 
