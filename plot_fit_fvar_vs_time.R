@@ -11,7 +11,7 @@ plot_fit_fvar_vs_time <- function( linearfit1, linearfit_mid, linearfit_strong, 
     filn <- "fig/flue_est_per_site.pdf" 
     if (makepdf) print( paste( "plotting fLUE and fLUEest vs. time for each site into file ", filn, "..." ) )
     if (makepdf) pdf( filn, width = 10, height = 6 )
-    for (sitename in linearfit2$data$mysitename){
+    for (sitename in linearfit_mid$data$mysitename){
 
       df_tmp <- dplyr::filter(nice_agg, mysitename==sitename)
 

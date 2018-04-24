@@ -41,9 +41,9 @@ siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_flu
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" ) # loads 'df_dday_agg', 'df_dday_8d_agg', 'df_dday_mte_agg', 'df_dday_bess_agg', 'df_dday_vpm_agg'
 
-## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
-load( "data/linearfit2_ratio.Rdata" )
-df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
+# ## Estimate soil moisture correction (adds column 'flue_est' to dataframe)
+# load( "data/linearfit2_ratio.Rdata" )
+# df_dday_8d_agg    <- compl_df_flue_est( df_dday_8d_agg, linearfit2, x0_fix=0.9  )
 
 ## group data by fLUE
 nbins <- 10

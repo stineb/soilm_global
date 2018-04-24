@@ -1,0 +1,109 @@
+---
+title: "Supplementary information to *Satellite observations underestimate the impact of drought on terrestrial primary productivity*"
+author: "Benjamin D. Stocker, Jakob Zscheischler, Trevor F. Keenan, I. Colin Prentice, Josep Penuelas, and Sonia I. Seneviratne"
+# date: "`r Sys.Date()`"
+# output:
+#   html_document:
+#     toc: true
+#     toc_float: true
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+header-includes:
+   - \usepackage{amsmath}
+bibliography: bibliography.bib
+---
+
+## Supplementary Figures
+
+### S1
+
+```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem}
+source("plot_bias_problem.R")
+```
+![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Data is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).](./fig/bias_bymodels_norm.pdf){ width=65% }
+
+
+### S2
+
+```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_nn}
+source("plot_bias_nn.R")
+```
+<!-- ![Ratio of observed over modelled GPP versus fLUE during drought days. Colors in scatterplots show density of overlaying points. Model names are given on top-left of each panel.](./fig/bias_vs_fvar.pdf) -->
+
+### S3
+
+![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Data is not normalised.](./fig/bias_bymodels.pdf){ width=65% }
+
+
+### S4
+
+```{r plot_site_vs_soilmoisture, fig.width=4, fig.height=3.5, echo=FALSE, warning=FALSE, error=FALSE}
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE )
+require(readr, quietly = TRUE, warn.conflicts = FALSE )
+
+load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
+ddf <- df_dday_agg
+rm("df_dday_agg")  # rename to be a bit more concise
+
+## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
+successcodes <- read.csv( paste0( myhome, "/sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv" ), as.is = TRUE )
+do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
+ddf <- ddf %>% filter( mysitename %in% do.sites )
+
+## Merge mean annual alpha (AET/PET) values into this dataframe
+load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
+
+## Merge vegetation class
+siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
+ddf <- ddf %>% select( -starts_with("classid")) %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
+
+source("plot_fit_vs_soilmoist.R")
+load("data/linearfit_I.Rdata")
+load("data/linearfit_IV.Rdata")
+load("data/linearfit_III.Rdata")
+
+print("Linear model for approach I:")
+print(coef(linearfit_I$linmod))
+
+print("Linear model for approach IV (grasses):")
+print(coef(linearfit_IV$linmod_grass))
+
+print("Linear model for approach IV (trees):")
+print(coef(linearfit_IV$linmod_tree))
+
+print("Linear model for approach III:")
+print(coef(linearfit_III$linmod))
+
+plot_fit_vs_soilmoist( linearfit_I, linearfit_IV, linearfit_III, ddf, makepdf = FALSE )
+```
+
+### S5
+```{r echo=FALSE, warning=FALSE, error=FALSE, plot_spatial_temporal}
+## Get annual values and evaluate power of getting spatial and annual variations
+source("aggregate_nn_fluxnet2015_annual.R")
+```
+![Spatial/annual](./fig/modobs_ann_spatial_temporal_pmodel_s0.pdf){ width=75% }
+
+![Spatial/annual, corrected](./fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf){ width=75% }
+
+
+
+### Numbers for paper
+
+```{r echo=FALSE, warning=FALSE, error=FALSE, getnumbers_biasreduction}
+## Reduction of bias by multiplying with fLUE
+source("plot_bias_resolved_fLUE.R")
+```
+
+```{r echo=FALSE, warning=FALSE, error=FALSE, getnumbers_within}
+## % of fLUE values within fLUE_I and fLUE_III
+tmp <- ddf %>% 
+  rowwise() %>% 
+  mutate( lo = min( flue_est_I, flue_est_IV, flue_est_III ), hi = max( flue_est_I, flue_est_IV, flue_est_III ) ) %>% 
+  select( fvar, lo, hi ) %>%
+  mutate( within = ifelse( fvar>=lo & fvar<=hi, TRUE, FALSE ) )
+print( sum(tmp$within, na.rm = TRUE)/sum(!is.na(tmp$within)) )
+```

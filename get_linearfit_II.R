@@ -1,6 +1,3 @@
-##------------------------------------------------
-## identical to get_linearfit2.R except that two different linear models are fitted - one for grasslands/shrublands and one for others
-##------------------------------------------------
 get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_min=0.01, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
 
   require(dplyr)
@@ -52,44 +49,38 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
       weights <- rep( 1.0, nrow(df_tmp) )
     }
 
-    if (nrow(filter(df_tmp, soilm_mean<0.5))>0){
+    ## parabolic stress function
+    eq <- paste0( target, " ~ stress_quad_1sided( soilm_mean, x0, beta )")
+    fit <- try( 
+                nlsLM( 
+                      eq,
+                      data=df_tmp,
+                      start=list( x0=x0_fix, beta=1.0 ),
+                      lower=c( x0_fix,  beta_min ),
+                      upper=c( x0_fix,  99  ),
+                      algorithm="port",
+                      weights = weights
+                      )
+                )
 
-      ## parabolic stress function
-      eq <- paste0( target, " ~ stress_quad_1sided( soilm_mean, x0, beta )")
-      fit <- try( 
-                  nlsLM( 
-                        eq,
-                        data=df_tmp,
-                        start=list( x0=x0_fix, beta=1.0 ),
-                        lower=c( x0_fix,  beta_min ),
-                        upper=c( x0_fix,  99  ),
-                        algorithm="port",
-                        weights = weights
-                        )
-                  )
+    if (doplot){
 
-      if (doplot){
+      par( las=1 )
+      with( df_tmp, plot( soilm_mean, fvar, xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("black", 0.2) ) )
 
-        par( las=1 )
-        with( df_tmp, plot( soilm_mean, fvar, xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("black", 0.2) ) )
-
-        ## Curve
-        if (class(fit)!="try-error"){
-          ## parabolic stress function
-          mycurve(  function(x) stress_quad_1sided( x, x0 = 0.9, coef(fit)[[ "beta" ]] ), from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
-        }
-        mtext( df_tmp$mysitename[1], line = 0.5, adj = 0.0, font = 2 )
-
+      ## Curve
+      if (class(fit)!="try-error"){
+        ## parabolic stress function
+        mycurve(  function(x) stress_quad_1sided( x, x0 = 0.9, coef(fit)[[ "beta" ]] ), from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
       }
+      mtext( df_tmp$mysitename[1], line = 0.5, adj = 0.0, font = 2 )
 
-      # return coefficients of fitted function
-      ## parabolic stress function
-      if (class(fit)!="try-error"){ 
-        out <- c( coef(fit), y0=stress_quad_1sided( 0.0, x0_fix, coef(fit)[[ "beta" ]] ) )
-      } else {
-        out <- c( x0=NA, beta=NA, y0=NA )
-      }
-      
+    }
+
+    # return coefficients of fitted function
+    ## parabolic stress function
+    if (class(fit)!="try-error"){ 
+      out <- c( coef(fit), y0=stress_quad_1sided( 0.0, x0_fix, coef(fit)[[ "beta" ]] ) )
     } else {
       out <- c( x0=NA, beta=NA, y0=NA )
     }
@@ -100,7 +91,7 @@ get_yintersect <- function( df, target="ratio_obs_mod_pmodel", bin=TRUE, beta_mi
 }
 
 
-get_linearfit6 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
+get_linearfit_II <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bin=TRUE, x0_fix=0.8, agg=NA, useweights=FALSE, doplot=FALSE ){
   ##------------------------------------------------------------------------
   ## This first fits the y-axis intersect using a stress function ('stress_quad_1sided()'),
   ## and then fits a linear model between between this y-axis intersect and the site-level mean alpha.
@@ -108,11 +99,8 @@ get_linearfit6 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   
   require(dplyr)
   require(tidyr)
-  require(readr)
 
   beta_min <- 0.01
-
-  siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
 
   if (monthly){
     ## add date and MOY to dataframe nice_agg
@@ -145,13 +133,10 @@ get_linearfit6 <- function( df, target="ratio_obs_mod_pmodel", monthly=FALSE, bi
   out <- as.data.frame( cbind( df_flue0, out ) )
 
   ##------------------------------------------------------------------------
-  ## Fit linear models
+  ## Fit linear model
   ##------------------------------------------------------------------------
-  out <- out %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
-
-  linmod_tree  <- lm( y0 ~ meanalpha, data=dplyr::filter( out, !(classid %in% c("GRA", "CSH") ) & y0 > -1 ) )
-  linmod_grass <- lm( y0 ~ meanalpha, data=dplyr::filter( out,   classid %in% c("GRA", "CSH")   & y0 > -1 ) )
+  linmod <- lm( y0 ~ meanalpha, data=dplyr::filter( out, y0 > -1 ) )
   
-  return( list( linmod_tree=linmod_tree, linmod_grass=linmod_grass, data=out ) )
+  return( list( linmod=linmod, data=dplyr::filter( out, y0 > -1 ) ) )
 
 }
