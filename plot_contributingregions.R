@@ -68,7 +68,7 @@ detr[[ "diffa" ]] <- detr[[ "Pmodel_S0" ]] - detr[[ "Pmodel_S1a" ]]
 detr[[ "diffb" ]] <- detr[[ "Pmodel_S0" ]] - detr[[ "Pmodel_S1b" ]]
 detr[[ "diffc" ]] <- detr[[ "Pmodel_S0" ]] - detr[[ "Pmodel_S1c" ]]
 
-# stocker_fb <- get_stocker_f( detr$diffb, detr$Pmodel_S1b, isabs=FALSE )
+stocker_fb <- get_stocker_f( detr$diffb, detr$Pmodel_S1b, isabs=FALSE )
 
 for (it in 1:5){
   ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], isabs=FALSE )
@@ -76,6 +76,10 @@ for (it in 1:5){
 }
 ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b, detr$Pmodel_S1b, isabs=FALSE )
 plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem.pdf") ) #  
+
+
+ahlstroem_fb <- get_stocker_f( detr$Pmodel_S0, detr$Pmodel_S0, isabs=FALSE )
+plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem_s0.pdf") ) #  
 
 ##-----------------------------------------------------
 ## Plot with inset
@@ -163,7 +167,7 @@ filn <- "fig/map_stocker_gpploss.pdf"
       grconvertY(u[3:4], "user", "ndc")
     )
     v_orig <- v
-    v <- c( v[1]+0.07, v[1]+0.2*v[2], v[3]+0.10*v[4], v[3]+0.32*v[4] )
+    v <- c( v[1]+0.03, v[1]+0.2*v[2], v[3]+0.10*v[4], v[3]+0.32*v[4] )
     par( fig=v, new=TRUE, mar=c(0,0,0,0), mgp=c(3,0.5,0) )
     hist( arr, breaks=50, main="", freq = FALSE, xlim=c(-0.75,0.75), cex.axis=0.7, axes=FALSE, col="grey70" )
     axis( 1, cex.axis=0.7 )

@@ -70,6 +70,8 @@ source("~/.Rprofile")
         left_join( df_vpm, by = "year") %>%
         left_join( df_bess, by = "year") %>%
         left_join( df_mte, by = "year")
+
+  save( df, file = "data/gpp_glob_tseries.Rdata")
   
   ##-----------------------------------------------------
   ## GPP time series

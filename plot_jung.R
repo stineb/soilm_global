@@ -166,10 +166,11 @@ ampl_agg_1c <- ampl_1c %>%  group_by( resnr ) %>%
 # ampl_agg <- abind( ampl_agg_1a, ampl_agg_1b, ampl_agg_1c, along = 3 ) %>%
 # 						apply( c(1,2), FUN = mean ) %>%
 #             as_tibble()
-# save( ampl_agg, file="data/ampl_agg_jung.Rdata" )
 
 ## use s1b as standard
 ampl_agg <- ampl_agg_1b
+
+save( ampl_agg, file="data/ampl_agg_jung.Rdata" )
 
 ## Plot scale dependence of soil moisture effect on GPP interannual variance
 pdf("fig/plot_jung.pdf", width = 5, height = 4 )
