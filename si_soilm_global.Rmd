@@ -89,9 +89,19 @@ source("aggregate_nn_fluxnet2015_annual.R")
 
 ![Modelled and observed annual GPP in the simulation ignoring accounting for soil moisture effects (method IV). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites.](./fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf){ width=75% }
 
+## Supplementary Tables
 
+### Site list
 
-### Numbers for paper
+```{r}
+siteinfo <- suppressMessages(read_csv("siteinfo_fluxnet2015_sofun.csv"))
+success <- suppressMessages(read_csv( "successcodes.csv" ))
+do.sites <- filter( success, successcode==1 )$mysitename
+siteinfo_sub <- siteinfo %>% filter( mysitename %in% do.sites ) %>% select( -elv, -elv_watch, -elv_diff, -years_data, -whc ) %>% rename( site=mysitename )
+knitr::kable( siteinfo_sub, caption = "**Table**: Sites used for bias evaluation")
+```
+
+## Numbers for paper
 
 ```{r echo=FALSE, warning=FALSE, error=FALSE, getnumbers_biasreduction}
 ## Reduction of bias by multiplying with fLUE
@@ -113,3 +123,5 @@ Mean amplification of relative variance across 0.5 degree gridcells:
 load("data/ampl_relvar.Rdata")
 print( paste( mean( vec )) )
 ```
+
+
