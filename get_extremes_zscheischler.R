@@ -1,140 +1,140 @@
-# # make anomalies
-# require(raster)
-# require(neuroim)
-# require(igraph)
-# require(fields) ## for image.plot() function
-# require(dplyr)
-# require(ncdf4)
-# require(lubridate)
-# 
-# myboxplot <- function( ... ){
-#   boxplot( ..., staplewex=0, whisklty=1, outline=FALSE )
-# }
-# 
-# ##-----------------------
-# overwrite <- FALSE
-# ##-----------------------
-# 
-# outfile <- " "
-# 
-# if (!file.exists(outfile)||overwrite){
-# 
-#   ## Define continents from SREX regions
-#   # SREX <- raster("/net/exo/landclim/data/dataset/SREX-Region-Masks/20120709/0.5deg_lat-lon_time-invariant/processed/netcdf/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
-#   SREX <- raster("~/data/landmasks/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
-#   subsets <- list()
-#   subsets[[1]] <- 1:6
-#   subsets[[2]] <- 7:10
-#   subsets[[3]] <- 11:13
-#   subsets[[4]] <- 14:17
-#   subsets[[5]] <- 18:23
-#   subsets[[6]] <- 24:26
-# 
-#   CC_list <- list()
-# 
-#   idx_largest <- list()
-# 
-#   fit_s0  <- list()
-#   fit_s1a <- list()
-#   fit_s1b <- list()
-#   fit_s1c <- list()
-# 
-#   IMPACT_s0  <- list()
-#   IMPACT_s1a <- list()
-#   IMPACT_s1b <- list()
-#   IMPACT_s1c <- list()
-# 
-#   ## load monthly anomalies created beforehand with 'proc_nc_fields.sh'
-#   print("loading anomaly files...")
-#   ANOM_s0_all  <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc")
-#   ANOM_s1a_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_MON_ANOM.nc")
-#   ANOM_s1b_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_MON_ANOM.nc")
-#   ANOM_s1c_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_MON_ANOM.nc")
-# 
-#   ## reorder dimensions and multiply with gridcell surface area
-#   print("reorder dimensions...")
-#   ANOM_s0.a  <- aperm(as.array(ANOM_s0_all  * area(ANOM_s0_all)),c(2,1,3))[,360:1,]
-#   ANOM_s1a.a <- aperm(as.array(ANOM_s1a_all * area(ANOM_s1a_all)),c(2,1,3))[,360:1,]
-#   ANOM_s1b.a <- aperm(as.array(ANOM_s1b_all * area(ANOM_s1b_all)),c(2,1,3))[,360:1,]
-#   ANOM_s1c.a <- aperm(as.array(ANOM_s1c_all * area(ANOM_s1c_all)),c(2,1,3))[,360:1,]
-# 
-#   ## Loop over continents
-#   latx <- 360
-#   for (j in 1:6) {
-#     
-#     print(paste("continent",as.character(j),"/ 6"))
-#     
-#     # define mask for only 1 continent
-#     Na <- SREX %in% subsets[[j]]
-# 
-#     ## mask out values
-#     ANOM_s1a <- mask( ANOM_s1a_all, Na, maskvalue=0 )
-#     ANOM_s1b <- mask( ANOM_s1b_all, Na, maskvalue=0 )
-#     ANOM_s1c <- mask( ANOM_s1c_all, Na, maskvalue=0 )
-#     
-#     ## get quantiles based on simulation s1c
-#     q_all <- quantile( as.vector(ANOM_s1c), c(0.05,0.1,0.9,0.95), na.rm = TRUE )
-#     
-#     # same quantiles (computed over the combined dataset)
-#     EXT05_s1c <- ANOM_s1c < q_all[1]
-#     
-#     EXT05_s1c <- aperm( as.array(EXT05_s1c), c(2,1,3) )[,latx:1,] == TRUE
-#     CC_s1 <- connComp3D( EXT05_s1c )
-#     
-#     ## keep only events gt 200
-#     CC_s1$index[CC_s1$size < 200] <- 0
-#     
-#     # make list with indices pointing to equal index
-#     # CC_s1$list are the indeces pointing to respective events, it's a list with length equal number of events
-#     CC_s1$list <- sapply( 1:max(CC_s1$index), function(x) which(CC_s1$index == x) )
-#     
-#     # find largest extremes defined by impact
-#     IMPACT_s0[[j]]  <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s0.a[x])) )
-#     IMPACT_s1a[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1a.a[x])) )
-#     IMPACT_s1b[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1b.a[x])) )
-#     IMPACT_s1c[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1c.a[x])) )
-#     
-#     # pdf("fig/extremes.pdf")
-#     # plot(   sort( -1*impact_s0,  decreasing=TRUE ) * 1e-9, log="xy", ylab="PgC/yr", xlab="rank" )
-#     # points( sort( -1*impact_s1a, decreasing=TRUE ) * 1e-9, col=2 )
-#     # points( sort( -1*impact_s1b, decreasing=TRUE ) * 1e-9, col=2 )
-#     # points( sort( -1*impact_s1c, decreasing=TRUE ) * 1e-9, col=2 )
-#     # legend( "topright", pch=1, col=1:2, legend=c("s0","s1"), bty="n" )
-#     # title( paste( "continent", as.character(j) ) )
-#     # dev.off()
-#     
-#     # tmp <- sort( -1*IMPACT_s0[[j]], decreasing=TRUE, index.return = TRUE )
-#     # idx_largest[[j]] <- tmp$ix[1]
-# 
-#     fit_s0 [[j]] <- fit_power_law( tmp$x*1e-9 )
-#     fit_s1a[[j]] <- fit_power_law( sort(-1*IMPACT_s1a[[j]], decreasing=TRUE )*1e-9 )
-#     fit_s1b[[j]] <- fit_power_law( sort(-1*IMPACT_s1b[[j]], decreasing=TRUE )*1e-9 )
-#     fit_s1c[[j]] <- fit_power_law( sort(-1*IMPACT_s1c[[j]], decreasing=TRUE )*1e-9 )
-#       
-#     # attach to list
-#     CC_list[[j]] <- CC_s1
-# 
-#   }
-# 
-#   save( CC_list, IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file=outfile )
-# 
-# } else {
-# 
-#   load(outfile)
-# 
-# }
-# 
-# ## Size difference of the 10 largest extremes
-# ## sort by descending s1c impacts
-# list_impacts <- list()
-# for (icont in 1:6){
-#   df_impacts <- tibble( s0 = IMPACT_s0[[icont]], s1a = IMPACT_s1a[[icont]], s1b = IMPACT_s1b[[icont]], s1c = IMPACT_s1c[[icont]] ) %>%
-#     # arrange( s1c ) %>% 
-#     mutate( rank = sort( -1*s1b, decreasing=TRUE, index.return = TRUE )$ix ) %>%
-#     mutate( ampl_s1a = s1a / s0, ampl_s1b = s1b / s0, ampl_s1c = s1c / s0 ) %>%
-#     mutate( ampl_mean = rowMeans( dplyr::select(., starts_with("ampl")) ) )
-#   list_impacts[[icont]] <- df_impacts
-# }
+# make anomalies
+require(raster)
+require(neuroim)
+require(igraph)
+require(fields) ## for image.plot() function
+require(dplyr)
+require(ncdf4)
+require(lubridate)
+
+myboxplot <- function( ... ){
+  boxplot( ..., staplewex=0, whisklty=1, outline=FALSE )
+}
+
+##-----------------------
+overwrite <- FALSE
+##-----------------------
+
+outfile <- " "
+
+if (!file.exists(outfile)||overwrite){
+
+  ## Define continents from SREX regions
+  # SREX <- raster("/net/exo/landclim/data/dataset/SREX-Region-Masks/20120709/0.5deg_lat-lon_time-invariant/processed/netcdf/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
+  SREX <- raster("~/data/landmasks/srex-region-masks_20120709.srex_mask_SREX_masks_all.05deg.time-invariant.nc")
+  subsets <- list()
+  subsets[[1]] <- 1:6
+  subsets[[2]] <- 7:10
+  subsets[[3]] <- 11:13
+  subsets[[4]] <- 14:17
+  subsets[[5]] <- 18:23
+  subsets[[6]] <- 24:26
+
+  CC_list <- list()
+
+  idx_largest <- list()
+
+  fit_s0  <- list()
+  fit_s1a <- list()
+  fit_s1b <- list()
+  fit_s1c <- list()
+
+  IMPACT_s0  <- list()
+  IMPACT_s1a <- list()
+  IMPACT_s1b <- list()
+  IMPACT_s1c <- list()
+
+  ## load monthly anomalies created beforehand with 'proc_nc_fields.sh'
+  print("loading anomaly files...")
+  ANOM_s0_all  <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc")
+  ANOM_s1a_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1a_MON_ANOM.nc")
+  ANOM_s1b_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1b_MON_ANOM.nc")
+  ANOM_s1c_all <- brick("~/data/pmodel_fortran_output/v2/gpp_pmodel_s1c_MON_ANOM.nc")
+
+  ## reorder dimensions and multiply with gridcell surface area
+  print("reorder dimensions...")
+  ANOM_s0.a  <- aperm(as.array(ANOM_s0_all  * area(ANOM_s0_all)),c(2,1,3))[,360:1,]
+  ANOM_s1a.a <- aperm(as.array(ANOM_s1a_all * area(ANOM_s1a_all)),c(2,1,3))[,360:1,]
+  ANOM_s1b.a <- aperm(as.array(ANOM_s1b_all * area(ANOM_s1b_all)),c(2,1,3))[,360:1,]
+  ANOM_s1c.a <- aperm(as.array(ANOM_s1c_all * area(ANOM_s1c_all)),c(2,1,3))[,360:1,]
+
+  ## Loop over continents
+  latx <- 360
+  for (j in 1:6) {
+    
+    print(paste("continent",as.character(j),"/ 6"))
+    
+    # define mask for only 1 continent
+    Na <- SREX %in% subsets[[j]]
+
+    ## mask out values
+    ANOM_s1a <- mask( ANOM_s1a_all, Na, maskvalue=0 )
+    ANOM_s1b <- mask( ANOM_s1b_all, Na, maskvalue=0 )
+    ANOM_s1c <- mask( ANOM_s1c_all, Na, maskvalue=0 )
+    
+    ## get quantiles based on simulation s1c
+    q_all <- quantile( as.vector(ANOM_s1c), c(0.05,0.1,0.9,0.95), na.rm = TRUE )
+    
+    # same quantiles (computed over the combined dataset)
+    EXT05_s1c <- ANOM_s1c < q_all[1]
+    
+    EXT05_s1c <- aperm( as.array(EXT05_s1c), c(2,1,3) )[,latx:1,] == TRUE
+    CC_s1 <- connComp3D( EXT05_s1c )
+    
+    ## keep only events gt 200
+    CC_s1$index[CC_s1$size < 200] <- 0
+    
+    # make list with indices pointing to equal index
+    # CC_s1$list are the indeces pointing to respective events, it's a list with length equal number of events
+    CC_s1$list <- sapply( 1:max(CC_s1$index), function(x) which(CC_s1$index == x) )
+    
+    # find largest extremes defined by impact
+    IMPACT_s0[[j]]  <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s0.a[x])) )
+    IMPACT_s1a[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1a.a[x])) )
+    IMPACT_s1b[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1b.a[x])) )
+    IMPACT_s1c[[j]] <- unlist( lapply( CC_s1$list, function(x) sum(ANOM_s1c.a[x])) )
+    
+    # pdf("fig/extremes.pdf")
+    # plot(   sort( -1*impact_s0,  decreasing=TRUE ) * 1e-9, log="xy", ylab="PgC/yr", xlab="rank" )
+    # points( sort( -1*impact_s1a, decreasing=TRUE ) * 1e-9, col=2 )
+    # points( sort( -1*impact_s1b, decreasing=TRUE ) * 1e-9, col=2 )
+    # points( sort( -1*impact_s1c, decreasing=TRUE ) * 1e-9, col=2 )
+    # legend( "topright", pch=1, col=1:2, legend=c("s0","s1"), bty="n" )
+    # title( paste( "continent", as.character(j) ) )
+    # dev.off()
+    
+    # tmp <- sort( -1*IMPACT_s0[[j]], decreasing=TRUE, index.return = TRUE )
+    # idx_largest[[j]] <- tmp$ix[1]
+
+    fit_s0 [[j]] <- fit_power_law( tmp$x*1e-9 )
+    fit_s1a[[j]] <- fit_power_law( sort(-1*IMPACT_s1a[[j]], decreasing=TRUE )*1e-9 )
+    fit_s1b[[j]] <- fit_power_law( sort(-1*IMPACT_s1b[[j]], decreasing=TRUE )*1e-9 )
+    fit_s1c[[j]] <- fit_power_law( sort(-1*IMPACT_s1c[[j]], decreasing=TRUE )*1e-9 )
+      
+    # attach to list
+    CC_list[[j]] <- CC_s1
+
+  }
+
+  save( CC_list, IMPACT_s0, IMPACT_s1a, IMPACT_s1b, IMPACT_s1c, fit_s0, fit_s1a, fit_s1b, fit_s1c, file=outfile )
+
+} else {
+
+  load(outfile)
+
+}
+
+## Size difference of the 10 largest extremes
+## sort by descending s1c impacts
+list_impacts <- list()
+for (icont in 1:6){
+  df_impacts <- tibble( s0 = IMPACT_s0[[icont]], s1a = IMPACT_s1a[[icont]], s1b = IMPACT_s1b[[icont]], s1c = IMPACT_s1c[[icont]] ) %>%
+    # arrange( s1c ) %>% 
+    mutate( rank = sort( -1*s1b, decreasing=TRUE, index.return = TRUE )$ix ) %>%
+    mutate( ampl_s1a = s1a / s0, ampl_s1b = s1b / s0, ampl_s1c = s1c / s0 ) %>%
+    mutate( ampl_mean = rowMeans( dplyr::select(., starts_with("ampl")) ) )
+  list_impacts[[icont]] <- df_impacts
+}
 
 ## integrate events to get time series
 ## get dates from NetCDF file
