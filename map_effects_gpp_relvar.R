@@ -55,14 +55,14 @@ gpp_s1c <- ncvar_get( nc, varid="gpp" )
 nc_close(nc)
 
 
-# ##-----------------------------------------------------
-# ## Plot relative variance in S1
-# ##-----------------------------------------------------
-# plot_map( gpp_s1b, lev=c( 0, 40, 10 ),
-#       toplefttext=expression(paste("GPP relative variance")),
-#       toprighttext=expression(paste("fraction")),
-#       maxval = 200, color=cols
-#       )
+##-----------------------------------------------------
+## Plot relative variance in S1
+##-----------------------------------------------------
+plot_map( gpp_s1b / gpp_s0, lev=c( 0, 4, 10 ),
+      toplefttext=expression(paste("Amplification of GPP relative variance")),
+      toprighttext=expression(paste("fraction")),
+      maxval = 35, color=cols
+      )
 
 ##-----------------------------------------------------
 ## Change in relative variance

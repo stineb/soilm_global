@@ -19,10 +19,10 @@ source("~/.Rprofile")
   time <- nc$dim$time$vals
   nc_close(nc)
 
-  ## S1
-  nc <- nc_open( paste0( dir, fil_s1 ) )
-  gpp_s1 <- ncvar_get( nc, varid="gpp" )
-  nc_close(nc)
+  # ## S1
+  # nc <- nc_open( paste0( dir, fil_s1 ) )
+  # gpp_s1 <- ncvar_get( nc, varid="gpp" )
+  # nc_close(nc)
 
   ## S1b
   nc <- nc_open( paste0( dir, fil_s1b ) )
@@ -30,44 +30,44 @@ source("~/.Rprofile")
   nc_close(nc)
 
 
-  # ##-----------------------------------------------------
-  # ## absolute GPP (gC m-2 yr-1)
-  # ##-----------------------------------------------------
-  # cols <- colorRampPalette( brewer.pal(9,"YlOrRd"))(10)
+  ##-----------------------------------------------------
+  ## absolute GPP (gC m-2 yr-1)
+  ##-----------------------------------------------------
+  cols <- colorRampPalette( brewer.pal(9,"YlOrRd"))(10)
 
-  # plot_map( gpp_s0, lev = c( 0, 4500, 10 ), 
-  #           toplefttext=expression(paste("GPP, no soil moisture limitation")), 
-  #           toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
-  #           maxval=4600, color=cols
-  #           , file = "fig/map_gpp_nolimit.pdf"
-  #           )
+  plot_map( gpp_s0, lev = c( 0, 4500, 10 ), 
+            toplefttext=expression(paste("GPP, no soil moisture limitation")), 
+            toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
+            maxval=4600, color=cols
+            , file = "fig/map_gpp_nolimit.pdf"
+            )
 
-  # plot_map( gpp_s1b, lev = c( 0, 4500, 10 ), 
-  #           toplefttext=expression(paste("GPP, with soil moisture limitation")), 
-  #           toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
-  #           maxval=4600, color=cols
-  #           , file = "fig/map_gpp_limit.pdf"
-  #           )
+  plot_map( gpp_s1b, lev = c( 0, 4500, 10 ), 
+            toplefttext=expression(paste("GPP, with soil moisture limitation")), 
+            toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
+            maxval=4600, color=cols
+            , file = "fig/map_gpp_limit.pdf"
+            )
 
-  # ##-----------------------------------------------------
-  # ## absolute GPP loss (gC m-2 yr-1)
-  # ##-----------------------------------------------------
-  # plot_map( gpp_s0 - gpp_s1b, lev = c( 0, 600, 10 ), 
-  #           toplefttext=expression(paste("GPP loss")), 
-  #           toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
-  #           maxval=1900, color=cols
-  #           , file = "fig/map_gpp_loss_abs.pdf"
-  #           )
+  ##-----------------------------------------------------
+  ## absolute GPP loss (gC m-2 yr-1)
+  ##-----------------------------------------------------
+  plot_map( gpp_s0 - gpp_s1b, lev = c( 0, 600, 10 ), 
+            toplefttext=expression(paste("GPP loss")), 
+            toprighttext=expression(paste("gC m"^{-2}, "yr"^{-1})),
+            maxval=1900, color=cols
+            , file = "fig/map_gpp_loss_abs.pdf"
+            )
 
-  # ##-----------------------------------------------------
-  # ## relative GPP loss (percent)
-  # ##-----------------------------------------------------
-  # plot_map( (1-(gpp_s1b / gpp_s0))*100, lev=c( 0, 70, 14 ), 
-  #           toplefttext=expression(paste("GPP loss")), 
-  #           toprighttext=expression(paste("%")),
-  #           color=cols, maxval = 100
-  #           , file = "fig/map_gpp_loss_rel.pdf"
-  #           )
+  ##-----------------------------------------------------
+  ## relative GPP loss (percent)
+  ##-----------------------------------------------------
+  plot_map( (1-(gpp_s1b / gpp_s0))*100, lev=c( 0, 70, 14 ), 
+            toplefttext=expression(paste("GPP loss")), 
+            toprighttext=expression(paste("%")),
+            color=cols, maxval = 100
+            , file = "fig/map_gpp_loss_rel.pdf"
+            )
 
 
 ##------------------------------------------------------------------------

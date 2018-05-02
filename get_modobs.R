@@ -34,7 +34,7 @@ get_modobs <- function( simsuite, outputset, add_swcvars=TRUE, add_swcvars_etbuc
   source("add_swcvars_fluxnet2015.R")
   source("get_modobs_fluxnet2015.R")
 
-  siteinfo   <- read_csv( paste0( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_", simsuite, "_sofun.csv" ) )
+  siteinfo   <- read_csv( paste0( myhome, "/siteinfo_fluxnet2015_sofun.csv" ) )
   datafilnam <- paste0( "data/modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v5" )
   datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_"), "_with_SWC_v5" )
 

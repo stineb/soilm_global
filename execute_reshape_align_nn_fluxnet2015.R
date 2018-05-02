@@ -6,14 +6,8 @@
 # - `df_dday_mte_agg`
 # - `df_dday_aggbydday_agg`
 ##------------------------------------------------
-
-.libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
 require(dplyr)
 require(readr)
-
-syshome <- Sys.getenv( "HOME" )
-source( paste( syshome, "/.Rprofile", sep="" ) )
 
 source( "reshape_align_nn_fluxnet2015.R" )
 
@@ -33,15 +27,17 @@ print( "aligning data for all sites ...")
 df_dday_agg <- c()
 df_dday_8d_agg <- c()
 df_dday_aggbydday_agg <- c()
+df_dday_aggbydday_8d_agg <- c()
 
 for (sitename in do.sites){
 
   print( paste( "reshaping for site", sitename ) )
   out <- reshape_align_nn_fluxnet2015( sitename, nam_target="lue_obs_evi", overwrite=TRUE, verbose=FALSE )
 
-  if (!is.null(out$df_dday))           df_dday_agg           <- bind_rows( df_dday_agg,           out$df_dday )
-  if (!is.null(out$df_dday_aggbydday)) df_dday_aggbydday_agg <- bind_rows( df_dday_aggbydday_agg, out$df_dday_aggbydday )    
-  if (!is.null(out$df_dday_8d   ))     df_dday_8d_agg        <- bind_rows( df_dday_8d_agg   ,     out$df_dday_8d    )
+  if (!is.null(out$df_dday))              df_dday_agg              <- bind_rows( df_dday_agg,              out$df_dday )
+  if (!is.null(out$df_dday_aggbydday))    df_dday_aggbydday_agg    <- bind_rows( df_dday_aggbydday_agg,    out$df_dday_aggbydday )    
+  if (!is.null(out$df_dday_aggbydday_8d)) df_dday_aggbydday_8d_agg <- bind_rows( df_dday_aggbydday_8d_agg, out$df_dday_aggbydday_8d )    
+  if (!is.null(out$df_dday_8d   ))        df_dday_8d_agg           <- bind_rows( df_dday_8d_agg   ,        out$df_dday_8d    )
 
 }
 
@@ -54,7 +50,7 @@ if ( length( dplyr::filter( siteinfo, successcode==1 )$mysitename ) == length( d
   ##------------------------------------------------
   filn <- "data/data_aligned_agg.Rdata"
   print( paste( "saving variables 'df_dday_agg', 'df_dday_8d_agg', and 'df_dday_aggbydday_agg' to file:", filn ) )
-  save( df_dday_agg, df_dday_8d_agg, df_dday_aggbydday_agg, file=filn )
+  save( df_dday_agg, df_dday_8d_agg, df_dday_aggbydday_agg, df_dday_aggbydday_8d_agg, file=filn )
 
 } else {
 

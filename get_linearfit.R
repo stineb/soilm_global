@@ -29,7 +29,7 @@ get_linearfit <- function( df, monthly=FALSE ){
                       dplyr::filter( ininterval=="(0,0.25]" )
 
   ## Merge mean annual alpha (AET/PET) values into this dataframe
-  load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
+  load( "./data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
   df_flue0 <- df_flue0 %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
 
   ##------------------------------------------------------------------------

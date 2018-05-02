@@ -1,127 +1,727 @@
 ---
 title: "Supplementary information to *Satellite observations underestimate the impact of drought on terrestrial primary productivity*"
 author: "Benjamin D. Stocker, Jakob Zscheischler, Trevor F. Keenan, I. Colin Prentice, Josep Penuelas, and Sonia I. Seneviratne"
-# date: "`r Sys.Date()`"
-# output:
-#   html_document:
-#     toc: true
-#     toc_float: true
+date: "`r Sys.Date()`"
 output:
-  pdf_document:
+  html_document:
     toc: true
+    toc_float: true
     toc_depth: 2
+    number_sections: true
+# output:
+#   pdf_document:
+#     toc: true
+#     toc_depth: 2
+#     number_sections: true
 header-includes:
    - \usepackage{amsmath}
 bibliography: bibliography.bib
 ---
 
-## Supplementary Figures
-
-### S1
-
-```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem}
-source("plot_bias_problem.R")
-```
-![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Simulated GPP is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).](./fig/bias_bymodels_norm.pdf){ width=65% }
-
-
-### S2
-
-```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_nn}
-source("plot_bias_nn.R")
-```
-![Ratio of observed over modelled GPP versus fLUE during drought days. Colors in scatterplots show density of overlaying points. Model names are given on top-left of each panel.](./fig/bias_vs_fvar.pdf)
-
-### S3
-
-![Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Data is not normalised.](./fig/bias_bymodels.pdf){ width=65% }
-
-
-### S4
-
-```{r plot_site_vs_soilmoisture, fig.width=4, fig.height=3.5, echo=FALSE, warning=FALSE, error=FALSE}
-library(dplyr, quietly = TRUE, warn.conflicts = FALSE )
-require(readr, quietly = TRUE, warn.conflicts = FALSE )
-
-load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
-ddf <- df_dday_agg
-rm("df_dday_agg")  # rename to be a bit more concise
-
-## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
-successcodes <- read.csv( paste0( myhome, "/sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv" ), as.is = TRUE )
-do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
-ddf <- ddf %>% filter( mysitename %in% do.sites )
-
-## Merge mean annual alpha (AET/PET) values into this dataframe
-load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha'
-ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" )
-
-## Merge vegetation class
-siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv")
-ddf <- ddf %>% select( -starts_with("classid")) %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" )
-
-source("plot_fit_vs_soilmoist.R")
-load("data/linearfit_I.Rdata")
-load("data/linearfit_IV.Rdata")
-load("data/linearfit_III.Rdata")
-
-print("Linear model for approach I:")
-print(coef(linearfit_I$linmod))
-
-print("Linear model for approach IV (grasses):")
-print(coef(linearfit_IV$linmod_grass))
-
-print("Linear model for approach IV (trees):")
-print(coef(linearfit_IV$linmod_tree))
-
-print("Linear model for approach III:")
-print(coef(linearfit_III$linmod))
-
-plot_fit_vs_soilmoist( linearfit_I, linearfit_IV, linearfit_III, ddf, makepdf = FALSE )
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(captioner)
+tab_nums <- captioner(prefix = "Table")
+fig_nums <- captioner(prefix = "Figure")
 ```
 
-### S5
-```{r echo=FALSE, warning=FALSE, error=FALSE, plot_spatial_temporal}
-## Get annual values and evaluate power of getting spatial and annual variations
-source("aggregate_nn_fluxnet2015_annual.R")
+This document provides supplementary information to the article *Satellite observations underestimate the impact of drought on terrestrial primary productivity*. References are made to scripts and functions implemented in R and available open access through github (https://github.com/stineb/soilm_global). This repository also provides a detailed workflow description as an RMarkdown file (`knit_soilm_global.Rmd`) that allows for full reproducibility of published results and figures, including contents of this document.
+
+
+<!-- # Data preparation -->
+
+<!-- ## Data collection -->
+
+<!-- First, we combined FLUXNET 2015 data (daily, from Tier 1 sites), and respective environmental forcing data (meteorological variables from FLUXNET, fAPAR from MODIS FPAR, and soil moisture distributed through the FLUXNET 2015 dataset).  -->
+
+<!-- We use GPP data, derived from measurements of net ecosystem CO$_2$ exchange based on the nighttime partitioning method refXXX, named `GPP_NT_VUT_REF` in the FLUXNET 2015 dataset. We filtered negative daily GPP values, data for which more than 50% of respective half-hourly data is gap-filled and for which the daytime and nighttime methods (`GPP_DT_VUT_REF` and `GPP_NT_VUT_REF`, resp.) are inconsistent, i.e., the upper and lower 2.5% quantile of the difference between each method???s GPP quantification. -->
+
+<!-- This step is implemented by code `get_modobs.R`. -->
+
+<!-- ## Data aggregation -->
+
+<!-- We combine site-level observational data with site-level model outputs from the P-model, BESS, VPM, and MODIS, and aggregate data to 8-days periods, defined by MODIS data frequency.  -->
+
+<!-- This step is implemented by code `aggregate_nn_fluxnet2015.R`  -->
+
+<!-- ## Data filtering for soil moisture effects -->
+
+<!-- The comparison of GPP from RS-models and FLUXNET observations is limited to data from a subset of sites, where soil moisture effects had reliably been identified, and to periods with clearly identified soil moisture effects. The site selection is determined by the amount of data available from respective sites (at least 500 days' data for the site after data cleaning) and the reliability by which the importance of soil moisture effects was identified. This is based on the analysis by [@stocker18] and selects for sites that experience clear episodic or recurrent soil water stress and is, i.a., limited by fAPAR (MODIS FPAR) data quality (necessary to determine $\text{LUE}=\text{GPP}/(\text{fAPAR}\cdot\text{PAR})$). An overview of selected and not selected sites is given by Table 1 and Figure 1. -->
+
+<!-- ```{r siteoverview, echo=FALSE, warning=FALSE} -->
+<!-- suppressMessages(require(readr, quietly = TRUE)) -->
+<!-- suppressMessages(require(dplyr, quietly = TRUE)) -->
+<!-- siteinfo <- suppressMessages(read_csv("siteinfo_fluxnet2015_sofun.csv")) -->
+<!-- success  <- suppressMessages(read_csv( "successcodes.csv" )) -->
+<!-- do.sites.nn <- filter( success, successcode==1 )$mysitename -->
+<!-- do.sites.all <- filter( success, successcode==1 | successcode==2 )$mysitename -->
+<!-- siteinfo <- siteinfo %>%  mutate( group = ifelse(  mysitename %in% do.sites.nn, 1, ifelse(  mysitename %in% do.sites.all, 2, 0 ) ) ) %>%  -->
+<!--                           select( -elv, -elv_watch, -elv_diff, -years_data, -whc ) %>%  -->
+<!--                           rename( site=mysitename ) -->
+<!-- siteinfo %>% filter( group %in% c(1,2) ) %>% mutate( lon=format(lon, digits=2), lat=format(lat, digits=4) ) %>% knitr::kable( caption = "Sites used for bias evaluation" ) -->
+<!-- ``` -->
+
+<!-- ```{r siteoverview_fig, echo=FALSE, warning=FALSE} -->
+<!-- suppressMessages(require(ncdf4, quietly = TRUE)) -->
+<!-- ncfiln <- "../data/greve/ep_over_p_cru_ncep.nc" -->
+<!-- if (!file.exists(ncfiln)) { -->
+<!--   epop <- array( 1, dim=c(720,360) ) -->
+<!-- } else { -->
+<!--   nc <- nc_open( ncfiln ) -->
+<!--   epop <- ncvar_get( nc, varid="EP_OVER_P_CRU_NCEP" ) -->
+<!-- } -->
+<!-- source("plot_map_siteoverview.R") -->
+<!-- suppressMessages( plot_map_siteoverview( siteinfo, 1/epop ) ) # , plotfiln="fig/map_sites.pdf" -->
+<!-- cap_siteoverview_fig <- fig_nums( "siteoverview_fig", caption="Geographical distribution of sites selected for the bias evaluation. Sites listed in Table 1 as group 1 are in green, sites of group 2 are in black. The color of land area represents aridity, quantified as the ratio of potential evapotranspiration over precipitation from [@greve]" ) -->
+<!-- ``` -->
+
+<!-- `r fig_nums("siteoverview_fig")` -->
+
+<!-- In a second step, data is filtered for periods where soil moisture impacts are significant based on the parallel evolution of observed photosynthetic light use efficiency (LUE), temperature, vapour pressure deficit (VPD), photosynthetically active radiation (PAR), and soil moisture. Impact-relevant drought periods are defined when LUE is significantly reduced by soil moisture effects ('fLUE droughts' in [@stocker18]). Only data is retained for the 20-day period prior to the onset of fLUE droughts and during the duration of fLUE droughts. -->
+
+<!-- The data filtering steps are implemented by code `execute_reshape_align_nn_fluxnet2015.R`. -->
+
+<!-- For additional analyses with relaxed criteria for site selection and independent of the drought identification by [@stocker18], alternative data aggregation is implemented by code `aggregate_all_fluxnet2015.R`. -->
+
+
+<!-- # Bias detection -->
+
+<!-- We evaluate the bias of different RS-model versus soil moisture and versus actual over potential evapotranspiration (AET/PET) for 71 sites (corresponding to the full list of sites shown in Table 1). This corresponds to the selection with relaxed criteria and is independent of the drought identification by [@stocker18]. For all RS-models, the bias generally increases along bins of decreasing AET/PET. Note that below, boxplots are shown for the ratio of modelled over observed GPP. -->
+
+<!-- ```{r plot_bias_all, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE} -->
+<!-- source("plot_bias_all.R") -->
+<!-- plot_bias_all( nice_agg, nice_8d_agg ) -->
+<!-- cap_bias_all <- fig_nums( "bias_all", caption="Bias of simulated daily GPP by models, in different bins of daily AET/PET. The bias is calculated here as the ratio of simulated GPP over observed GPP. Observational data is derived from flux measurements at 71 sites (all sites in Table 1)." ) -->
+<!-- ``` -->
+
+<!-- `r fig_nums("bias_all")` -->
+
+<!-- This pattern becomes clearer when applying the narrower site selection (sites in group 1 in Table XXX) and using only data during apparent droughts, i.e. where soil-moisture appears to reduce the LUE as determined by [@stocker18]. -->
+
+<!-- ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem} -->
+<!-- source("plot_bias_problem.R") -->
+<!-- plot_bias_bymodels( df_dday_8d_agg ) -->
+<!-- cap_bias_bymodels <- fig_nums("bias_bymodels", caption="Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table 1).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("bias_bymodels")` -->
+
+<!-- All RS-models, except P-model, have a tendency to be biased low under non-soil moisture-limited conditions and biased under strong soil moisture stress. To distill the pattern, independent of the mean absolute bias, we normalised simulated GPP to the median ratio of modelled-over-observed GPP in the highest fLUE bin, i.e., where soil moisture impacts on observed fluxes are small (fLUE bin 0.8-1.0). -->
+
+<!-- ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem_norm} -->
+<!-- plot_bias_bymodels( df_dday_8d_agg_norm ) -->
+<!-- bias_norm <- fig_nums("bias_norm", caption="Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table 1). Simulated GPP is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("bias_norm")` -->
+
+<!-- <!-- Another way to illustrate the systematic relationship between the RS-models' bias and the apparent soil moisture-related LUE reductions is given below. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations. The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points. --> -->
+
+<!-- <!-- ```{r plot_bias, eval=FALSE, message=FALSE, warning=FALSE, echo=FALSE} --> -->
+<!-- <!-- source("plot_bias_nn.R") --> -->
+<!-- <!-- plot_bias_nn( df_dday_agg, filn="./fig/bias_vs_fvar.pdf" ) --> -->
+<!-- <!-- ratioplot <- fig_nums("ratioplot", caption="Ratio of observed-to-modelled GPP versus the apparent soil moisture-related LUE reduction (fLUE) for different RS-models.") --> -->
+<!-- <!-- ``` --> -->
+<!-- <!-- [](./fig/bias_vs_fvar.pdf){width=100%} --> -->
+<!-- <!-- `r fig_nums("ratioplot")` --> -->
+
+<!-- # Soil moisture stress functions -->
+
+<!-- As documented above, there is a systematic bias of several remote sensing-based GPP models during droughts and this bias is strongly related, both in magnitude and timing, to the apparent effects of soil moisture on light use efficiency (LUE). With sufficient temporal aggregation, GPP can be expressed as a light use efficiency model [@monteith72]: -->
+<!-- $$ -->
+<!-- \text{GPP} = \text{APAR} \cdot \text{LUE} -->
+<!-- $$ -->
+<!-- Hence, the bias in simulated GPP ($\text{GPP}_{\text{mod}}$) can effectively be removed by multiplying GPP with a soil moisture stress function $\varphi(\theta)$. Corrected GPP estimates are: -->
+<!-- $$ -->
+<!-- \text{GPP}_{\text{corr}} = \text{GPP}_{\text{mod}} \cdot \varphi(\theta) -->
+<!-- $$ -->
+<!-- The apparent soil moisture-related reduction in light use efficiency (termed fLUE), separated from effects by VPD, greenness, other meteorological drivers, has been identified by [@stocker18] using a machine-learning algorithm, applied on eddy covariance flux measurement data, combined with co-located soil moisture measurements and remotely-sensed greenness. We use these results here to fit a set of soil moisture stress functions ($\varphi(\theta)\simeq\text{fLUE}$) based on two general patterns: -->
+
+<!-- 1. The functional form of $\varphi(\theta)$ is general across all sites and can be approximated by a quadratic function that approaches 1 for soil moisture at a certain threshold $\theta_0$ and held constant at 1 for soil moisture values above that. Here $\theta$ is the plant-available soil water, expressed as a fraction of field capacity. The general form is: -->
+<!-- $$ -->
+<!--     \varphi = -->
+<!-- \begin{cases} -->
+<!--     \beta(\theta - \theta_0)^2 + 1,& \theta \leq \theta_0\\ -->
+<!--     1,              & \theta > \theta_0 -->
+<!-- \end{cases} -->
+<!-- $$ -->
+<!-- 2. The sensitivity of $\varphi(\theta)$ to extreme soil dryness ($\theta \rightarrow 0$) is related to the mean aridity at the site. The dryness-related decline in $\varphi(\theta)$ is particularly strong at the driest sites (mostly deserts, grasslands, savannahs), whereas sites at intermediate aridity (mostly mediterranean) exhibit a smaller reduction in $\varphi(\theta)$ when soil water gets depleted. In the equation above, the "sensitivity parameter" $\beta$ is defined by the maximum $\varphi$ reduction at low soil moisture $\varphi_0\equiv\varphi(\theta=0)$, leading to $\beta=(\varphi_0-1)/\theta_0^2$. $\varphi_0$ is modelled as a linear function of the mean aridity, quantified by the mean annual ratio of AET/PET, termed $\alpha$: -->
+<!-- $$ -->
+<!-- \varphi_0 = a + b \alpha -->
+<!-- $$ -->
+
+<!-- We have tested several approaches to fit parameters $a$ and $b$. Final fitted functions based on approaches I-III bracket fLUE values derived at our selection of sites (group 1 in Table XXX). Their definition is described below. -->
+
+<!-- ## Approach I -->
+
+<!-- Based on fLUE in lowest soil moisture bin and its relationship to mean AET/PET. -->
+
+<!-- This is based on the relationship between minimum fLUE and mean AET/PET, identified in [@stocker18]. Parameters $a$ and $b$ are calculated from a linear regression between each site's $\varphi_0$ and $\alpha$. $\alpha$ is calculated as the annual mean ratio of AET/PET, calculated from daily AET and PET values from simulations with the SPLASH model [@davis17] (the same set of simulations as described in the Methods in the main text, section 'Global P-model simulations'). $\varphi_0$ is derived for each site as the mean fLUE value of data in the lowest soil moisture quartile. This defines parameters $\varphi_0$ and hence $\beta$ in above equations. This is identical to the linear regression of fLUE$_0$ to soil moisture shown in Fig. 9 in [@stocker18]. -->
+
+<!-- ```{r linearfit_I, message=FALSE, warning=FALSE, echo=FALSE} -->
+<!-- library(dplyr) -->
+<!-- load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc. -->
+<!-- ddf <- df_dday_agg -->
+<!-- rm("df_dday_agg")  # rename to be a bit more concise -->
+
+<!-- ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation) -->
+<!-- successcodes <- read.csv( paste0( myhome, "/sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv" ), as.is = TRUE ) -->
+<!-- do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename -->
+<!-- ddf <- ddf %>% filter( mysitename %in% do.sites ) -->
+
+<!-- ## Merge mean annual alpha (AET/PET) values into this dataframe -->
+<!-- load( "../sofun/utils_sofun/analysis_sofun/fluxnet2015/data/alpha_fluxnet2015.Rdata" )  # loads 'df_alpha' -->
+<!-- ddf <- ddf %>% left_join( rename( df_alpha, meanalpha=alpha ), by="mysitename" ) -->
+
+<!-- ## Merge vegetation class -->
+<!-- siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv") -->
+<!-- ddf <- ddf %>% select( -starts_with("classid")) %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" ) -->
+
+<!-- source("get_linearfit.R") -->
+<!-- source("plot_linearfit.R") -->
+
+<!-- linearfit_I  <- get_linearfit( filter( ddf, ratio_obs_mod_pmodel < 5 ), monthly=FALSE ) -->
+<!-- save( linearfit_I,  file="data/linearfit_I.Rdata" ) -->
+<!-- plot_linearfit( linearfit_I ) -->
+<!-- fig_regr_aI <- fig_nums("regr_aI", caption="Maximum apparent light use efficiency reduction at low soil moisture (fLUE0) versus the ratio of annual mean actual over potential evapotranspiration (AET/PET). Points represent sites of group 1 (see Table 1). The linear regression model is given by the equation and the line.") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("regr_aI")` -->
+
+<!-- In summary, this method derives the following fitting parameters: -->
+<!-- ```{r echo=FALSE} -->
+<!-- print( coef(linearfit_I$linmod) ) -->
+<!-- ``` -->
+
+<!-- Given the estimate of $\varphi_0$ as a function of $\alpha$ at each site, we can calculate the soil moisture stress function using daily varying soil moisture data and evaluate whether accounting for this resolves the bias of modelled GPP at low soil moisture. Here, we're assessing this with GPP predictions from the P-model. -->
+
+<!-- ```{r correct_linearfit_Ia, message=FALSE, warning=FALSE, echo=FALSE} -->
+<!-- source("calc_flue_est_alpha.R") -->
+
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf <- ddf %>% filter( mysitename!="US-Var") %>%  mutate( flue_est_I = calc_flue_est_alpha( soilm_mean, alpha=meanalpha, apar=coef(linearfit_I$linmod)[1], bpar=coef(linearfit_I$linmod)[2], cpar=0.125, dpar=0.75 ) ) %>% -->
+<!--                           mutate( bias_pmodel_diff = gpp_pmodel - gpp_obs, -->
+<!--                                   bias_pmodel_diff_corr = gpp_pmodel * fvar - gpp_obs, -->
+<!--                                   bias_pmodel_diff_corr_I = gpp_pmodel * flue_est_I - gpp_obs -->
+<!--                                  ) -->
+
+<!-- ## evaluate bias~soil moisture -->
+<!-- nbins <- 5 -->
+<!-- binwidth <- 1/nbins -->
+<!-- bins <- seq( from=0, to=1, by=binwidth ) -->
+<!-- ddf <- ddf %>% mutate( inbin = cut( as.numeric(fvar), breaks = bins ) ) %>% -->
+<!--                mutate( lobin = ifelse( inbin %in% c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]"), TRUE, FALSE ) ) -->
+
+<!-- ## Bias (difference), correction by fLUE directly, fLUE bins -->
+<!-- bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="fLUE bins", ylab=expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp2 <- boxplot( bias_pmodel_diff_corr_I ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected by I", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") ) -->
+<!-- boxpl_aI <- fig_nums("boxpl_aI", caption="Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by approach I (stress multiplier estimated from  soil moisture following approach I) in light green.") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("boxpl_aI")` -->
+
+<!-- Here are the statistics for I, mean across the lower five fLUE bins: -->
+<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+<!-- ## get statistics -->
+<!-- suppressMessages(library(hydroGOF)) -->
+<!-- bybin_orig <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corr <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corI <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr_I, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_I + gpp_obs, gpp_obs) ) -->
+
+<!-- print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3))) -->
+<!-- print(paste("With fLUE, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3))) -->
+
+<!-- print(paste("With I, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corI$bias[1:5]), digits=3))) -->
+<!-- print(paste("With I, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corI$rmse[1:5]), digits=3))) -->
+
+<!-- ## save performance statistics -->
+<!-- df_corI <- ddf %>% summarise( bias = mean(bias_pmodel_diff_corr_I, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_I + gpp_obs, gpp_obs) ) -->
+<!-- df_orig <- ddf %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) -->
+<!-- df_coef   <-  tibble( approach="original", -->
+<!--                       apar=NA, -->
+<!--                       bpar=NA, -->
+<!--                       apar_grass=NA, bpar_grass=NA, -->
+<!--                       bias=df_orig$bias, rmse=df_orig$rmse -->
+<!--                       ) %>%  -->
+<!--               bind_rows(  -->
+<!--                 tibble( approach="I", -->
+<!--                         apar=coef(linearfit_I$linmod)["(Intercept)"], -->
+<!--                         bpar=coef(linearfit_I$linmod)["meanalpha"], -->
+<!--                         apar_grass=NA, bpar_grass=NA, -->
+<!--                         bias=df_corI$bias, rmse=df_corI$rmse -->
+<!--                         )) -->
+<!-- ``` -->
+
+<!-- Above figure shows that the bias in predicted GPP is reduced but not fully resolved. Hence, we defined alternative stress functions below. -->
+
+<!-- ## Approach II -->
+
+<!-- First, a quadratic function of the form described above is fitted to fLUE data for each site individually. The y-axis intersect of the site-specific fitted function is used here as $\varphi_0$. Second, $\varphi_0$ is regressed against $\alpha$ as above. -->
+
+<!-- ```{r get_linearfit_II, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## load additional functions -->
+<!-- source("get_linearfit_II.R") -->
+<!-- source("stress_quad_1sided.R") -->
+
+<!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
+<!-- x0_fix <- 0.9 -->
+<!-- linearfit_II <- get_linearfit_II( filter( ddf, dday>=0 ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE ) -->
+<!-- save( linearfit_II, file="data/linearfit_II_ratio.Rdata" ) -->
+<!-- ``` -->
+
+
+<!-- ```{r correct_linearfit_II_boxpl, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf <- ddf %>%  mutate( flue_est_II = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit_II$linmod)[["(Intercept)"]], coef(linearfit_II$linmod)[["meanalpha"]] ) ) %>% -->
+<!--                 mutate( bias_pmodel_diff_corr_II = gpp_pmodel * flue_est_II - gpp_obs ) -->
+
+<!-- ## Bias (difference), correction by fLUE directly, fLUE bins --> -->
+<!-- bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="fLUE bins", ylab=expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp2 <- boxplot( bias_pmodel_diff_corr_II ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected by II", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") ) -->
+<!-- boxpl_aII <- fig_nums("boxpl_aII", caption="Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by approach I (stress multiplier estimated from  soil moisture following approach II) in light green.") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("boxpl_aII")` -->
+
+<!-- This method derives the following fitting parameters: -->
+<!-- ```{r echo=FALSE} -->
+<!-- print( coef(linearfit_II$linmod) ) -->
+<!-- ``` -->
+
+<!-- Here are the statistics for II, mean across the lower five fLUE bins: -->
+<!-- ```{r echo=FALSE} -->
+<!-- ## get statistics -->
+<!-- bybin_orig <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corr <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corII<- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr_II, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_II + gpp_obs, gpp_obs) ) -->
+
+<!-- print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3))) -->
+<!-- print(paste("With fLUE, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3))) -->
+
+<!-- print(paste("With II, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corII$bias[1:5]), digits=3))) -->
+<!-- print(paste("With II, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corII$rmse[1:5]), digits=3))) -->
+
+<!-- ## save performance statistics -->
+<!-- df_corII <- ddf %>% summarise( bias = mean(bias_pmodel_diff_corr_II, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_II + gpp_obs, gpp_obs) ) -->
+<!-- df_coef <- df_coef %>% bind_rows( tibble( -->
+<!--   approach="II", -->
+<!--   apar=coef(linearfit_II$linmod)["(Intercept)"], -->
+<!--   bpar=coef(linearfit_II$linmod)["meanalpha"], -->
+<!--   apar_grass=NA, bpar_grass=NA, -->
+<!--   bias=df_corII$bias, rmse=df_corII$rmse -->
+<!-- )) -->
+<!-- ``` -->
+
+<!-- This approach (II) is more effective in reducing the bias in the lower four fLUE bins than approach I, but corrected values still have the tendency to be biased high in the lowest fLUE bin and it also introduces a negative bias in the highest fLUE bin. -->
+
+<!-- ## Approach III -->
+
+<!-- In view of the remaining positive bias in the lowest fLUE bin, we derive soil moisture stress functions with an even stronger sensitivity. To achieve that, we use only data from sites where approach II does not effectively remove the bias. The method for finding fit parameters itself is identical to approach II. Sites used here are IT-Noe, FR-Pue, AU-Stp, AU-Fog, AU-DaP, AU-ASM, IT-SRo, US-SRG, US-SRM, and US-Var. -->
+
+
+<!-- ```{r get_linearfit_III, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
+<!-- x0_fix <- 0.9 -->
+<!-- notorious <- c("IT-Noe", "FR-Pue", "AU-Stp", "AU-Fog", "AU-DaP", "AU-ASM", "IT-SRo", "US-SRG", "US-SRM", "US-Var") -->
+<!-- linearfit_III <- get_linearfit_II( filter( ddf, dday>=0, mysitename %in% notorious ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE ) -->
+<!-- save( linearfit_III, file="data/linearfit_III.Rdata" ) -->
+<!-- ``` -->
+
+<!-- ```{r correct_linearfit_III_boxpl, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf <- ddf %>%  mutate( flue_est_III = stress_quad_1sided_alpha( soilm_mean, meanalpha, x0_fix, coef(linearfit_III$linmod)[["(Intercept)"]], coef(linearfit_III$linmod)[["meanalpha"]] ) ) %>% -->
+<!--                 mutate( bias_pmodel_diff_corr_III = gpp_pmodel * flue_est_III - gpp_obs ) -->
+
+<!-- ## Bias (difference), correction by fLUE directly, fLUE bins -->
+<!-- bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="fLUE bins", ylab=expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp2 <- boxplot( bias_pmodel_diff_corr_III ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected by III", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") ) -->
+<!-- boxpl_aIII <- fig_nums("boxpl_aIII", caption="Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by approach I (stress multiplier estimated from  soil moisture following approach III) in light green.") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("boxpl_aIII")` -->
+
+<!-- Here are the statistics for III, mean across the lower five fLUE bins: -->
+<!-- ```{r echo=FALSE} -->
+<!-- ## get statistics -->
+<!-- bybin_orig  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corr  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corIII<- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr_III, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_III + gpp_obs, gpp_obs) ) -->
+
+<!-- print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3))) -->
+<!-- print(paste("With fLUE, RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3))) -->
+
+<!-- print(paste("With III, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corIII$bias[1:5]), digits=3))) -->
+<!-- print(paste("With III, RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corIII$rmse[1:5]), digits=3))) -->
+
+<!-- ## save performance statistics -->
+<!-- df_corIII <- ddf %>% summarise( bias = mean(bias_pmodel_diff_corr_III, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_III + gpp_obs, gpp_obs) ) -->
+<!-- df_coef <- df_coef %>% bind_rows( tibble( -->
+<!--   approach="III", -->
+<!--   apar=coef(linearfit_III$linmod)["(Intercept)"], -->
+<!--   bpar=coef(linearfit_III$linmod)["meanalpha"], -->
+<!--   apar_grass=NA, bpar_grass=NA, -->
+<!--   bias=df_corIII$bias, rmse=df_corIII$rmse -->
+<!-- )) -->
+<!-- ``` -->
+
+<!-- ## Approach IV -->
+
+<!-- In view of the trade-off between resolving the bias in the lowest and highest fLUE bins and remaining biases, we developed a method that uses additional information to distinguish between vegetation types for determining the sensitivity of the soil moisture stress function. We applied the same method as in approach II, but determined fit parameters for grasslands (IGBP vegetation type GRA or CSH) and forest ecosystems separately. -->
+
+<!-- ```{r get_linearfit_IV, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- ## Merge IGBP class ID into dataframe -->
+<!-- require(readr) -->
+<!-- siteinfo <- read_csv("../sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv") -->
+<!-- ddf <- ddf %>% select( -starts_with("classid")) %>% left_join( select( siteinfo, mysitename, classid ), by = "mysitename" ) -->
+
+<!-- ## load additional functions -->
+<!-- source("get_linearfit_IV.R") -->
+<!-- source("stress_quad_1sided.R") -->
+
+<!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) -->
+<!-- x0_fix <- 0.9 -->
+<!-- linearfit_IV <- get_linearfit_IV( filter( ddf, dday >=0 & !(mysitename %in% c("CH-Oe1", "US-Var")) ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE ) -->
+<!-- save( linearfit_IV, file="data/linearfit_IV.Rdata" ) -->
+<!-- ``` -->
+
+<!-- Again, we have a linear relationship between the maximum LUE reduction (y-axis intersect) and mean site aridity (AET/PET), as shown below. -->
+
+<!-- ```{r echo=FALSE} -->
+<!-- par(las=1) -->
+<!-- with( filter( linearfit_IV$data, classid %in% c("GRA", "CSH")), plot( meanalpha, y0, pch=16 , ylim=c(0,1), xlim=c(0,1), xlab="AET/PET", ylab=expression(paste("fLUE"[0]))) ) -->
+<!-- with( filter( linearfit_IV$data, !(classid %in% c("GRA", "CSH"))), points( meanalpha, y0, pch=1 ) ) -->
+<!-- abline( linearfit_IV$linmod_grass ) -->
+<!-- abline( linearfit_IV$linmod_tree, lty=2 ) -->
+<!-- legend("topleft", c("Grasslands and open shrublands (GRA, CSH)", "Other ecosystems"), pch=c(16, 1), bty="n") -->
+<!-- regr_aIV <- fig_nums("regr_aIV", caption="Maximum apparent light use efficiency reduction at low soil moisture (fLUE0) versus the ratio of annual mean actual over potential evapotranspiration (AET/PET). Points represent sites of group 1 (see Table 1).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("regr_aIV")` -->
+
+<!-- ```{r correct_linearfit_IV, warning=FALSE, message=FALSE, echo=FALSE} -->
+<!-- source("stress_quad_1sided.R") -->
+<!-- apar <- c( coef(linearfit_IV$linmod_tree)[["(Intercept)"]], coef(linearfit_IV$linmod_grass)[["(Intercept)"]] ) -->
+<!-- bpar <- c( coef(linearfit_IV$linmod_tree)[["meanalpha"]], coef(linearfit_IV$linmod_grass)[["meanalpha"]] ) -->
+
+<!-- ## add estimated fLUE to ddf -->
+<!-- ddf$flue_est_IV <- rep( NA, nrow( ddf )) -->
+<!-- for (idx in seq(nrow(ddf))){ -->
+<!--   ddf$flue_est_IV[idx] <- stress_quad_1sided_alpha_grasstree( ddf$soilm_mean[idx], ddf$meanalpha[idx], x0 = 0.9, apar, bpar, ddf$classid[idx] ) -->
+<!-- } -->
+<!-- ddf <- ddf %>% mutate( bias_pmodel_diff_corr_IV = gpp_pmodel * flue_est_IV - gpp_obs ) -->
+
+<!-- ## Bias (difference), correction by fLUE directly, fLUE bins -->
+<!-- bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="fLUE bins", ylab=expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp2 <- boxplot( bias_pmodel_diff_corr_IV ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) -->
+<!-- abline( h=0.0, lty=3 ) -->
+<!-- legend("bottomleft", c("P-model", "P-model, corrected by IV", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") ) -->
+<!-- boxpl_aIV <- fig_nums("boxpl_aIV", caption="Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by approach I (stress multiplier estimated from  soil moisture following approach IV) in light green.") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("boxpl_aIV")` -->
+
+<!-- Here are the statistics for IV, mean across the lower five fLUE bins: -->
+<!-- ```{r echo=FALSE} -->
+<!-- ## get statistics -->
+<!-- bybin_orig  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corr  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr + gpp_obs, gpp_obs) ) -->
+<!-- bybin_corIV <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr_IV , na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_IV  + gpp_obs, gpp_obs) ) -->
+
+<!-- print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3))) -->
+<!-- print(paste("With fLUE, RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3))) -->
+
+<!-- print(paste("With IV , mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corIV $bias[1:5]), digits=3))) -->
+<!-- print(paste("With IV , RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corIV $rmse[1:5]), digits=3))) -->
+
+<!-- ## save performance statistics -->
+<!-- df_corIV <- ddf %>% summarise( bias = mean(bias_pmodel_diff_corr_IV, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_IV + gpp_obs, gpp_obs) ) -->
+<!-- df_coef <- df_coef %>% bind_rows( tibble( -->
+<!--   approach="IV", -->
+<!--   apar=coef(linearfit_IV$linmod_tree)["(Intercept)"], -->
+<!--   bpar=coef(linearfit_IV$linmod_tree)["meanalpha"], -->
+<!--   apar_grass=coef(linearfit_IV$linmod_grass)["(Intercept)"], -->
+<!--   bpar_grass=coef(linearfit_IV$linmod_grass)["meanalpha"], -->
+<!--   bias=df_corIV$bias, rmse=df_corIV$rmse -->
+<!--  )) -->
+<!-- ``` -->
+
+
+<!-- <!-- ### Linearfit V: Exponential stress function --> -->
+
+<!-- <!-- ```{r get_linearfit_V, warning=FALSE, message=FALSE, echo=FALSE} --> -->
+<!-- <!-- ## load additional functions --> -->
+<!-- <!-- source("get_linearfit_V.R") --> -->
+
+<!-- <!-- ## Use fixed point (soil moisture) above which stress function is 1 (no stress) --> -->
+<!-- <!-- x0_fix <- 0.9 --> -->
+<!-- <!-- linearfit_V <- get_linearfit_V( filter( ddf, dday>=0, mysitename!="CH-Oe1" ), target="fvar", monthly=FALSE, bin=FALSE, x0_fix=x0_fix, useweights = TRUE, doplot = FALSE ) --> -->
+<!-- <!-- save( linearfit_V, file="data/linearfit_V.Rdata" ) --> -->
+<!-- <!-- df_coef <- df_coef %>% bind_rows( tibble( approach="V", apar=coef(linearfit_V$linmod_y0_tree)["(Intercept)"], bpar=coef(linearfit_V$linmod_y0_tree)["meanalpha"], apar_grass=coef(linearfit_V$linmod_y0_grass)["(Intercept)"], bpar_grass=coef(linearfit_V$linmod_y0_grass)["meanalpha"] )) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- <!-- What sort of relationships do we see between `y0` and aridity or vegetation type? --> -->
+
+<!-- <!-- Again, we have a linear relationship between the maximum LUE reduction (y-axis intersect) and mean site aridity (AET/PET). --> -->
+<!-- <!-- ```{r} --> -->
+<!-- <!-- par(las=1) --> -->
+<!-- <!-- with(filter(linearfit_V$data, classid!="GRA"), plot( meanalpha, y0, pch=1, ylim=c(0,1) ) ) --> -->
+<!-- <!-- with(filter(linearfit_V$data, classid=="GRA"), points( meanalpha, y0, pch=16 ) ) --> -->
+<!-- <!-- abline( linearfit_V$linmod_y0_tree, lty=2 ) --> -->
+<!-- <!-- abline( linearfit_V$linmod_y0_grass ) --> -->
+<!-- <!-- mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit_V$linmod_y0_tree )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 ) --> -->
+<!-- <!-- cf <- coef(linearfit_V$linmod_y0_tree) %>% round( 2 ) --> -->
+<!-- <!-- eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " ) --> -->
+<!-- <!-- mtext( line=-2.5, eq, adj=0.1 ) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- <!-- And (a somewhat weaker) relationship between the mean aridity and the curvature parameter. --> -->
+<!-- <!-- ```{r} --> -->
+<!-- <!-- par(las=1) --> -->
+<!-- <!-- # with( linearfit_V$data, plot( y0, curve, pch=16 ) ) --> -->
+<!-- <!-- with( linearfit_V$data, plot( meanalpha, curve, pch=16 ) ) --> -->
+<!-- <!-- abline( linearfit_V$linmod_curve ) --> -->
+<!-- <!-- mtext( line=-1.5, bquote( italic(R)^2 == .(format( summary( linearfit_V$linmod_curve )$r.squared, digits = 2) ) ),  adj=0.1, cex=1 ) --> -->
+<!-- <!-- cf <- coef(linearfit_V$linmod_curve) %>% round( 2 ) --> -->
+<!-- <!-- eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " ) --> -->
+<!-- <!-- mtext( line=-2.5, eq, adj=0.1 ) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- <!-- Let's see how this works... --> -->
+<!-- <!-- ```{r correct_linearfit_V, warning=FALSE, message=FALSE, echo=FALSE} --> -->
+<!-- <!-- source("stress_exp.R") --> -->
+
+<!-- <!-- apar <- c( coef(linearfit_V$linmod_y0_tree)[["(Intercept)"]], coef(linearfit_V$linmod_y0_grass)[["(Intercept)"]] ) --> -->
+<!-- <!-- bpar <- c( coef(linearfit_V$linmod_y0_tree)[["meanalpha"]], coef(linearfit_V$linmod_y0_grass)[["meanalpha"]] ) --> -->
+
+<!-- <!-- ## add estimated fLUE to ddf --> -->
+<!-- <!-- ddf$flue_est_V  <- rep( NA, nrow( ddf )) --> -->
+<!-- <!-- for (idx in seq(nrow(ddf))){ --> -->
+<!-- <!--   ddf$flue_est_V[idx]  <- stress_exp_alpha_grasstree( ddf$soilm_mean[idx], ddf$meanalpha[idx], apar, bpar, coef(linearfit_V$linmod_curve)[1], coef(linearfit_V$linmod_curve)[2], classid=ddf$classid[idx] ) --> -->
+<!-- <!-- } --> -->
+
+<!-- <!-- ddf <- ddf %>% mutate( bias_pmodel_diff_corr_V = gpp_pmodel * flue_est_V - gpp_obs ) --> -->
+
+<!-- <!-- ## Bias (difference), correction by fLUE directly, fLUE bins --> -->
+<!-- <!-- bp1 <- boxplot( bias_pmodel_diff ~ inbin, data=ddf, col="tomato", las=1, outline = FALSE, na.rm=TRUE, add=FALSE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.1), boxwex=0.03, xlim=c(0,1), xlab="soilm moisture bins", ylab="bias (mod.-obs.)", staplewex=0, whisklty=1, ylim=c(-6,6) ) --> -->
+<!-- <!-- bp2 <- boxplot( bias_pmodel_diff_corr_V ~ inbin, data=ddf, col="springgreen3", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.3), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) --> -->
+<!-- <!-- bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) ) --> -->
+<!-- <!-- abline( h=0.0, lty=3 ) --> -->
+<!-- <!-- legend("bottomleft", c("P-model", "P-model, corrected by V", "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") ) --> -->
+<!-- <!-- ``` --> -->
+
+
+<!-- <!-- Here are the statistics for V, mean across the lower five fLUE bins: --> -->
+<!-- <!-- ```{r echo=FALSE} --> -->
+<!-- <!-- ## get statistics --> -->
+<!-- <!-- bybin_orig  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff, na.rm=TRUE), rmse = rmse( bias_pmodel_diff + gpp_obs, gpp_obs) ) --> -->
+<!-- <!-- bybin_corr  <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr, na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr + gpp_obs, gpp_obs) ) --> -->
+<!-- <!-- bybin_corV <- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_diff_corr_V , na.rm=TRUE), rmse = rmse( bias_pmodel_diff_corr_V  + gpp_obs, gpp_obs) ) --> -->
+
+<!-- <!-- print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3))) --> -->
+<!-- <!-- print(paste("With fLUE, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3))) --> -->
+
+<!-- <!-- print(paste("With V , mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corV $bias[1:5]), digits=3))) --> -->
+<!-- <!-- print(paste("With V , RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corV $rmse[1:5]), digits=3))) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- ## Summary of approaches -->
+
+<!-- For further analyses, we only retained approaches I, IV, III. Approach IV yields the best performance statistics in removing the bias in simulated GPP (P-model outputs assessed here) and serves as a best estimate. Approaches I and III provide a lower and upper boundary for the uncertainty in the sensitivity of GPP (or LUE) to declining soil moisture. An overview of fitted parameters $a$ and $b$ (for Equation XXX) is given below. Note that the different approaches I, IV, and III are used for global P-model simulations s1a, s1b, and s1c, respectively. -->
+<!-- ```{r echo = FALSE, results = 'asis', warning=FALSE} -->
+<!-- df_coef <- df_coef %>% mutate( simulation=c(NA, "s1a", NA, "s1c", "s1b") ) -->
+<!-- df_coef %>% mutate( apar=format(apar, digits=1), bpar=format(bpar, digits=3), -->
+<!--                     apar_grass=format(apar_grass, digits=3), bpar_grass=format(bpar_grass, digits=2)) %>% -->
+<!--             rename( a=apar, b=bpar, a_grass=apar_grass, b_grass=bpar_grass) %>% -->
+<!--             select( approach, simulation, a, b, a_grass, b_grass, bias, rmse ) %>% -->
+<!--             knitr::kable( caption = "Overview of parameters for the empirical soil moisture stress functions.") -->
+<!-- ``` -->
+
+<!-- ## Site-by-site evaluations of approaches -->
+
+<!-- Site-by-site evaluations of the three different soil moisture stress functions are shown below. -->
+
+<!-- ```{r plot_site_vs_soilmoisture, fig.width=3.8, fig.height=3.5, echo=FALSE, warning=FALSE, error=FALSE} -->
+<!-- source("plot_fit_vs_soilmoist.R") -->
+<!-- plot_fit_vs_soilmoist( linearfit_I, linearfit_IV, linearfit_III, ddf, nice_agg, makepdf = FALSE ) -->
+<!-- fig_fr <- fig_nums("fig_fr", caption="Illustration of the different empirical soil moisture stress functions (lines) and apparent soil moisture-related reductions in light use efficiency (dots).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_fr")` -->
+
+<!-- <!-- ### Stress and fLUE vs. time --> -->
+
+<!-- <!-- ```{r plot_site_fit_fvar_vs_time} --> -->
+<!-- <!-- source("plot_fit_fvar_vs_time.R") --> -->
+<!-- <!-- load("data/nice_nn_agg_lue_obs_evi.Rdata") --> -->
+<!-- <!-- plot_fit_fvar_vs_time( linearfit_I, linearfit_IV, linearfit_III, ddf, nice_agg, makepdf = TRUE ) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- <!-- ### GPP, P-model original and corrected --> -->
+
+<!-- <!-- ```{r plot_site_fit_gpp_vs_time} --> -->
+<!-- <!-- source("plot_fit_gpp_vs_time.R") --> -->
+<!-- <!-- plot_fit_gpp_vs_time( linearfit_I, linearfit_IV, linearfit_III, ddf, nice_agg, makepdf=TRUE ) --> -->
+<!-- <!-- ``` --> -->
+
+
+
+<!-- # Performance of soil moisture correction -->
+
+<!-- ## Bias reduction during droughts -->
+
+<!-- Above, the performance of different empirical soil moisture stress (ESMS) functions was assessed by comparing original and corrected GPP estimates from the P-model against observations. Next, we compare their performance in removing the bias in all RS-models assessed here (MODIS, VPM, BESS, P-model). For this, we pool the normalised bias from all models. -->
+
+<!-- ```{r plot_bias_resolved_fLUE, echo=FALSE} -->
+<!-- source("plot_bias_resolved_fLUE.R") -->
+<!-- out_s1 <- get_bias_resolved_flue( df_dday_8d_agg ) -->
+<!-- plot_bias_resolved( out_s1$tmp, out_s1$tmp0, out_s1$tmp1, out_s1$tmp4, out_s1$tmp3, cex=0.7 ) -->
+<!-- fig_bias_s0 <- fig_nums("fig_bias_s0", caption="Bias of simulated daily GPP in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites. Uncorrected data (red) from different RS-models is pooled and normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0). Pooled and normalised data is multiplied by the apparent soil moisture-related reductions in light use efficiency, fLUE 28 (blue boxes) and empirical soil moisture stress functions (I, III, IV) with different sensitivities (green boxes).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_bias_s0")` -->
+
+<!-- ```{r echo=FALSE} -->
+<!-- get_numbers_biasreduction(out_s1) -->
+<!-- ``` -->
+
+<!-- For the site US-Var, apparent soil moisture-related reductions in LUE (fLUE) are excessively large and, while the site is not extremely arid, it is notoriously difficult to appropriately predict its sensitivity from using only information on vegetation type (GRA) and mean annual AET/PET. Therefore, we excluded results from this site for evaluations of the bias after correction below. -->
+
+<!-- ```{r plot_bias_resolved_fLUE_nousvar, echo=FALSE} -->
+<!-- out_s1 <- get_bias_resolved_flue( filter( df_dday_8d_agg, mysitename!="US-Var" ) ) -->
+<!-- plot_bias_resolved( out_s1$tmp, out_s1$tmp0, out_s1$tmp1, out_s1$tmp4, out_s1$tmp3, cex=0.7 ) -->
+<!-- fig_bias_s1 <- fig_nums("fig_bias_s1", caption="Bias of simulated daily GPP in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 35 sites (excluding data from site US-Var). Uncorrected data (red) from different RS-models is pooled and normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0). Pooled and normalised data is multiplied by the apparent soil moisture-related reductions in light use efficiency, fLUE 28 (blue boxes) and empirical soil moisture stress functions (I, III, IV) with different sensitivities (green boxes).") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_bias_s1")` -->
+
+<!-- ```{r echo=FALSE} -->
+<!-- get_numbers_biasreduction(out_s1) -->
+<!-- ``` -->
+
+<!-- ## Spatial and interannual variability -->
+
+<!-- ```{r echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, plot_spatial_temporal} -->
+<!-- ## Get annual values and evaluate power of getting spatial and annual variations -->
+<!-- suppressMessages(source("aggregate_nn_fluxnet2015_annual.R")) -->
+<!-- plot_spatial_annual_s0( adf, meandf, linmod_list_pmodel_s0,  linmod_mean_pmodel_s0,  stats_adf, stats_meandf ) -->
+<!-- fig_sa_s0 <- fig_nums("fig_sa_s0", caption="Modelled and observed annual GPP in the simulation ignoring direct soil moisture effects. Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites") -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_sa_s0")` -->
+
+<!-- ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_spatial_temporal_corr} -->
+<!-- ## Get annual values and evaluate power of getting spatial and annual variations -->
+<!-- plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel_s1b,  stats_adf, stats_meandf ) -->
+<!-- fig_sa_s1 <- fig_nums("fig_sa_s1", caption="Modelled and observed annual GPP in the simulation ignoring accounting for soil moisture effects (method IV). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites." ) -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_sa_s1")` -->
+
+<!-- # Setup for global P-model simulations -->
+
+<!-- Approaches I, III, and IV are implemented for global simulations with the P-model. -->
+<!-- ```{r, echo=FALSE} -->
+<!-- suppressMessages(library(dplyr)) -->
+<!-- tibble( Approach=c("not corrected", "I", "II", "III", "IV"), Simulation=c("s0", "s1a", "not used", "s1c", "s1b")) %>% knitr::kable( caption="Approach used for defining the soil moisture stress function in different P-model simulations.") -->
+<!-- ``` -->
+
+<!-- This section provides information of the model code version and setup. -->
+
+<!-- ## Model -->
+
+<!-- The P-model [@wang17XXX] and SPLASH [@davis17] are implemented for site-scale and global applications within a single flexible modelling framework, SOFUN v1.0.0 [XXXstocker18zenodo] available through Zenodo(https://zenodo.org/record/1213758#.WubnudNubOQ) and Github (https://github.com/stineb/sofun/tree/v1.1.0). This is based on the formulation to predict leaf-level photosynthetis and light use efficiency of (P-model) [@wang17XXX] and the SPLASH model [@davis17] for calculating potential evapotranspiration and simulating the soil water balance. Different implementations of the P-model have been used previously [@keenanXXX]. A monthly LUE is calculated based on monthly mean climate conditions, calculated from daily values (see below). Daily GPP is then calculated based on monthly LUE multiplied by daily varying absorbed PAR and aggregated again to longer periods for all evaluations. The time scale at which the light use efficiency concept can be applied is determined by the time scale of allocation into the photosynthetic machinery (turnover of enzymes). The linearity between primary production and absorbed light described by Monteith's light use efficiency model arises due to acclimation of photosynthesis to light conditions but does not hold at short time scales (e.g., hourly-daily), where the light response curves are strongly non-linear. -->
+
+<!-- ## Greenness data -->
+
+<!-- The P-model is used here as a light use efficiency model [monteith72] (Eq. 1 in main text), driven by remotely sensed greenness (fAPAR). We use an updated version of FPAR3g [@zhu13] here, which covers years 1982-2016 and limits model simulations into the past. -->
+
+<!-- ## Climate data -->
+
+<!-- Daily data from the WATCH-WFDEI climate forcing dataset [@weedon14] is used here for variables temperature, precipitation (sum of rainfall and snowfall), specific humidity (converted to vapour pressure deficit), and shortwave incoming radiation (converted to photosynthetically active radiation). -->
+
+<!-- ### Vapour pressure deficit -->
+<!-- Vapour pressure deficit (VPD, here $D$, in units of Pa) is calculated from specific humidity ($q$) as: -->
+<!-- $$ -->
+<!-- D = e_s - e_a -->
+<!-- $$ -->
+<!-- wehere $e_s$ is the saturation water vapour pressure, and $e_a$ is the actual water vapour pressure (both in Pa). $e_s$ is calculated as: -->
+<!-- $$ -->
+<!-- e_s = 611.0 \; \exp \Big( \frac{17.27 \; T}{T + 237.3} \Big) -->
+<!-- $$ -->
+<!-- $T$ is temperature. Actual water vapour pressure $e_a$ is calculated as: -->
+<!-- $$ -->
+<!-- e_a = P\frac{w R_v}{R_d + w R_v} -->
+<!-- $$ -->
+<!-- where $P$ is the atmospheric pressure, $w$ is the mass mising ratio of water vapor to dry air (dimensionless), $R_v$ is the specific gas constant of water vapor (J g$^{-1}$ K$^{-1}$), and $R_d$ is the specific gas constant of dry air (J g$^{-1}$ K$^{-1}$). $P$ is calculated from standard conditions and spatially varying elevation. $w$ is calculated from specific humidity $q$ data: -->
+<!-- $$ -->
+<!-- w = q/(1-q). -->
+<!-- $$ -->
+
+
+<!-- ### Photosynthetically active radiation -->
+
+<!-- Photosynthetically active radiation (PAR, in units of mol m$^{-2}$ d$^{-1}$) is calculated from shortwave incoming radiation $R_s$ (W m$^{-2}$) as -->
+<!-- $$ -->
+<!-- \text{PAR} = R_s \; k \; 60.0 \cdot 60.0 \cdot 24.0 \cdot  10^{-6} -->
+<!-- $$ -->
+<!-- where $k$ is a flux-to-energy conversion factor, here 2.04 $\mu$mol J$^{-1}$. -->
+
+<!-- ## Soil data -->
+
+<!-- Plant-available soil water holding capacity (WHC) is an essential variable that determines water stress during dry periods. To estimate variations in WHC across the globe, we used texture data from SoilGrids (xxx ref) at 1 km resolution and derived plant wilting point $F_{\text{PWP}}$ and field capacity $F_{\text{FC}}$ estimated from sand, clay and organic matter contents following [@saxton06]. WHC is calculated as -->
+<!-- $$ -->
+<!-- \text{WHC} = (F_{\text{PWP}}-F_{\text{FC}})(1-f_{\text{gravel}})\cdot\min(z, z_{\text{max}}) -->
+<!-- $$ -->
+<!-- where $f_{\text{gravel}}$ is the coarse fraction (SoilGrids data) and $z$ is the soil depth to bedrock (SoilGrids data) and $z_{\text{max}}$ is the maximum soil depth considered here, taken as 2000 mm. For global applications, global WHC fields derived at 1 km resolution are aggregated to 0.5$^{\circ}$ in longitude and latitude. -->
+
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE} -->
+<!-- filn <- paste0( myhome, "data/soil/soilgrids/KWm_halfdeg.nc") -->
+<!-- if (file.exists(filn)){ -->
+<!--   suppressMessages(library(ncdf4)) -->
+<!--   suppressMessages(library(pracma)) -->
+<!--   source("plot_map.R") -->
+<!--   nc <- nc_open( filn ) -->
+<!--   whc <- ncvar_get( nc, varid="KWm" ) -->
+<!--   whc <- flipdim( whc, 2 ) -->
+<!--   nc_close( nc ) -->
+<!--   plot_map( whc, lev=c(0,400,10), color=rev(c( "royalblue4", "royalblue1", "tomato1", "tomato4" ))) -->
+<!--   fig_whc <- fig_nums("fig_whc", caption="Water holding capacity map used for P-model simulations") -->
+<!-- } else { -->
+<!--   print("WHC file not available. Contact the author.") -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- `r fig_nums("fig_whc")` -->
+
+# Additional analyses
+
+Soil moisture effects decrease global GPP on average by: 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("plot_effects_gpp_tseries.R")
+get_numbers_effects_gpp_tseries( df )
 ```
-![Modelled and observed annual GPP in the simulation ignoring direct soil moisture effects. Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites.](./fig/modobs_ann_spatial_temporal_pmodel_s0.pdf){ width=75% }
 
-![Modelled and observed annual GPP in the simulation ignoring accounting for soil moisture effects (method IV). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; 'slope' is the mean slope of all regression lines, weighted by the standard deviation of observed annual GPP of respective sites.](./fig/modobs_ann_spatial_temporal_pmodel_s1b.pdf){ width=75% }
+In all simulations, global GPP exhibits an increasing trend over the years 1982-2016 in our simulations. Although this trend is stronger in s0 than in other simulations, where soil moisture effects are factored in (0.52 PgC yr$^{-1}$ in s0 and 0.45 PgC yr$^{-1}$ in s1b, see XXX), this difference is explained by the difference in the magnitude of mean global GPP in respective simulations. The relative increase is identical in all simulations (see XXX) and the soil moisture effect, expressed as a percentage reduction, is constant across years (Fig. XXX).  
 
-## Supplementary Tables
-
-### Site list
-
-```{r}
-siteinfo <- suppressMessages(read_csv("siteinfo_fluxnet2015_sofun.csv"))
-success <- suppressMessages(read_csv( "successcodes.csv" ))
-do.sites <- filter( success, successcode==1 )$mysitename
-siteinfo_sub <- siteinfo %>% filter( mysitename %in% do.sites ) %>% select( -elv, -elv_watch, -elv_diff, -years_data, -whc ) %>% rename( site=mysitename )
-knitr::kable( siteinfo_sub, caption = "**Table**: Sites used for bias evaluation")
+Global GPP, as simulated by the P-model, increases
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("plot_effects_gpp_tseries.R")
+plot_gpp_global_tseries_trend_pmodel( df )
+plot_gpp_global_tseries_reltrend_pmodel( df )
+plot_gpp_global_tseries_relefftrend_pmodel( df )
 ```
 
-## Numbers for paper
+# References
 
-```{r echo=FALSE, warning=FALSE, error=FALSE, getnumbers_biasreduction}
-## Reduction of bias by multiplying with fLUE
-source("plot_bias_resolved_fLUE.R")
-```
-
-```{r echo=FALSE, warning=FALSE, error=FALSE, getnumbers_within}
-## % of fLUE values within fLUE_I and fLUE_III
-tmp <- ddf %>% 
-  rowwise() %>% 
-  mutate( lo = min( flue_est_I, flue_est_IV, flue_est_III ), hi = max( flue_est_I, flue_est_IV, flue_est_III ) ) %>% 
-  select( fvar, lo, hi ) %>%
-  mutate( within = ifelse( fvar>=lo & fvar<=hi, TRUE, FALSE ) )
-print( sum(tmp$within, na.rm = TRUE)/sum(!is.na(tmp$within)) )
-```
-
-Mean amplification of relative variance across 0.5 degree gridcells:
-```{r echo=FALSE}
-load("data/ampl_relvar.Rdata")
-print( paste( mean( vec )) )
-```
 
 

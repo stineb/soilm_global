@@ -3,6 +3,8 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
   require(dplyr, quietly = TRUE, warn.conflicts = FALSE )
   require(lubridate, quietly = TRUE, warn.conflicts = FALSE )
 
+  source("../utilities/add_alpha.R")
+  source("../utilities/mycurve.R")
   source("stress_exp.R")
   source("calc_flue_est_alpha.R")
   source("stress_quad_1sided.R")
@@ -70,7 +72,7 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
         #           from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
 
 
-        legend( "bottomright", c("approach I", "approach IV", "approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
+        legend( "bottomright", c("Approach I", "Approach IV", "Approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
   
       }
     }

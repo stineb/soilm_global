@@ -2,9 +2,7 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(tidyr, quietly = TRUE, warn.conflicts = FALSE)
 library(tibble, quietly = TRUE, warn.conflicts = FALSE)
 
-myboxplot <- function( ... ){
-	boxplot( ..., staplewex=0, whisklty=1, outline=FALSE )
-}
+source("../utilities/myboxplot.R")
 
 ## Load aligned aggregated data
 load( "data/data_aligned_agg.Rdata" )
@@ -12,7 +10,6 @@ load( "data/data_aligned_agg.Rdata" )
 ## IMPORTANT: REMOVE DUPLICATE ROWS (were introduced because one date can below to multiple drought instances (within their before-after window) )
 df_dday_agg    <- df_dday_agg    %>% select( -dday, -inst ) %>% unique()
 df_dday_8d_agg <- df_dday_8d_agg %>% select( -dday, -inst ) %>% unique()
-
 
 # df_dday_8d_agg <- filter( df_dday_8d_agg, mysitename!="US-Var")
 
@@ -155,104 +152,126 @@ tmp  <- df_dday_8d_agg_norm %>% select( mysitename, date, fvar, infbin, insbin, 
 ## showing bias for:
 ## - uncorrected, normalised, pooled models
 ##------------------------------------------------
-xlim <- c(0.5,5.5)
-ylim <- c(-5,6.5)
+plot_bias_pooled <- function( df, filn=NA ){
+  ## pooled, fLUE bins
+  xlim <- c(0.5,5.5)
+  ylim <- c(-5,6.5)
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+    par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    myboxplot( bias_diff ~ infbin, data = df, col="tomato", add=TRUE )
+    abline( h=0, lty=3 )
+    mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
+  if (!is.na(filn)) dev.off()
+}
+# plot_bias_pooled(tmp, filn="fig/bias_pooled.pdf")
 
-## pooled, fLUE bins
-pdf("fig/bias_pooled.pdf", width = 7, height = 6)
-  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-  plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
-  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-  myboxplot( bias_diff ~ infbin, data = tmp, col="tomato", add=TRUE )
-  abline( h=0, lty=3 )
-  mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
-dev.off()
-
-## pooled, soil moisture bins
-pdf("fig/bias_pooled_smbin.pdf", width = 7, height = 6)
-  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-  plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "soil moisture bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
-  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-  myboxplot( bias_diff ~ insbin, data = tmp, col="tomato", add=TRUE )
-  abline( h=0, lty=3 )
-  mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
-dev.off()
-
-## by individual models
-pdf("fig/bias_bymodels_norm.pdf", width = 7, height = 6)
-  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-  plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
-  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-  myboxplot( bias_pmodel_diff ~ infbin, data = df_dday_8d_agg_norm, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2 )
-
-  ## modis
-  myboxplot( bias_modis_diff ~ infbin, data = df_dday_8d_agg_norm, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2 )
-
-  ## VPM
-  myboxplot( bias_vpm_diff ~ infbin, data = df_dday_8d_agg_norm, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2 )
-
-  ## BESS
-  myboxplot( bias_bess_v1_diff ~ infbin, data = df_dday_8d_agg_norm, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2 )
-
-  # ## MTE
-  # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg_norm, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
-
-  abline( h=0, lty=3 )
-  legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
-dev.off()
+plot_bias_pooled_smbin <- function( df, filn=NA ){
+  ## pooled, soil moisture bins
+  xlim <- c(0.5,5.5)
+  ylim <- c(-5,6.5)
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+    par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "soil moisture bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    myboxplot( bias_diff ~ insbin, data = df, col="tomato", add=TRUE )
+    abline( h=0, lty=3 )
+    mtext( "Pooled models, normalised", line=0.5, adj = 0, font=2 )
+  if (!is.na(filn)) dev.off()  
+}
+# plot_bias_pooled_smbin(tmp, filn="fig/bias_pooled_smbin.pdf")
 
 
-## NOT NORMALISED, by individual models
-pdf("fig/bias_bymodels.pdf", width = 7, height = 6)
-  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-  plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
-  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-  myboxplot( bias_pmodel_diff ~ infbin, data = df_dday_8d_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2 )
+# plot_bias_bymodels_norm <- function( df, filn=NA ){
+#   ## by individual models
+#   xlim <- c(0.5,5.5)
+#   ylim <- c(-5,6.5)
+#   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+#     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+#     plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
+#     rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+#     myboxplot( bias_pmodel_diff ~ infbin, data = df, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2 )
 
-  ## modis
-  myboxplot( bias_modis_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2 )
+#     ## modis
+#     myboxplot( bias_modis_diff ~ infbin, data = df, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2 )
 
-  ## VPM
-  myboxplot( bias_vpm_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2 )
+#     ## VPM
+#     myboxplot( bias_vpm_diff ~ infbin, data = df, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2 )
 
-  ## BESS
-  myboxplot( bias_bess_v1_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2 )
+#     ## BESS
+#     myboxplot( bias_bess_v1_diff ~ infbin, data = df, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2 )
 
-  # ## MTE
-  # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
+#     # ## MTE
+#     # myboxplot( bias_mte_diff ~ infbin, data = df, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
 
-  abline( h=0, lty=3 )
-  legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
-dev.off()
+#     abline( h=0, lty=3 )
+#     legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
+#   if (!is.na(filn)) dev.off()
+# }
+# plot_bias_bymodels_norm( df_dday_8d_agg_norm, filn="fig/bias_bymodels_norm.pdf")
 
 
-##------------------------------------------------
-## Final plot: bias (the problem)
-## showing ratio obs/mod for:
-##------------------------------------------------
-xlim <- c(0.5,5.5)
-ylim <- c(0,4)
+plot_bias_bymodels <- function( df, filn=NA){
+  ## NOT NORMALISED, by individual models
+  xlim <- c(0.5,5.5)
+  ylim <- c(-5,6.5)
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+    par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+    plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
+    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
 
-## by individual models
-pdf("fig/ratio_obs_mod_bymodels.pdf", width = 7, height = 6)
-  par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-  plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
-  rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-  myboxplot( ratio_obs_mod_pmodel ~ infbin, data = df_dday_8d_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2 )
+    myboxplot( bias_pmodel_diff ~ infbin, data = df, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
 
-  ## modis
-  myboxplot( ratio_obs_mod_modis ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2 )
+    ## modis
+    myboxplot( bias_modis_diff ~ infbin, data = df, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
 
-  ## VPM
-  myboxplot( ratio_obs_mod_vpm ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2 )
+    ## VPM
+    myboxplot( bias_vpm_diff ~ infbin, data = df, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
 
-  ## BESS
-  myboxplot( ratio_obs_mod_bess_v1 ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2 )
+    ## BESS
+    myboxplot( bias_bess_v1_diff ~ infbin, data = df, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE )
 
-  # ## MTE
-  # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
+    # ## MTE
+    # myboxplot( bias_mte_diff ~ infbin, data = df, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2, outline=FALSE )
 
-  abline( h=1, lty=3 )
-  legend("topleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
-dev.off()
+    abline( h=0, lty=3 )
+    legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
+  if (!is.na(filn)) dev.off()
 
+}
+
+# plot_bias_bymodels( df_dday_8d_agg, filn="fig/bias_bymodels.pdf" )
+# plot_bias_bymodels( df_dday_8d_agg_norm, filn="fig/bias_bymodels_norm.pdf")
+
+
+plot_ratio_bymodels <- function( df, filn=NA ){
+
+  xlim <- c(0.5,5.5)
+  ylim <- c(0,4)
+
+  ## by individual models
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+    par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
+    plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
+    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    myboxplot( ratio_obs_mod_pmodel ~ infbin, data = df, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2 )
+
+    ## modis
+    myboxplot( ratio_obs_mod_modis ~ infbin, data = df, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2 )
+
+    ## VPM
+    myboxplot( ratio_obs_mod_vpm ~ infbin, data = df, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2 )
+
+    ## BESS
+    myboxplot( ratio_obs_mod_bess_v1 ~ infbin, data = df, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2 )
+
+    # ## MTE
+    # myboxplot( bias_mte_diff ~ infbin, data = df, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
+
+    abline( h=1, lty=3 )
+    legend("topleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
+  if (!is.na(filn)) dev.off()
+
+}  
+# plot_ratio_bymodels( df_dday_8d_agg, filn="fig/ratio_obs_mod_bymodels.pdf" )

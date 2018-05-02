@@ -4,10 +4,10 @@ plot_linearfit <- function( linearfit, nlsfit=NULL ){
   with( linearfit$data, plot( meanalpha, y0, pch=16, xlab="AET/PET", ylab=expression(paste("fLUE"[0])), xlim=c(0,1) ) )
   abline( linearfit$linmod, col="black" )
 
-  text( 0.3, 1.2, bquote( italic(R)^2 == .(format( summary( linearfit$linmod )$r.squared, digits = 2) ) ),  adj=0.0, cex=1 )
+  # mtext( bquote( italic(R)^2 == .(format( summary( linearfit$linmod )$r.squared, digits = 2) ) ),  adj=0.05, cex=1, line=-1.1 )
   cf <- coef(linearfit$linmod) %>% round( 2 )
   eq <- paste0( "y = ", cf[1], ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), " x " )
-  text( 0.3, 1.1, eq, adj=0.0 )
+  mtext( eq, adj=0.05, line=-2.1 )
 
   if (!is.null(nlsfit)){
     abline( a=coef(nlsfit)[[ "apar" ]], b=coef(nlsfit)[[ "bpar" ]], col="red" )

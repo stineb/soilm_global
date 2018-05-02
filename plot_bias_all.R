@@ -1,10 +1,4 @@
-.libPaths( c( .libPaths(), "/home/bstocker/R/x86_64-pc-linux-gnu-library/3.3") )
-
-syshome <- Sys.getenv( "HOME" )
-source( paste( syshome, "/.Rprofile", sep="" ) )
-
-require(dplyr)
-require(LSD)
+source("../utilities/myboxplot.R")
 
 siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
 
@@ -28,77 +22,62 @@ nice_8d_agg  <- nice_8d_agg  %>% filter( mysitename %in% do.sites )
 binwidth <- 0.2
 alphabins <- seq( from=0, to=1, by=binwidth )
 soilmbins <- seq( from=0, to=1, by=binwidth )
-nice_agg     <- nice_agg     %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
-nice_8d_agg  <- nice_8d_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ), insoilmbin = cut( as.numeric(soilm_mean), breaks = soilmbins ) ) 
+nice_agg     <- nice_agg     %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ) ) 
+nice_8d_agg  <- nice_8d_agg  %>% mutate( inalphabin = cut( as.numeric(alpha), breaks = alphabins ) ) 
 
-## get additional variables
-cutoff <- 0.5
-nice_agg     <- nice_agg     %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
-nice_8d_agg  <- nice_8d_agg  %>% mutate( dry = ifelse(alpha<cutoff, TRUE, FALSE) )
+##------------------------------------------------
+## Get bias
+##------------------------------------------------
+nice_8d_agg <- nice_8d_agg %>%  mutate( bias_pmodel_diff  = gpp_pmodel  - gpp_obs,
+                                        bias_modis_diff   = gpp_modis   - gpp_obs,
+                                        bias_vpm_diff     = gpp_vpm     - gpp_obs,
+                                        bias_bess_v1_diff = gpp_bess_v1 - gpp_obs,
+                                        bias_mte_diff     = gpp_mte     - gpp_obs
+                                       )
+nice_agg <- nice_agg %>%  mutate( bias_pmodel_diff  = gpp_pmodel  - gpp_obs,
+                                  bias_bess_v1_diff = gpp_bess_v1 - gpp_obs
+                                 )
 
-par(las=1)
+##------------------------------------------------
+## Bin data w.r.t. alpha
+##------------------------------------------------
 
-boxplot( log( bias_pmodel ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="P-model" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+plot_bias_all <- function( nice_agg, nice_8d_agg, filn=NA ){
 
-boxplot( log( bias_modis )  ~ dry, data=nice_8d_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="MODIS" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+  xlim <- c(0.5,5.5)
+  ylim <- c(-3,3)
 
-boxplot( log( bias_mte ) ~ dry, data=nice_8d_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="MTE" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6)
+    par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
 
-boxplot( log( bias_bess_v1 ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v1" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+    plot( xlim, ylim, type="n", ylim=ylim, xlab = "AET/PET bin", ylab = expression( paste("modelled / observed GPP (ratio)" ) ), xlim=xlim, axes=FALSE )
 
-boxplot( log( bias_bess_v2 ) ~ dry, data=nice_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="BESS v2" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
 
-boxplot( log( bias_vpm ) ~ dry, data=nice_8d_agg, outline=FALSE, col="grey70", ylab="log of bias (mod/obs)", xlab=paste("AET/PET <", cutoff), main="VPM" ) #, xlim=c(0.5,4.5), at=c(1,3))       
-abline( h=0, lty=3 )
+    ## bias in P-model versus alpha
+    myboxplot( log( bias_bess_v1 ) ~ inalphabin, data=nice_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE)
+    # myboxplot( bias_bess_v1_diff ~ inalphabin, data=nice_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE)
+    
+    ## bias in MODIS versus alpha
+    myboxplot( log(bias_vpm) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_vpm_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
+    
+    ## bias in VPM versus alpha
+    myboxplot( log(bias_modis) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_modis_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
+    
+    ## bias in BESS v1 versus alpha
+    myboxplot( log( bias_pmodel ) ~ inalphabin, data=nice_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_pmodel_diff ~ inalphabin, data=nice_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
+    
+    # ## MTE
+    # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
 
-## bias in P-model versus alpha
-boxplot( log( bias_pmodel ) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70", main="P-model", xlab="AET/PET bins" )
-abline( h=0, lty=3 )
+    abline( h=0, lty=3 )
+    legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
 
-## bias in BESS v1 versus alpha
-boxplot( log( bias_bess_v1 ) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70", main="BESS v1", xlab="AET/PET bins" )
-abline( h=0, lty=3 )
-
-## bias in BESS v2 versus alpha
-boxplot( log( bias_bess_v2 ) ~ inalphabin, data=nice_agg, outline=FALSE, col="grey70", main="BESS v2", xlab="AET/PET bins" )
-abline( h=0, lty=3 )
-
-# ## bias in MTE versus alpha
-# boxplot( log(bias_mte) ~ inalphabin, data=nice_8d_agg, outline=FALSE, col="grey70", main="FLUXCOM MTE" )
-# abline( h=0, lty=3 )
-
-# ## bias in MODIS versus alpha
-# boxplot( log(bias_modis) ~ inalphabin, data=modis_agg, outline=FALSE, col="grey70", main="MODIS" )
-# abline( h=0, lty=3 )
-
-
-## bias in P-model versus soilm moisture bin
-boxplot( log( bias_pmodel ) ~ insoilmbin, data=nice_agg, outline=FALSE, col="grey70", main="P-model", xlab="soil moisture bins" )
-abline( h=0, lty=3 )
+  if (!is.na(filn)) dev.off()
+}
 
 
-
-# xlim <- c(0,1.2)
-# ylim <- c(0,2.5)
-# with( 
-#       dplyr::filter( nice_agg, ratio_obs_mod<5 & alpha < 0.999 ),  # necessary to get useful bins with heatscatter()
-#       heatscatter( 
-#                   flue_est, 
-#                   ratio_obs_mod, 
-#                   xlab="AET/PET",
-#                   ylab="GPP observed / GPP modelled",
-#                   xlim=xlim,
-#                   ylim=ylim,
-#                   main=""
-#                 )
-#     )
-
-# abline( h=1.0, lwd=0.5, lty=2 )
-# abline( v=1.0, lwd=0.5, lty=2 )
-# lines( c(-99,99), c(-99,99), col='red' )
 

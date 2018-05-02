@@ -1,7 +1,7 @@
 reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
   # ## debug-------------------
-  # sitename = "IT-Ro1"
+  # sitename = "AR-Vir"
   # nam_target="lue_obs_evi"
   # bysm=FALSE
   # use_fapar=FALSE
@@ -180,7 +180,9 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
 
       ## aggregate by 'dday'
-      df_dday_aggbydday <- df_dday %>%  group_by( dday ) %>% 
+      df_dday_aggbydday <- df_dday %>%  mutate( bias_pmodel = gpp_obs / gpp_pmodel, bias_bess_v1 = gpp_obs / gpp_bess_v1, bias_bess_v2 = gpp_obs / gpp_bess_v2 ) %>%
+                                        mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), bias_bess_v1 = ifelse( is.infinite(bias_bess_v1), NA, bias_bess_v1 ), bias_bess_v2 = ifelse( is.infinite(bias_bess_v2), NA, bias_bess_v2 ) ) %>%
+                                        group_by( dday ) %>% 
                                         summarise(
                                                   ## soil moisture
                                                   soilm_med=median( soilm_mean, na.rm=TRUE ), soilm_upp=quantile( soilm_mean, 0.75, na.rm=TRUE ), soilm_low=quantile( soilm_mean, 0.25, na.rm=TRUE ),
@@ -257,10 +259,14 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
           df_dday_8d <- df_dday_8d %>% bind_rows( addrows )
         }
 
+        # ## add variables
+        # df_dday_8d <- df_dday_8d %>% mutate( bias_modis = gpp_obs / gpp_modis, bias_vpm = if( exists( "gpp_vpm", where=. ) ) gpp_obs / gpp_vpm else NA ) %>%
+        #                              mutate( bias_modis = ifelse( is.infinite(bias_modis), NA, bias_pmodel ), bias_vpm = ifelse( is.infinite(bias_vpm), NA, bias_vpm ) )
+
         ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
         save( df_dday_8d, file=outfiln )
-
-        ## aggregate by 'dday'
+                                        
+        ## Get quantiles for variable 'bias'
         df_dday_8d_agg_med <- df_dday_8d %>%  group_by( dday ) %>% 
                                               summarise_at( vars( starts_with("bias_") ), funs(  median(.) ), na.rm = TRUE ) %>%
                                               setNames( c("dday", paste0( names(.)[-1], "_med" ) ) )
@@ -300,7 +306,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
 
   }
 
-  out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_8d=df_dday_8d )
+  out <- list( df_dday=df_dday, df_dday_aggbydday=df_dday_aggbydday, df_dday_aggbydday_8d=df_dday_aggbydday_8d, df_dday_8d=df_dday_8d )
   return( out )
 
 }

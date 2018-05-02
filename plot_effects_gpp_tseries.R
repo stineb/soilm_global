@@ -2,11 +2,17 @@ library(ncdf4)
 library(RColorBrewer)
 library(dplyr)
 source("plot_map.R")
-source("~/.Rprofile")
+source("../utilities/add_alpha.R")
 
-##------------------------------------------------------------------------
-## GPP loss
-##------------------------------------------------------------------------
+
+overwrite <- FALSE
+
+filn <- "data/gpp_glob_tseries.Rdata"
+
+if (!file.exists(filn)||overwrite){
+  ##------------------------------------------------------------------------
+  ## GPP loss
+  ##------------------------------------------------------------------------
   fil_s0  <- "gpp_pmodel_s0_GLOB.nc"
   fil_s1a <- "gpp_pmodel_s1a_GLOB.nc"
   fil_s1b <- "gpp_pmodel_s1b_GLOB.nc"
@@ -70,13 +76,41 @@ source("~/.Rprofile")
         left_join( df_vpm, by = "year") %>%
         left_join( df_bess, by = "year") %>%
         left_join( df_mte, by = "year")
+        
+  save( df, file = filn)
 
-  save( df, file = "data/gpp_glob_tseries.Rdata")
+} else {
+
+  load( filn )
+
+}
+
+##-----------------------------------------------------
+## Get additional variables
+##-----------------------------------------------------
+## difference due to soil moisture effects
+df <- df %>% mutate( diff_s1a = gpp_s1a - gpp_s0, diff_s1b = gpp_s1b - gpp_s0, diff_s1c = gpp_s1c - gpp_s0 )
+
+## linear trends
+linmod_s0  <- lm( gpp_s0  ~ year, data=df )
+linmod_s1a <- lm( gpp_s1a ~ year, data=df )
+linmod_s1b <- lm( gpp_s1b ~ year, data=df )
+linmod_s1c <- lm( gpp_s1c ~ year, data=df )
   
-  ##-----------------------------------------------------
-  ## GPP time series
-  ##-----------------------------------------------------
-  pdf("fig/gpp_global_tseries.pdf", width = 7, height = 6 )
+linmod_s0_rel  <- lm( gpp_s0 / mean(gpp_s0)  ~ year, data=df )
+linmod_s1a_rel <- lm( gpp_s1a / mean(gpp_s1a) ~ year, data=df )
+linmod_s1b_rel <- lm( gpp_s1b / mean(gpp_s1b) ~ year, data=df )
+linmod_s1c_rel <- lm( gpp_s1c / mean(gpp_s1c) ~ year, data=df )
+
+linmod_s1a_releff <- lm( -100*(1-gpp_s1a/gpp_s0) ~ year, data=df )
+linmod_s1b_releff <- lm( -100*(1-gpp_s1b/gpp_s0) ~ year, data=df )
+linmod_s1c_releff <- lm( -100*(1-gpp_s1c/gpp_s0) ~ year, data=df )
+
+##-----------------------------------------------------
+## GPP time series
+##-----------------------------------------------------
+plot_gpp_global_tseries <- function( df, filn=NA ){
+  if (!is.na(filn)) pdf(, width = 7, height = 6 )
     par(las=1)
     with( df, plot( year, gpp_s1b, type="l", ylim=c(100,160), lty=2, xlab="year", ylab=expression( paste("global GPP (PgC yr"^-1, ")" ) ) ) )
     with( df,  polygon( c( year, rev(year)), c(gpp_s1a, rev(gpp_s1c)), border = NA, col=rgb(0,0,0,0.3) ) )
@@ -86,7 +120,108 @@ source("~/.Rprofile")
     with( df, lines( year, gpp_vpm, col="magenta" ) )
     with( df, lines( year, gpp_bess, col="blue" ) )
     with( df, lines( year, gpp_mte, col="green" ) )
+    axis(4, labels = FALSE)
 
     legend("topleft", c( "P-model", "P-model, corrected (IV)", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), col=c("black", "black", "red", "magenta", "blue", "green") )
-  dev.off()
+  if (!is.na(filn)) dev.off()  
+}
+plot_gpp_global_tseries( df, filn="fig/gpp_global_tseries.pdf" )
+
+##-----------------------------------------------------
+## Absolute trends with P-model output
+##-----------------------------------------------------
+plot_gpp_global_tseries_trend_pmodel <- function( df, filn=NA ){
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6 )
+    par(las=1, xaxs="i", yaxs="i")
+    with( df, plot( year, gpp_s1b, type="l", ylim=c(100,160), col="red", lty=1, xlab="year", ylab=expression( paste("global GPP (PgC yr"^-1, ")" ) ) ) )
+    abline( linmod_s1b, col="red" )
+    cf <- coef(linmod_s1b) %>% round( 2 )
+    eq <- paste0( "s1b: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-2, adj=0.05, col="red" )
+
+    with( df, polygon( c(year, rev(year)), c(gpp_s1a, rev(gpp_s1c)), col=add_alpha("red",0.5), border=NA ) )
+    abline( linmod_s1a, col=add_alpha("red",0.5) )
+
+    abline( linmod_s1c, col=add_alpha("red",0.5) )
+
+    with( df, lines( year, gpp_s0 ) )
+    abline( linmod_s0 )
+    cf <- coef(linmod_s0) %>% round( 2 )
+    eq <- paste0( "s0: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-1, adj=0.05, col="black" )
+    axis(4, labels = FALSE)
+  if (!is.na(filn)) dev.off()  
+} 
+plot_gpp_global_tseries_trend_pmodel( df, filn="fig/gpp_global_tseries_trend_pmodel.pdf" )
+
+##-----------------------------------------------------
+## Relative trends with P-model output
+##-----------------------------------------------------
+plot_gpp_global_tseries_reltrend_pmodel <- function( df, filn=NA ){
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6 )
+    par(las=1, xaxs="i", yaxs="i")
+    with( df, plot( year, gpp_s1b/mean(gpp_s1b), type="l", col="red", lty=1, xlab="year", ylab=expression( paste("global GPP (relative change)" ) ) ) )
+    abline( linmod_s1b_rel, col="red" )
+    cf <- coef(linmod_s1b_rel) %>% round( 4 )
+    eq <- paste0( "s0: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-3, adj=0.05, col="red" )
+
+    with( df, polygon( c(year, rev(year)), c(gpp_s1a/mean(gpp_s1a), rev(gpp_s1c/mean(gpp_s1c))), col=add_alpha("red", 0.5), border = NA ) )
+    abline( linmod_s1a_rel, col=add_alpha("red", 0.5) )
+    cf <- coef(linmod_s1a_rel) %>% round( 4 )
+    eq <- paste0( "s1a: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-2, adj=0.05, col=add_alpha("red", 0.5) )
+
+    abline( linmod_s1c_rel, col=add_alpha("red", 0.5) )
+    cf <- coef(linmod_s1c_rel) %>% round( 4 )
+    eq <- paste0( "s1b: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-4, adj=0.05, col=add_alpha("red", 0.5) )
+
+    with( df, lines( year, gpp_s0/mean(gpp_s0) ) )
+    abline( linmod_s0_rel )
+    cf <- coef(linmod_s0_rel) %>% round( 4 )
+    eq <- paste0( "s1c: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-1, adj=0.05, col="black" )
+    axis(4, labels = FALSE)
+  if (!is.na(filn)) dev.off()
+}
+plot_gpp_global_tseries_reltrend_pmodel( df, filn="fig/gpp_global_tseries_reltrend_pmodel.pdf" )
+
+##-----------------------------------------------------
+## Trends of soil moisture effect P-model output
+##-----------------------------------------------------
+plot_gpp_global_tseries_relefftrend_pmodel <- function( df, filn=NA ){
+  if (!is.na(filn)) pdf(filn, width = 7, height = 6 )
+    par(las=1, xaxs="i", yaxs="i")
+    with( df, plot( year, -100*(1-gpp_s1b/gpp_s0), type="l", col="red", lty=1, xlab="year", ylim=c(-22, -8), ylab=expression( paste("reduction in global GPP (%)" ) ) ) )
+    abline( linmod_s1b_releff, col="red" )
+    cf <- coef(linmod_s1b_releff) %>% round( 4 )
+    eq <- paste0( "s1b: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-3, adj=0.05, col="red" )
+
+    with( df, polygon( c(year, rev(year)), c( -100*(1-gpp_s1c/gpp_s0), rev( -100*(1-gpp_s1a/gpp_s0)) ), col=add_alpha("red", 0.5), border = NA ) )
+    abline( linmod_s1a_releff, col=add_alpha("red", 0.5) )
+    cf <- coef(linmod_s1a_releff) %>% round( 4 )
+    eq <- paste0( "s1a: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-2, adj=0.05, col=add_alpha("red", 0.5) )
+
+    abline( linmod_s1c_releff, col=add_alpha("red", 0.5) )
+    cf <- coef(linmod_s1c_releff) %>% round( 4 )
+    eq <- paste0( "s1c: slope = ", ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]) )
+    mtext( eq, line=-4, adj=0.05, col=add_alpha("red", 0.5) )
+
+    axis(4, labels = FALSE)
+
+  if (!is.na(filn)) dev.off()
+}
+plot_gpp_global_tseries_relefftrend_pmodel( df, filn="fig/gpp_global_tseries_relefftrend_pmodel.pdf" )
+
+
+get_numbers_effects_gpp_tseries <- function( df ){
+  with( df, print( paste0( "Percent decrease in mean GPP across years 1982-2016: ", 
+    format( 100*(1 - mean(gpp_s1b)/mean(gpp_s0)), digits=4), "% (", 
+    format( 100*(1 - mean(gpp_s1a)/mean(gpp_s0)), digits=4), " - ", 
+    format( 100*(1 - mean(gpp_s1c)/mean(gpp_s0)), digits=4), "%)" ) ) )
+} 
+
 

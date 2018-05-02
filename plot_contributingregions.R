@@ -70,16 +70,21 @@ detr[[ "diffc" ]] <- detr[[ "Pmodel_S0" ]] - detr[[ "Pmodel_S1c" ]]
 
 stocker_fb <- get_stocker_f( detr$diffb, detr$Pmodel_S1b, isabs=FALSE )
 
-for (it in 1:5){
-  ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], isabs=FALSE )
-  plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem", as.character(it), ".pdf") ) #  
-}
-ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b, detr$Pmodel_S1b, isabs=FALSE )
-plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem.pdf") ) #  
+# for (it in 1:5){
+#   ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], detr$Pmodel_S1b[,,((it-1)*7+1):((it-1)*7+7)], isabs=FALSE )
+#   plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem", as.character(it), ".pdf") ) #  
+# }
+# ahlstroem_fb <- get_stocker_f( detr$Pmodel_S1b, detr$Pmodel_S1b, isabs=FALSE )
+# plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem.pdf") ) #  
 
 
-ahlstroem_fb <- get_stocker_f( detr$Pmodel_S0, detr$Pmodel_S0, isabs=FALSE )
-plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem_s0.pdf") ) #  
+# ahlstroem_fb <- get_stocker_f( detr$Pmodel_S0, detr$Pmodel_S0, isabs=FALSE )
+# plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem_s0.pdf") ) #  
+
+##-----------------------------------------------------
+## Plot without inset
+##-----------------------------------------------------
+plot_map( stocker_fb*1e4, lev=seq(-0.5,0.5,0.1), positive=FALSE, maxval=30, minval=-30 )
 
 ##-----------------------------------------------------
 ## Plot with inset

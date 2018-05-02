@@ -9,9 +9,6 @@ source( paste( syshome, "/.Rprofile", sep="" ) )
 source( paste( myhome, "sofun/utils_sofun/analysis_sofun/remove_outliers.R", sep="" ) )
 source( "../utilities/init_dates_dataframe.R" )
 
-# IMPORTANT: USE SOILMOISTURE FROM S13 FOR NN-TRAINING
-load( paste( myhome, "data/fluxnet_sofun/modobs_fluxnet2015_s11_s12_s13_with_SWC_v3.Rdata", sep="" ) ) # "new data" with s13
-
 ##------------------------------------------------
 ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
 ##------------------------------------------------
@@ -41,7 +38,7 @@ norm_to_max <- function( vec ){
 ## Get FLUXNET 2015 data and SOFUN outputs from site-scale simulations
 ## The file loaded here is created by 'get_modobs.R'
 ##------------------------------------------------
-datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v4.Rdata" )
+datafilnam_flat <- paste0( "data/df_modobs_fluxnet2015_", paste( outputset, collapse="_" ), "_with_SWC_v5.Rdata" )
 load( datafilnam_flat )  # loads 'df_fluxnet'
 
 ##------------------------------------------------
@@ -71,7 +68,6 @@ if ( file.exists( filn ) ){
 
 ## replace with NA
 for (ivar in names(mte_8d)){ mte_8d[[ ivar ]][ which( mte_8d[[ ivar ]]==-9999 ) ] <- NA }
-
 
 ##------------------------------------------------
 ## Get BESS-GPP for all sites
