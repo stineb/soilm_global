@@ -57,7 +57,3 @@ if ( length( dplyr::filter( siteinfo, successcode==1 )$mysitename ) == length( d
   print("WARNING: NO SAVING AT THE END!")
 
 }
-
-
-
-

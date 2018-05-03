@@ -21,11 +21,45 @@ bibliography: bibliography.bib
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(captioner)
-tab_nums <- captioner(prefix = "Table")
-fig_nums <- captioner(prefix = "Figure")
+tab_nums <- captioner(prefix = "Table S", auto_space=FALSE, style = "i")
+fig_nums <- captioner(prefix = "Figure S", auto_space=FALSE, style = "i")
 ```
 
 This document provides supplementary information to the article *Satellite observations underestimate the impact of drought on terrestrial primary productivity*. References are made to scripts and functions implemented in R and available open access through github (https://github.com/stineb/soilm_global). This repository also provides a detailed workflow description as an RMarkdown file (`knit_soilm_global.Rmd`) that allows for full reproducibility of published results and figures, including contents of this document.
+
+# Supplementary figures and analyses.
+
+## Global GPP trends
+
+In all simulations, global GPP exhibits an increasing trend over the years 1982-2016 in our simulations. Although this trend is stronger in *s0* than in other simulations, where soil moisture effects are factored in (0.52 PgC yr$^{-1}$ in *s0* and 0.45 PgC yr$^{-1}$ in s1b, `r fig_nums( "tseries_abs", display="cite")`), this difference is explained by the difference in the magnitude of mean global GPP in respective simulations. The relative increase is identical in all simulations (`r fig_nums( "tseries_rel", display="cite")`) and the soil moisture effect, expressed as a percentage reduction, is constant across years (`r fig_nums( "tseries_red", display="cite")`).  
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("plot_effects_gpp_tseries.R")
+plot_gpp_global_tseries_trend_pmodel( df )
+cap_tseries_abs <- fig_nums( "tseries_abs", caption=" Global annual GPP and linear trend in different P-model simulations. The slope is given in PgC/yr. The red range is given by simulations s1a and s1c, with s1b given by the red line in its center." )
+```
+
+`r fig_nums( "tseries_abs") ` 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+plot_gpp_global_tseries_reltrend_pmodel( df )
+cap_tseries_rel <- fig_nums( "tseries_rel", caption=" Relative change in global annual GPP, expressed relative to its mean across years. The slope is given in %/yr. The red range is given by simulations s1a and s1c, with s1b given by the red line in its center." )
+```
+
+`r fig_nums( "tseries_rel") ` 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+plot_gpp_global_tseries_relefftrend_pmodel( df )
+cap_tseries_red <- fig_nums( "tseries_red", caption=" Reduction in global annual GPP due to soil moisture effects (in %) and linear trend in different P-model simulations. The slope is given in %/yr. The red range is given by simulations s1a and s1c, with s1b given by the red line in its center." )
+```
+
+`r fig_nums( "tseries_red") ` 
+
+Soil moisture effects decrease global GPP on average by: 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("plot_effects_gpp_tseries.R")
+get_numbers_effects_gpp_tseries( df )
+```
 
 
 <!-- # Data preparation -->
@@ -703,23 +737,6 @@ This document provides supplementary information to the article *Satellite obser
 
 <!-- `r fig_nums("fig_whc")` -->
 
-# Additional analyses
-
-Soil moisture effects decrease global GPP on average by: 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-source("plot_effects_gpp_tseries.R")
-get_numbers_effects_gpp_tseries( df )
-```
-
-In all simulations, global GPP exhibits an increasing trend over the years 1982-2016 in our simulations. Although this trend is stronger in s0 than in other simulations, where soil moisture effects are factored in (0.52 PgC yr$^{-1}$ in s0 and 0.45 PgC yr$^{-1}$ in s1b, see XXX), this difference is explained by the difference in the magnitude of mean global GPP in respective simulations. The relative increase is identical in all simulations (see XXX) and the soil moisture effect, expressed as a percentage reduction, is constant across years (Fig. XXX).  
-
-Global GPP, as simulated by the P-model, increases
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-source("plot_effects_gpp_tseries.R")
-plot_gpp_global_tseries_trend_pmodel( df )
-plot_gpp_global_tseries_reltrend_pmodel( df )
-plot_gpp_global_tseries_relefftrend_pmodel( df )
-```
 
 # References
 

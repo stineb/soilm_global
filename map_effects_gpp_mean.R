@@ -19,10 +19,10 @@ source("~/.Rprofile")
   time <- nc$dim$time$vals
   nc_close(nc)
 
-  # ## S1
-  # nc <- nc_open( paste0( dir, fil_s1 ) )
-  # gpp_s1 <- ncvar_get( nc, varid="gpp" )
-  # nc_close(nc)
+  ## S1
+  nc <- nc_open( paste0( dir, fil_s1 ) )
+  gpp_s1 <- ncvar_get( nc, varid="gpp" )
+  nc_close(nc)
 
   ## S1b
   nc <- nc_open( paste0( dir, fil_s1b ) )
@@ -85,8 +85,8 @@ load("data/gpp_glob_tseries.Rdata")
 magn <- 4
 ncols <- 3
 nrows <- 1
-widths <- rep(1.3*magn,ncols)
-widths[2] <- 0.15*widths[1]
+widths <- rep(1.4*magn,ncols)
+widths[2] <- 0.17*widths[1]
 widths[3] <- 0.80*widths[1]
 heights <- rep(magn,nrows)
 order <- matrix( c(1,2,3), nrows, ncols, byrow=TRUE )
@@ -119,7 +119,7 @@ pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
   
   color <- c( "wheat", "tomato2", "tomato4" )
   
-  lev = c( 0, 500, 10 )
+  lev = c( 0, 400, 10 )
   out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=FALSE, maxval=max(out, na.rm=TRUE), minval=min(out, na.rm=TRUE) )
   
   par( mar=c(3,3,3,1),xaxs="i", yaxs="i",las=1)
@@ -145,8 +145,6 @@ pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
   axis( 3, at=lon.labels, lab=F, lwd=1.5 )
   axis( 3, at=lon.short, lab=F, lwd=1, tck=-0.01 )
   
-  mtext( "a)", font=2, adj = 0, line = 0.5, cex = 1 )
-
   ## Color key
   par( mar=c(3,3,3,1),xaxs="i", yaxs="i",las=1)
   out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=1900 )
@@ -161,10 +159,9 @@ pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
   with( df, lines( year, gpp_vpm, col="magenta" ) )
   with( df, lines( year, gpp_bess, col="blue" ) )
   with( df, lines( year, gpp_mte, col="green" ) )
-  axis(4, labels = FALSE)
 
-  legend("topleft", c( "P-model, s0", "P-model, s1b", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), col=c("black", "black", "red", "magenta", "blue", "green") )
-  mtext( "b)", font=2, adj = 0, line = 0.5, cex = 1 )
+  legend("topleft", c( "P-model", "P-model, corrected (IV)", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), col=c("black", "black", "red", "magenta", "blue", "green") )
+    mtext( "a", font=2, adj = 0, line = 0.5, cex = 1.2 )
 
 dev.off()
 

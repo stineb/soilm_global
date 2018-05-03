@@ -6,6 +6,10 @@ lmp <- function(modelobject) {
   return(p)
 }
 
+inverse <- function( x ){ 1/x }
+
+normalise <- function( x, norm ){ x/norm }
+
 smooth_runminmax <- function( x, y ){  
   source( "../utilities/cutna_headtail.R" )
   idxs_drop <- cutna_headtail( y )
@@ -238,10 +242,13 @@ plot_bysite_tseries <- function( sitename, makepdf=TRUE ){
       xvals <- (-before:after)+1
 
       if ("bias_pmodel_med" %in% names(df_dday_aggbydday) && any(!is.na(df_dday_aggbydday$bias_pmodel_upp))){
-
-        upper <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_pmodel_upp), xout=xvals )$y ) 
-        lower <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_pmodel_low), xout=xvals )$y ) 
-        mid   <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_pmodel_med), xout=xvals )$y ) 
+        
+        # norm <- mean( 1/df_dday_aggbydday$bias_pmodel_med[1:30], na.rm=TRUE )
+        norm <- 1
+        
+        upper <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_pmodel_upp, xout=xvals )$y %>% inverse() %>% normalise( norm )
+        lower <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_pmodel_low, xout=xvals )$y %>% inverse() %>% normalise( norm )
+        mid   <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_pmodel_med, xout=xvals )$y %>% inverse() %>% normalise( norm )
         idxs  <- which( !is.na(upper) & !is.na(lower) )
 
         ## plot polygon
@@ -258,9 +265,12 @@ plot_bysite_tseries <- function( sitename, makepdf=TRUE ){
 
       if ("bias_bess_v1_med" %in% names(df_dday_aggbydday) && any(!is.na(df_dday_aggbydday$bias_bess_v1_upp))){
 
-        upper <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_bess_v1_upp), xout=xvals )$y ) 
-        lower <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_bess_v1_low), xout=xvals )$y ) 
-        mid   <- 1 / ( approx( df_dday_aggbydday$dday, 1/(df_dday_aggbydday$bias_bess_v1_med), xout=xvals )$y ) 
+        # norm <- mean( 1/df_dday_aggbydday$bias_bess_v1_med[1:30], na.rm=TRUE )
+        norm <- 1
+        
+        upper <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_bess_v1_upp, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+        lower <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_bess_v1_low, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+        mid   <- approx( df_dday_aggbydday$dday, df_dday_aggbydday$bias_bess_v1_med, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
         idxs  <- which( !is.na(upper) & !is.na(lower) )
 
         ## plot polygon
@@ -275,9 +285,12 @@ plot_bysite_tseries <- function( sitename, makepdf=TRUE ){
       par( new=TRUE )
       xvals <- (-before:after)+1
 
-      upper <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, (df_dday_aggbydday_8d$bias_modis_q75), xout=xvals )$y ) 
-      lower <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, (df_dday_aggbydday_8d$bias_modis_q25), xout=xvals )$y ) 
-      mid   <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, (df_dday_aggbydday_8d$bias_modis_med), xout=xvals )$y ) 
+      # norm <- mean( 1/df_dday_aggbydday_8d$bias_modis_med[1:4], na.rm=TRUE )
+      norm <- 1
+      
+      upper <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_modis_q75, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+      lower <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_modis_q25, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+      mid   <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_modis_med, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
       idxs  <- which( !is.na(upper) & !is.na(lower) )
 
       ## plot polygon
@@ -292,9 +305,12 @@ plot_bysite_tseries <- function( sitename, makepdf=TRUE ){
 
       if ("bias_vpm_med" %in% names(df_dday_aggbydday_8d) && any(!is.na(df_dday_aggbydday_8d$bias_vpm_med))){
 
-        upper <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, 1/(df_dday_aggbydday_8d$bias_vpm_q75), xout=xvals )$y ) 
-        lower <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, 1/(df_dday_aggbydday_8d$bias_vpm_q25), xout=xvals )$y ) 
-        mid   <- 1 / ( approx( df_dday_aggbydday_8d$dday*8, 1/(df_dday_aggbydday_8d$bias_vpm_med), xout=xvals )$y ) 
+        # norm <- mean( 1/df_dday_aggbydday_8d$bias_vpm_med[1:4], na.rm=TRUE )
+        norm <- 1
+        
+        upper <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_vpm_q75, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+        lower <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_vpm_q25, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
+        mid   <- approx( df_dday_aggbydday_8d$dday*8, df_dday_aggbydday_8d$bias_vpm_med, xout=xvals )$y %>% inverse() %>% normalise( norm ) 
         idxs  <- which( !is.na(upper) & !is.na(lower) )
 
         ## plot polygon
@@ -323,6 +339,8 @@ do.sites <- dplyr::filter( successcodes, successcode==1 )$mysitename
 load( "data/nice_nn_agg_lue_obs_evi.Rdata" )
 load( "data/nice_nn_8d_agg_lue_obs_evi.Rdata" )
 load( "data/data_aligned_agg.Rdata" )
+
+do.sites <- "FR-Pue"
 
 print("creating time series plots for all sites ...")
 for (sitename in do.sites){

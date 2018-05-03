@@ -1,7 +1,7 @@
 reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", bysm=FALSE, use_fapar=FALSE, use_weights=FALSE, overwrite=TRUE, verbose=FALSE ){
 
   # ## debug-------------------
-  # sitename = "AR-Vir"
+  # sitename = "FR-Pue"
   # nam_target="lue_obs_evi"
   # bysm=FALSE
   # use_fapar=FALSE
@@ -26,9 +26,13 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
   faparbins <- seq( from=-20, to=40, by=20 )
   iwuebins  <- seq( from=-30, to=60, by=30 )
 
+  fvarbins_8d  <- seq( from=-24, to=96, by=16 )
+
   bincentres_fvar  <- fvarbins[1:(length(fvarbins)-1)]   + (fvarbins[2]-fvarbins[1])/2
   bincentres_fapar <- faparbins[1:(length(faparbins)-1)] + (faparbins[2]-faparbins[1])/2
   bincentres_iwue  <- iwuebins[1:(length(iwuebins)-1)]   + (iwuebins[2]-iwuebins[1])/2
+
+  bincentres_fvar_8d  <- fvarbins_8d[1:(length(fvarbins_8d)-1)] + (fvarbins_8d[2]-fvarbins_8d[1])/2
 
   usecols <- c( "mysitename",
                 "date",
@@ -160,7 +164,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                          complete( infvarbin, fill = list( vpd  = NA ) ) %>% 
                          dplyr::select( vpd )
       tmp <- unlist( tmp )[1:(length(fvarbins)-1)]
-      df_dday$dvpd = df_dday$vpd / tmp[1]
+      df_dday$dvpd <- df_dday$vpd / tmp[1]
 
       ## add row: normalised soil moisture
       tmp <- df_dday %>% group_by( infvarbin ) %>% 
@@ -168,7 +172,7 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                          complete( infvarbin, fill = list( soilm_mean  = NA ) ) %>% 
                          dplyr::select( soilm_mean )
       tmp <- unlist( tmp )[1:(length(fvarbins)-1)]
-      df_dday$soilm_norm = df_dday$soilm_mean / tmp[1]
+      df_dday$soilm_norm <- df_dday$soilm_mean / tmp[1]
 
       ## add row: normalised fAPAR (EVI)
       tmp <- df_dday %>% group_by( infaparbin ) %>% 
@@ -176,13 +180,31 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                          complete( infaparbin, fill = list( fpar  = NA ) ) %>% 
                          dplyr::select( fpar )
       tmp <- unlist( tmp )[1:(length(faparbins)-1)]
-      df_dday$fpar_norm = df_dday$fpar / tmp[1]
+      df_dday$fpar_norm <- df_dday$fpar / tmp[1]
+
+      ## add row: normalised pmodel bias
+      tmp <- df_dday %>% group_by( infvarbin ) %>% 
+                         summarise( bias_pmodel  = median( bias_pmodel , na.rm=TRUE ) ) %>%
+                         complete( infvarbin, fill = list( bias_pmodel  = NA ) ) %>% 
+                         dplyr::select( bias_pmodel )
+      tmp <- unlist( tmp )[1:(length(fvarbins)-1)]
+      df_dday$bias_pmodel_norm <- df_dday$bias_pmodel / tmp[1]
+
+      ## add row: normalised bess v1 bias
+      tmp <- df_dday %>% group_by( infvarbin ) %>% 
+                         summarise( bias_bess_v1  = median( bias_bess_v1 , na.rm=TRUE ) ) %>%
+                         complete( infvarbin, fill = list( bias_bess_v1  = NA ) ) %>% 
+                         dplyr::select( bias_bess_v1 )
+      tmp <- unlist( tmp )[1:(length(fvarbins)-1)]
+      df_dday$bias_bess_v1_norm <- df_dday$bias_bess_v1 / tmp[1]
+
 
 
       ## aggregate by 'dday'
-      df_dday_aggbydday <- df_dday %>%  mutate( bias_pmodel = gpp_obs / gpp_pmodel, bias_bess_v1 = gpp_obs / gpp_bess_v1, bias_bess_v2 = gpp_obs / gpp_bess_v2 ) %>%
-                                        mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), bias_bess_v1 = ifelse( is.infinite(bias_bess_v1), NA, bias_bess_v1 ), bias_bess_v2 = ifelse( is.infinite(bias_bess_v2), NA, bias_bess_v2 ) ) %>%
-                                        group_by( dday ) %>% 
+      # mutate( bias_pmodel = gpp_obs / gpp_pmodel, bias_bess_v1 = gpp_obs / gpp_bess_v1, bias_bess_v2 = gpp_obs / gpp_bess_v2 ) %>%
+      #                                   mutate( bias_pmodel = ifelse( is.infinite(bias_pmodel), NA, bias_pmodel ), bias_bess_v1 = ifelse( is.infinite(bias_bess_v1), NA, bias_bess_v1 ), bias_bess_v2 = ifelse( is.infinite(bias_bess_v2), NA, bias_bess_v2 ) ) %>%
+                                        
+      df_dday_aggbydday <- df_dday %>%  group_by( dday ) %>% 
                                         summarise(
                                                   ## soil moisture
                                                   soilm_med=median( soilm_mean, na.rm=TRUE ), soilm_upp=quantile( soilm_mean, 0.75, na.rm=TRUE ), soilm_low=quantile( soilm_mean, 0.25, na.rm=TRUE ),
@@ -200,11 +222,13 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
                                                   ## FPAR
                                                   fpar_med=median( fpar, na.rm=TRUE ), fpar_upp=quantile( fpar, 0.75, na.rm=TRUE ), fpar_low=quantile( fpar, 0.25, na.rm=TRUE ),
 
-                                                  ## P-model bias
+                                                  ## P-model bias and normalised bias
                                                   bias_pmodel_med=median( bias_pmodel, na.rm=TRUE ), bias_pmodel_upp=quantile( bias_pmodel, 0.75, na.rm=TRUE ), bias_pmodel_low=quantile( bias_pmodel, 0.25, na.rm=TRUE ),
+                                                  bias_pmodel_norm_med=median( bias_pmodel_norm, na.rm=TRUE ), bias_pmodel_norm_upp=quantile( bias_pmodel_norm, 0.75, na.rm=TRUE ), bias_pmodel_norm_low=quantile( bias_pmodel_norm, 0.25, na.rm=TRUE ),
 
-                                                  ## BESS v1 bias
+                                                  ## BESS v1 bias and normalised bias
                                                   bias_bess_v1_med=median( bias_bess_v1, na.rm=TRUE ), bias_bess_v1_upp=quantile( bias_bess_v1, 0.75, na.rm=TRUE ), bias_bess_v1_low=quantile( bias_bess_v1, 0.25, na.rm=TRUE ),
+                                                  bias_bess_v1_norm_med=median( bias_bess_v1_norm, na.rm=TRUE ), bias_bess_v1_norm_upp=quantile( bias_bess_v1_norm, 0.75, na.rm=TRUE ), bias_bess_v1_norm_low=quantile( bias_bess_v1_norm, 0.25, na.rm=TRUE ),
 
                                                   ## BESS v2 bias
                                                   bias_bess_v2_med=median( bias_bess_v2, na.rm=TRUE ), bias_bess_v2_upp=quantile( bias_bess_v2, 0.75, na.rm=TRUE ), bias_bess_v2_low=quantile( bias_bess_v2, 0.25, na.rm=TRUE )
@@ -244,12 +268,20 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
         
         droughts_8d <- get_consecutive( nice_8d$is_drought_byvar, leng_threshold=2, do_merge=FALSE )
         
+        before_8d <- 24
+        after_8d <- 96
+        
+        before_8d_idx <- 24 / 8
+        after_8d_idx <- 96 / 8
+        
         df_dday_8d <- data.frame()
         nice_8d <- nice_8d %>% mutate( mysitename=sitename )
         for ( iinst in 1:nrow(droughts_8d) ){
-          after_inst <- min( after, droughts_8d$len[iinst] )
-          dday <- seq( from=-before, to=after_inst, by=1 )
-          idxs <- dday + droughts_8d$idx_start[iinst]
+          after_inst_idx <- min( after_8d_idx, droughts_8d$len[iinst] )
+          after_inst <- after_inst_idx * 8
+          dday <- seq( from=-before_8d, to=after_inst, by=8 )
+          dday_idx <- seq( from=-before_8d_idx, to=after_inst_idx, by=1 )
+          idxs <- dday_idx + droughts_8d$idx_start[iinst]
           drophead <- which( idxs < 1 )
           if (length(drophead)>0){
             idxs <- idxs[ -drophead ]
@@ -259,9 +291,25 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
           df_dday_8d <- df_dday_8d %>% bind_rows( addrows )
         }
 
-        # ## add variables
-        # df_dday_8d <- df_dday_8d %>% mutate( bias_modis = gpp_obs / gpp_modis, bias_vpm = if( exists( "gpp_vpm", where=. ) ) gpp_obs / gpp_vpm else NA ) %>%
-        #                              mutate( bias_modis = ifelse( is.infinite(bias_modis), NA, bias_pmodel ), bias_vpm = ifelse( is.infinite(bias_vpm), NA, bias_vpm ) )
+        ## Normalise
+        df_dday_8d <- df_dday_8d %>% mutate( infvarbin  = cut( as.numeric(dday), breaks = fvarbins_8d ) )
+
+        tmp <- df_dday_8d %>% group_by( infvarbin ) %>% 
+                              summarise( bias_modis  = median( bias_modis , na.rm=TRUE ) ) %>%
+                              complete( infvarbin, fill = list( bias_modis  = NA ) ) %>% 
+                              dplyr::select( bias_modis )
+        tmp <- unlist( tmp )[1:(length(fvarbins_8d)-1)]
+        df_dday_8d$bias_modis_norm <- df_dday_8d$bias_modis / tmp[1]
+
+        if ("bias_vpm" %in% names(df_dday_8d)){        
+          tmp <- df_dday_8d %>% group_by( infvarbin ) %>% 
+                                summarise( bias_vpm  = median( bias_vpm , na.rm=TRUE ) ) %>%
+                                complete( infvarbin, fill = list( bias_vpm  = NA ) ) %>% 
+                                dplyr::select( bias_vpm )
+          tmp <- unlist( tmp )[1:(length(fvarbins_8d)-1)]
+          df_dday_8d$bias_vpm_norm <- df_dday_8d$bias_vpm / tmp[1]
+        }
+
 
         ## Append to Rdata file that already has the aligned array. Function 'resave()' is in my .Rprofile
         save( df_dday_8d, file=outfiln )

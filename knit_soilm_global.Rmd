@@ -37,8 +37,8 @@ Install required R packages. The execution of the scripts provided here requires
 ```{r}
 list.of.packages <- c( "dplyr", "readr", "ggplot2", "tibble", "lubridate", "ncdf4", "abind", "maptools", "sp", "fields", "RColorBrewer", "LSD", "minpack.lm", "neuroim", "raster", "Metrics", "R.matlab", "pracma" )
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if( length(new.packages) ) install.packages(new.packages)
-## captioner is installed from the devtools by devtools::install_github("adletaw/captioner")
+if ( length(new.packages) ) install.packages(new.packages)
+if (!("captioner" %in% installed.packages()[,"Package"])) devtools::install_github("adletaw/captioner")
 ```
 
 Define working directory:
@@ -144,28 +144,31 @@ if (!file.exists("data/nice_all_agg_lue_obs_evi.Rdata") || !file.exists("data/ni
 
 ## Bias detection
 
-First, we evaluate the bias of different RS-model versus soil moisture and versus actual over potential evapotranspiration (AET/PET) for 71 sites (corresponding to the full list of sites shown in Table XXX). This corresponds to the selection with relaxed criteria and independent of the drought identification by [@stocker18]. For all RS-models, the bias generally increases along bins of decreasing AET/PET. Note that below, boxplots are shown for the ratio of modelled over observed GPP.
+First, we evaluate the bias of different RS-model versus actual over potential evapotranspiration (AET/PET) for 71 sites (corresponding to the full list of sites shown in Table 1). This corresponds to the selection with relaxed criteria and independent of the drought identification by [@stocker18]. For all RS-models, the bias generally increases along bins of decreasing AET/PET. Note that below, boxplots are shown for the ratio of modelled over observed GPP.
 ```{r plot_bias_all, eval=TRUE, message=FALSE, warning=FALSE}
 source("plot_bias_all.R")
 plot_bias_all( nice_agg, nice_8d_agg)
+cap_bias_alphabin <- fig_nums("cap_bias_alphabin", caption=" Bias of simulated daily GPP by models, in different bins of daily AET/PET. The bias is  calculated here as the ratio of simulated GPP over observed GPP. Observational data is derived from flux measurements at 71 sites (all sites in Table 1).")
 ```
 
-*Fig. above: Bias of simulated daily GPP by models, in different bins of daily AET/PET. The bias is  calculated here as the ratio of simulated GPP over observed GPP. Observational data is derived from flux measurements at 71 sites (all sites in Table XXX).*
+`r fig_nums("cap_bias_alphabin")`
 
-This pattern becomes clearer when applying the narrower site selection (sites in group 1 in Table XXX) and using only data during apparent droughts, i.e. where soil-moisture appears to reduce the LUE as determined by [@stocker18].
+This pattern becomes clearer when applying the narrower site selection (sites in group 1 in Table 1) and using only data during apparent droughts, i.e. where soil-moisture appears to reduce the LUE as determined by the fLUE [@stocker18].
 ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem}
 source("plot_bias_problem.R")
 plot_bias_bymodels( df_dday_8d_agg )
+cap_bias_fluebin <- fig_nums("cap_bias_fluebin", caption="Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table 1).")
 ```
 
-*Fig. above: Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table XXX).*
+`r fig_nums("cap_bias_fluebin")`
 
 All RS-models, except P-model, have a tendency to be biased low under non-soil moisture-limited conditions and biased under strong soil moisture stress. To distill the pattern, independent of the mean absolute bias, we normalised simulated GPP to the median ratio of modelled-over-observed GPP in the highest fLUE bin, i.e., where soil moisture impacts on observed fluxes are small (fLUE bin 0.8-1.0).
 ```{r echo=FALSE, warning=FALSE, error=FALSE, plot_bias_problem_norm}
 plot_bias_bymodels( df_dday_8d_agg_norm )
+cap_bias_fluebin_norm <- fig_nums("cap_bias_fluebin_norm", caption="Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table XXX). Simulated GPP is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).")
 ```
 
-*Fig. above: Bias of simulated daily GPP by models, in different fLUE bins, calculated as simulated GPP minus observed GPP, derived from flux measurements at 36 sites (sites of group 1 in Table XXX). Simulated GPP is normalised to the median ratio of modelled over observed GPP in the highest fLUE bin (0.8-1.0).*
+`r fig_nums("cap_bias_fluebin_norm")`
 
 Another way to illustrate the systematic relationship between the RS-models' bias and the apparent soil moisture-related LUE reductions is given below. Here, the ratio of observed-to-modelled is shown along the y-axes, indicating by how much modelled GPP would have to be scaled in order to match observations. The straight red line is the 1:1 line and the fact that points cluster along it indicates that soil moisture effects on LUE are the dominant factor underlying model bias. Colors indicate the density of points.
 
