@@ -295,6 +295,20 @@ reshape_align_nn_fluxnet2015 <- function( sitename, nam_target="lue_obs_evi", by
         df_dday_8d <- df_dday_8d %>% mutate( infvarbin  = cut( as.numeric(dday), breaks = fvarbins_8d ) )
 
         tmp <- df_dday_8d %>% group_by( infvarbin ) %>% 
+                              summarise( bias_pmodel  = median( bias_pmodel , na.rm=TRUE ) ) %>%
+                              complete( infvarbin, fill = list( bias_pmodel  = NA ) ) %>% 
+                              dplyr::select( bias_pmodel )
+        tmp <- unlist( tmp )[1:(length(fvarbins_8d)-1)]
+        df_dday_8d$bias_pmodel_norm <- df_dday_8d$bias_pmodel / tmp[1]
+
+        tmp <- df_dday_8d %>% group_by( infvarbin ) %>% 
+                              summarise( bias_bess_v1  = median( bias_bess_v1 , na.rm=TRUE ) ) %>%
+                              complete( infvarbin, fill = list( bias_bess_v1  = NA ) ) %>% 
+                              dplyr::select( bias_bess_v1 )
+        tmp <- unlist( tmp )[1:(length(fvarbins_8d)-1)]
+        df_dday_8d$bias_bess_v1_norm <- df_dday_8d$bias_bess_v1 / tmp[1]
+
+        tmp <- df_dday_8d %>% group_by( infvarbin ) %>% 
                               summarise( bias_modis  = median( bias_modis , na.rm=TRUE ) ) %>%
                               complete( infvarbin, fill = list( bias_modis  = NA ) ) %>% 
                               dplyr::select( bias_modis )

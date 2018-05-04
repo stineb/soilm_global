@@ -52,20 +52,22 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## fLUE
     ##--------------------------------------------------------
-    par( las=1, mar=c(4,4,1,3), xpd=FALSE, xaxs="i", yaxs="r" )
-    ylim <- c(0.0,1.5)
+    par( las=1, mar=c(4,4,2,2), xpd=FALSE, xaxs="i", yaxs="r" )
+    ylim <- c(0.5,1.1)
     xlim <- c(-20,80)
-    plot( c(-before,after), ylim, type="n", xlab="Day after drought onset", ylab="fLUE / ratio", axes=FALSE, xlim=xlim )
-    axis( 2, lwd = 1.75 )
-    axis( 2, at = seq( ylim[1], ylim[2], by=0.1 ), labels = FALSE, tck=-0.01 )
-    axis( 4, labels=FALSE, lwd = 1.75 )
-    axis( 4, at = seq( ylim[1], ylim[2], by=0.1 ), labels = FALSE, tck=-0.01 )
-    axis( 4 )
-    axis( 1, xlab="days after drought onset", lwd=1.75 )
+    plot( c(-before,after), ylim, type="n", xlab="Day after drought onset", ylab="fLUE, obs./mod. (fraction)", axes=FALSE, xlim=xlim )
+    axis( 2, lwd = 1.5 )
+    axis( 2, at = seq( ylim[1], ylim[2], by=0.02 ), labels = FALSE, tck=-0.01 )
+    axis( 4, labels=FALSE, lwd = 1.5 )
+    axis( 4, at = seq( ylim[1], ylim[2], by=0.02 ), labels = FALSE, tck=-0.01 )
+    axis( 1, xlab="days after drought onset", lwd=1.5 )
     axis( 1, at = seq( xlim[1], xlim[2], by=5 ), labels = FALSE, tck=-0.01 )
+    axis( 3, labels=FALSE, lwd=1.5 )
+    axis( 3, at = seq( xlim[1], xlim[2], by=5 ), labels = FALSE, tck=-0.01 )
     abline( h=1.0, col='grey40', lwd=0.5 )
     
-    axis(1,lwd=1.75);  axis(1,at=seq(xlim[1],xlim[2],by=20),labels=F,tck=-0.01)
+    axis(1,lwd=1.5);  axis(1,at=seq(xlim[1],xlim[2],by=20),labels=F,tck=-0.01)
+    box( lwd=1.5 )
 
     rect( 0, -99, after, 99, col=rgb(0,0,0,0.2), border=NA )
 
@@ -98,7 +100,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                       summarise( bias = quantile( 1/bias_pmodel_norm, 0.25, na.rm=TRUE ) ) %>% 
                       complete( dday )
 
-    polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("tomato", 0.3), border=NA )
+    # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("tomato", 0.3), border=NA )
     lines( median, col='tomato', lwd=2 )
 
     ##--------------------------------------------------------
@@ -115,7 +117,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                       summarise( bias = quantile( 1/bias_bess_v1_norm, 0.25, na.rm=TRUE ) ) %>% 
                       complete( dday )
 
-    polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("royalblue3", 0.3), border=NA )
+    # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("royalblue3", 0.3), border=NA )
     lines( median, col='royalblue3', lwd=2 )
 
     ##--------------------------------------------------------
@@ -132,7 +134,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                          summarise( bias = quantile( 1/bias_modis_norm, 0.25, na.rm=TRUE ) ) %>% 
                          complete( dday )
 
-    polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen1", 0.3), border=NA )
+    # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen1", 0.3), border=NA )
     lines( median, col='springgreen1', lwd=2 )
 
     ##--------------------------------------------------------
@@ -149,7 +151,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                          summarise( bias = quantile( 1/bias_vpm_norm, 0.25, na.rm=TRUE ) ) %>% 
                          complete( dday )
 
-    polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen4", 0.3), border=NA )
+    # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen4", 0.3), border=NA )
     lines( median, col='springgreen4', lwd=2 )
 
     legend( "bottomleft", c("fLUE", "P-model", "BESS", "MODIS", "VPM"), bty="n", lty=1, lwd=2, col=c( "black" ,"tomato", "royalblue3","springgreen1", "springgreen4"), cex=1.0 )
@@ -158,9 +160,9 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
 
 }
 
-##------------------------------------------------
-## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
-##------------------------------------------------
-load( "data/data_aligned_agg.Rdata" )
-plot_aligned_all( df_dday_agg, df_dday_8d_agg, filn=NA )
+# ##------------------------------------------------
+# ## Select all sites for which method worked (codes 1 and 2 determined by 'nn_getfail_fluxnet2015.R')
+# ##------------------------------------------------
+# load( "data/data_aligned_agg.Rdata" )
+# plot_aligned_all( df_dday_agg, df_dday_8d_agg, filn=NA )
 

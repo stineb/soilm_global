@@ -43,6 +43,3 @@ plot_map( (gpp_s1 - gpp_s0)*1e-3, lev=c( -10, 10, 10 ),
           positive = FALSE, maxval=60, minval=-60
           , file = "fig/map_gpp_var_diff.pdf"
           )
-
-
-

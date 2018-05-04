@@ -214,6 +214,9 @@ This is based on the relationship between minimum fLUE and mean AET/PET, identif
 library(dplyr)
 load( "data/data_aligned_agg.Rdata" )     # loads 'df_dday_agg', etc.
 ddf <- df_dday_agg
+# load( "data/nice_nn_agg_lue_obs_evi.Rdata" )     # loads 'nice_agg
+# ddf <- nice_agg
+
 rm("df_dday_agg")  # rename to be a bit more concise
 
 ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)
