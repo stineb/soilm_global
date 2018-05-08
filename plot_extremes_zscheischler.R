@@ -6,6 +6,8 @@ require(fields)
 require(sp)
 require(maptools)
 library(poweRlaw) # https://cran.r-project.org/web/packages/poweRlaw/vignettes/b_powerlaw_examples.pdf
+library(RColorBrewer)
+library(igraph) # for fit_power_law()
 
 
 myboxplot <- function( ... ){
@@ -60,19 +62,21 @@ median_glob <- df_impacts %>% summarise( ampl_s1a=median(ampl_s1a), ampl_s1b=med
 print( mean_glob )
 print( median_glob )
 
+cont <- c("NA", "SA", "EA", "AF", "AU")
 mean_cont <- df_impacts %>% group_by(icont) %>% summarise( ampl_s1a=mean(ampl_s1a), ampl_s1b=mean(ampl_s1b), ampl_s1c=mean(ampl_s1c), s0=mean(s0), s1a=mean(s1a), s1b=mean(s1b), s1c=mean(s1c) ) %>% bind_cols( cont=cont )
 median_cont <- df_impacts %>% group_by(icont) %>% summarise( ampl_s1a=median(ampl_s1a), ampl_s1b=median(ampl_s1b), ampl_s1c=median(ampl_s1c), s0=median(s0), s1a=median(s1a), s1b=median(s1b), s1c=median(s1c) ) %>% bind_cols( cont=cont )
 print( mean_cont )
 print( median_cont )
 
-
 ## Europe 2003 event
-filter(df_event_time, irank==114 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
+filter(df_event_time, rank_global==15 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
 
 ## Russia 2010 event
-filter(df_event_time, irank==9 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
+filter(df_event_time, rank_global==11 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
 
 ## plot time series of impact, integrated over lon-lat
+nevents_plot <- 8
+cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
 pdf( "fig/events_overtime.pdf", width = 8, height = 4)
 par( mar=c(5,4,1,1), xaxs="i", yaxs="i", las=1)
 with( df_event_time, plot(  date, -impact_s1b, type="n", ylim=c(0,max(-impact_s1b)), lwd=2, ylab="Impact (PgC/month)", xlim=c( ymd("1982-01-21"), ymd("2019-12-12")) ) )
@@ -133,6 +137,10 @@ dev.off()
   widths <- rep(6*magn,ncols)
   heights <- rep(5*magn,nrows)
   order <- matrix( seq(nrows*ncols), nrows, ncols, byrow=TRUE)
+  
+  fct_powerlaw <- function( x, xmin, alpha ){
+    xmin * x ^ alpha
+  }
 
   pdf( "fig/extremes_bycont.pdf", width=sum(widths), height = sum(heights) )
 
@@ -148,36 +156,122 @@ dev.off()
     for (icont in 1:5){
       
       par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
-      n <- nrow(list_impacts[[icont]])
-      plot(       sort( -list_impacts[[icont]]$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = rgb(1,0,0,1), xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))) )
-      # polygon( c( sort( -list_impacts[[icont]]$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -list_impacts[[icont]]$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
-      points(     sort( -list_impacts[[icont]]$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-      legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
-      mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
 
-      # ## continuous power-law
-      # d_cpl_s1b = conpl$new(-list_impacts[[icont]]$s1b[1:n]*1e-15)
-      # d_cpl_s0  = conpl$new(-list_impacts[[icont]]$s0[1:n]*1e-15)
+      # # n <- nrow(list_impacts[[icont]])
+      # # plot(       sort( -list_impacts[[icont]]$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = rgb(1,0,0,1), xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))) )
+      # # # polygon( c( sort( -list_impacts[[icont]]$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -list_impacts[[icont]]$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
+      # # points(     sort( -list_impacts[[icont]]$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
+      # # legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
+      # # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
       # 
-      # ## infer model parameters and update object
-      # est_s1b = estimate_xmin(d_cpl_s1b)
-      # est_s0  = estimate_xmin(d_cpl_s0 )
-      # 
-      # d_cpl_s1b$setXmin(est_s1b)
-      # d_cpl_s0$setXmin(est_s0)
-      # 
-      # out <- plot( d_cpl_s1b, pch=16, col = rgb(1,0,0,.75), xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))), xlab="Impact (PgC)", ylab="p(Impact>x)" )
-      # lines(d_cpl_s1b, col = rgb(1,0,0,1))
-      # par(new=TRUE)
-      # plot( d_cpl_s0, pch=16, col = rgb(0,0,0,.75), xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))), axes=FALSE )
-      # lines( d_cpl_s0, col = rgb(0,0,0,1))
-      # 
+      # ## no cutoff
+      # n <- length(list_impacts[[icont]]$s1b)
+      # plot(       sort( -list_impacts[[icont]]$s1b*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = rgb(1,0,0,1), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))) )
+      # points(     sort( -list_impacts[[icont]]$s0*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
       # legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
       # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
       # 
-      # # ## test if data is drawn from a power law distribution
-      # # bs_cpl = bootstrap_p( d_cpl, no_of_sims=500, threads=1 )
-      # # print(bs_cpl$p)
+      # ## Power Law fitting using "igraph" package
+      # fit0 <- fit_power_law(-list_impacts[[icont]]$s0*1e-15)
+      # fit1 <- fit_power_law(-list_impacts[[icont]]$s1b*1e-15)
+      # 
+      # pred_s0 <-  tibble( x = seq( fit0$xmin, max(-list_impacts[[icont]]$s0*1e-15), length.out = 100 ) ) %>%
+      #             mutate( y = fct_powerlaw( x, fit0$xmin, -fit0$alpha ))
+      # pred_s1b <- tibble( x = seq( fit1$xmin, max(-list_impacts[[icont]]$s1b*1e-15), length.out = 100 ) ) %>%
+      #             mutate( y = fct_powerlaw( x, fit1$xmin, -fit1$alpha ) )
+      # 
+      # lines( pred_s0, lwd=2 )
+      # lines( pred_s1b, lwd=2, col="red" )
+      # 
+      # # alpha_s1 <- fit1$alpha
+      # # alpha_s0 <- fit0$alpha
+      # 
+      # # mtext(paste("alpha_s1 =", round(alpha_s1[[k]],2)), side=3, line=-2, adj=0.9)
+      # # mtext(paste("alpha_s0 =", round(alpha_s0[[k]],2)), side=3, line=-4, adj=0.9)
+      # 
+      # (alpha_s1-1) * fit1$xmin^(alpha_s1-1)
+      # x1 <- seq(fit1$xmin, 2, length.out = 100)
+      # y1 <- x1^(-alpha_s1) * (alpha_s1-1) / sum(x1^(-alpha_s1) * (alpha_s1-1))
+      # x0 <- seq(fit0$xmin, 1, length.out = 100)
+      # y0 <- x0^(-alpha_s0) * (alpha_s0-1) / sum(x0^(-alpha_s0) * (alpha_s0-1))
+      # lines(x1,y1,log="xy")
+
+      ## Power Law fitting using "poweRlaw" package
+      ## continuous power-law
+      d_cpl_s1b = conpl$new(-list_impacts[[icont]]$s1b*1e-15)
+      d_cpl_s0  = conpl$new(-list_impacts[[icont]]$s0*1e-15)
+      
+      ## infer model parameters and update object
+      est_s1b = estimate_xmin(d_cpl_s1b)
+      if (cont[icont]=="EA"){
+        est_s0 <- est_s1b
+      } else {
+        est_s0  = estimate_xmin(d_cpl_s0 )
+      }
+      
+      d_cpl_s1b$setXmin(est_s1b)
+      d_cpl_s0$setXmin(est_s0)
+      
+      out <- plot( d_cpl_s1b, pch=16, col = rgb(1,0,0,0.5), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))), xlab="", ylab="" )
+      mtext( "Impact (PgC)", side = 1, line = 3, cex = 0.8 )
+      mtext( "p(Impact>x)", side = 2, line = 3.2, las=0, cex = 0.8 )
+      out_lines_s1b <- lines(d_cpl_s1b, col = rgb(1,0,0,1), xlab="Impact (PgC)", ylab="p(Impact>x)")
+      par(new=TRUE)
+      plot( d_cpl_s0, pch=16, col = rgb(0,0,0,0.5), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))), axes=FALSE, xlab="", ylab="" )
+      out_lines_s0 <- lines( d_cpl_s0, col = rgb(0,0,0,1))
+      
+      if (icont==1) legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.2 )
+      mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
+
+      ## back-calculate xmin and alpha from lines outout
+      alpha_s0 <- (log(out_lines_s0$y[2]) - log(out_lines_s0$y[1])) / (log(out_lines_s0$x[2]) - log(out_lines_s0$x[1]))
+      xmin_s0  <- out_lines_s0$y[1] / out_lines_s0$x[1] ^ alpha_s0
+
+      alpha_s1b <- (log(out_lines_s1b$y[2]) - log(out_lines_s1b$y[1])) / (log(out_lines_s1b$x[2]) - log(out_lines_s1b$x[1]))
+      xmin_s1b  <- out_lines_s1b$y[1] / out_lines_s1b$x[1] ^ alpha_s1b
+      
+      pred_s0 <-  tibble( x = seq( min(out_lines_s0$x), max(out_lines_s0$x), length.out = 100 ) ) %>%
+                  # mutate( y = fct_powerlaw( x, d_cpl_s0$xmin, -(d_cpl_s0$pars-1) ) )
+                  mutate( y = fct_powerlaw( x, xmin_s0, -(d_cpl_s0$pars-1) ) ) %>%  # this works perfectly, but don't know why
+                  mutate( y1 = fct_powerlaw( x, xmin_s1b, -(d_cpl_s1b$pars-1) ) )
+
+      pred_s1b <- tibble( x = seq( min(out_lines_s1b$x), max(out_lines_s1b$x), length.out = 100 ) ) %>%
+                  # mutate( y = fct_powerlaw( x, d_cpl_s1b$xmin, -(d_cpl_s1b$pars-1) ) )
+                  mutate( y = fct_powerlaw( x, xmin_s1b, -(d_cpl_s1b$pars-1) ) ) %>%  # this works perfectly, but don't know why
+                  mutate( y0 = fct_powerlaw( x, xmin_s0, -(d_cpl_s0$pars-1) ) )
+
+      lines( out_lines_s0, lwd=2, col="black" )
+      lines( out_lines_s1b, lwd=2, col="red" )
+
+      lines( pred_s0, lwd=2, lty=2 )
+      lines( pred_s1b, lwd=2, lty=2, col="red" )
+      # lines( pred_s1b$x, pred_s1b$y0, lwd=2, lty=2, col="green" )
+      
+      ## get mean amplification of probability
+      # pred_s1b <- pred_s1b %>% mutate( ampl_prob = y/y0 )
+      # out <- exp( mean( log(pred_s1b$ampl_prob) ) )
+      
+      pred_s0 <- pred_s0 %>% mutate( ampl_prob = y1/y )
+      ampl <- mean(pred_s0$ampl_prob) # exp( mean( log(pred_s0$ampl_prob) ) )
+
+      print( paste( cont[icont], " Amplification of probability:", ampl ) )
+
+      # mtext( expression( paste( alpha[s0], "= -", d_cpl_s0$pars ) ), line-1, adj = 1 )
+      mtext( bquote( italic(N) == .( format( length(list_impacts[[icont]]$s1b), digits = 3 ) ) ), line = -1.4, adj = 0.95, cex=0.9 )
+      mtext( bquote( alpha[s0] == .( format( d_cpl_s0$pars, digits = 3 ) ) ), line = -2.7, adj = 0.95, cex=0.9 )
+      mtext( bquote( alpha[s1b] == .( format( d_cpl_s1b$pars, digits = 3 ) ) ), line = -3.9, adj = 0.95, cex=0.9, col="red" )
+      mtext( bquote( italic(A) == .( format( ampl, digits = 3 ) ) ), line = -5.1, adj = 0.95, cex=0.9, col="red" )
+      
+      # (alpha_s1-1) * fit1$xmin^(alpha_s1-1)
+      # x1 <- seq(fit1$xmin, 2, length.out = 100)
+      # y1 <- x1^(-alpha_s1) * (alpha_s1-1) / sum(x1^(-alpha_s1) * (alpha_s1-1))
+      # x0 <- seq(fit0$xmin, 1, length.out = 100)
+      # y0 <- x0^(-alpha_s0) * (alpha_s0-1) / sum(x0^(-alpha_s0) * (alpha_s0-1))
+      # lines(x1,y1, col="blue")
+      # 
+      # ## test if data is drawn from a power law distribution
+      # bs_cpl = bootstrap_p( d_cpl, no_of_sims=500, threads=1 )
+      # print(bs_cpl$p)
 
     }
     
