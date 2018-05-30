@@ -202,7 +202,7 @@ plot_bias_resolved_flue <- function( tmp, tmp0, filn=NA ){
   ## pooled
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
-    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (mod.-obs., gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
     rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
     myboxplot( bias_diff ~ infbin, data = tmp, at=1:5-0.15, col="tomato", boxwex=0.3, add=TRUE )
     myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=1:5+0.15, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.3 )
@@ -215,7 +215,7 @@ plot_bias_resolved_flue <- function( tmp, tmp0, filn=NA ){
 plot_bias_resolved <- function( tmp, tmp0, tmp1, tmp4, tmp3, filn=NA, cex=1.0 ){
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1, mar=c(4,4,2,1) )
-    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
+    plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("bias (mod.-obs., gC m"^-2, "d"^-1, ")" ) ), axes=FALSE )
     rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
     myboxplot( bias_diff ~ infbin, data = tmp, at=1:5-0.2, col="tomato", boxwex=0.2, add=TRUE )
     myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=1:5+0.0, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.2 )

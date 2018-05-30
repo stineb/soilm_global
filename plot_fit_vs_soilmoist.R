@@ -17,10 +17,11 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
     filn <- "fig/fit_to_bias_plot_per_site.pdf" 
     if (makepdf) print( paste( "plotting fLUE vs. soil moisture for each site into file ", filn, "..." ) )
     if (makepdf) pdf( filn, width = 5, height = 4 )
-    for (sitename in linearfit_mid$data$mysitename){
+    # for (sitename in linearfit_mid$data$mysitename){
+    for (sitename in unique(ddf$mysitename)){
 
-      df_tmp <- dplyr::filter(ddf, mysitename==sitename)
-      data_tmp <- dplyr::filter( linearfit_mid$data, mysitename==sitename )
+      df_tmp   <- dplyr::filter( ddf, mysitename==sitename)
+      data_tmp <- dplyr::filter( ddf, mysitename==sitename )
 
       classid <- unique(df_tmp$classid)
 
@@ -33,7 +34,7 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
   
         ## Curve from approach I
         mycurve(  function(x) calc_flue_est_alpha(  x, 
-                                                    alpha=dplyr::select( data_tmp, meanalpha), 
+                                                    alpha=unique(dplyr::select( data_tmp, meanalpha)), 
                                                     apar=coef(linearfit_low$linmod)[1], 
                                                     bpar=coef(linearfit_low$linmod)[2], 
                                                     cpar=0.125, 
@@ -43,17 +44,17 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
 
         ## Curve from approach IV (mid)
         mycurve(  function(x) stress_quad_1sided_alpha_grasstree( x, 
-                                                        dplyr::select( data_tmp, meanalpha), 
-                                                        x0=0.9, 
-                                                        c(coef(linearfit_mid$linmod_tree)[["(Intercept)"]],coef(linearfit_mid$linmod_grass)[["(Intercept)"]]), 
-                                                        c(coef(linearfit_mid$linmod_tree)[["meanalpha"]],coef(linearfit_mid$linmod_grass)[["meanalpha"]]),
-                                                        classid
-                                                       ),
+                                                                  unique(dplyr::select( data_tmp, meanalpha)), 
+                                                                  x0=0.9, 
+                                                                  c(coef(linearfit_mid$linmod_tree)[["(Intercept)"]],coef(linearfit_mid$linmod_grass)[["(Intercept)"]]), 
+                                                                  c(coef(linearfit_mid$linmod_tree)[["meanalpha"]],coef(linearfit_mid$linmod_grass)[["meanalpha"]]),
+                                                                  classid
+                                                                 ),
                   from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
 
         ## Curve from approach III (strong)
         mycurve(  function(x) stress_quad_1sided_alpha( x, 
-                                                        dplyr::select( data_tmp, meanalpha), 
+                                                        unique(dplyr::select( data_tmp, meanalpha)), 
                                                         x0=0.9, 
                                                         coef(linearfit_strong$linmod)[["(Intercept)"]], 
                                                         coef(linearfit_strong$linmod)[["meanalpha"]]
