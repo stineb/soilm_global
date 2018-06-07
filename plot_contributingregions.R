@@ -2,7 +2,7 @@ library(ncdf4)
 library(abind)
 
 source("../utilities/plot_map.R")
-
+source("../utilities/mycolorbar.R")
 
 get_stocker_f <- function( eff, anom, isabs=FALSE ){
   ##---------------------------------------------------
@@ -13,10 +13,10 @@ get_stocker_f <- function( eff, anom, isabs=FALSE ){
 
   ## use gridcell total not per unit area
   if (isabs==FALSE){
-    source( "integrate_gridcell.R" )
+    source( "../utilities/integrate_gridcell.R" )
     
-    eff_abs <- integrate_gridcell( eff, global=FALSE, overwrite=TRUE )
-    anom_abs <- integrate_gridcell( anom, global=FALSE, overwrite=TRUE )
+    eff_abs <- integrate_gridcell( eff, global=FALSE, overwrite=FALSE )
+    anom_abs <- integrate_gridcell( anom, global=FALSE, overwrite=FALSE )
 
     eff_glob <- apply( eff_abs, c(3), FUN=sum, na.rm=TRUE )
     anom_glob <- apply( anom_abs, c(3), FUN=sum, na.rm=TRUE )
@@ -59,6 +59,8 @@ for (idx in seq(length(modl))){
     detr[[ modl[idx] ]] <- try( ncvar_get( nc, varid="gpp" ) )
     nc_close(nc)
 
+  } else {
+    print(paste("file does not exist:", filpath_detr[idx]))
   }
   
 }
@@ -90,6 +92,7 @@ plot_map( stocker_fb*1e4, lev=seq(-0.5,0.5,0.1), positive=FALSE, maxval=30, minv
 ## Plot with inset
 ##-----------------------------------------------------
 filn <- "fig/map_stocker_gpploss.pdf"
+
   arr = stocker_fb*1e4
   toplefttext = expression(paste(""))
   toprighttext = expression(paste(""))
@@ -116,8 +119,8 @@ filn <- "fig/map_stocker_gpploss.pdf"
   lon.labels <- seq(-180, 180, 60)
   lon.short  <- seq(-180, 180, 10)
 
-  a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
-  b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )
+  a <- sapply( lat.labels, function(x) if (x>0) {bquote(.(x)*degree ~N)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~S)} )
+  b <- sapply( lon.labels, function(x) if (x>0) {bquote(.(x)*degree ~E)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~W)})
 
   if (!is.na(filn)) pdf( filn, width=sum(widths), height=sum(heights) )
 

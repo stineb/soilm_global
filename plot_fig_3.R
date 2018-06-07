@@ -42,7 +42,8 @@ filn <- "fig/map_gpp_relvar_diff.pdf"
     
     par( parinit, mar=c(4,4,3,1), xaxs="i", yaxs="i",las=1, mgp=c(3,1,0) )
     # par(las=1, mar=c(4,4,1,1), new=FALSE, fig=c(0, 1, 0, 1) )
-    with( ampl_agg, plot( resnr, relvar_median, type="l", col="black", lwd=2, ylim=c(0,10), xaxt = "n", xlab="spatial resolution (degrees)", ylab="amplification" ) )
+    # with( ampl_agg, plot( resnr, relvar_median, type="l", col="black", lwd=2, ylim=c(0,10), xaxt = "n", xlab="Spatial resolution (degrees)", ylab="Amplification" ) )
+    with( ampl_agg, plot( resnr, relvar_median, type="l", col="black", lwd=2, ylim=c(0,10), xaxt = "n", xlab=bquote( "Spatial resolution "(degree) ), ylab="Amplification" ) )
     axis( 1, at=seq(length(vec_res)), labels=as.character( vec_res ) )
     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q01, relvar_q99), col=add_alpha("tomato2", 0.25), border = NA ) )
     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q05, relvar_q95), col=add_alpha("tomato2", 0.25), border = NA ) )
@@ -74,8 +75,8 @@ filn <- "fig/map_gpp_relvar_diff.pdf"
     lon.labels <- seq(-180, 180, 60)
     lon.short  <- seq(-180, 180, 10)
 
-    a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
-    b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )  
+    a <- sapply( lat.labels, function(x) if (x>0) {bquote(.(x)*degree ~N)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~S)} )
+    b <- sapply( lon.labels, function(x) if (x>0) {bquote(.(x)*degree ~E)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~W)})
 
     color <- c( "royalblue4", "wheat", "tomato2", "tomato4" )
     lev <- c( 0, 4, 10 )
@@ -118,10 +119,6 @@ filn <- "fig/map_gpp_relvar_diff.pdf"
   ##-----------------------------------------------------
   ## Inset: Empirical cumulative distribution function of the amplification factor
   ##-----------------------------------------------------
-    vec <- c( gpp_s1 / gpp_s0 )
-    vec <- vec[!is.na(vec)]
-    ecdf_ampl <- ecdf( vec )
-
     vec <- c( gpp_s1a / gpp_s0 )
     vec <- vec[!is.na(vec)]
     ecdf_ampl_a <- ecdf( vec )
@@ -146,7 +143,7 @@ filn <- "fig/map_gpp_relvar_diff.pdf"
     xlim <- c(0.75,25)
     ylim <- c(0.001, 1)
     plot( xlim, ylim, type="n", xlim=xlim, log="xy", ylim=ylim, xlab = "", ylab = "", bg="white", cex.axis=0.7, tck=-0.03 )
-    mtext( "amplification", side=1, line=1, adj=0.5, cex = 0.7 )
+    mtext( "Amplification", side=1, line=1, adj=0.5, cex = 0.7 )
     mtext( "ECDF", side=2, line=1.7, adj=0.5, cex = 0.7, las=0 )
     rect( xlim[1], ylim[1], xlim[2], ylim[2], border = NA, col="white" )
     curve( 1.0 - ecdf_ampl_b(x), from=xlim[1], to=xlim[2], col="red", add=TRUE  )

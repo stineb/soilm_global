@@ -55,7 +55,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     par( las=1, mar=c(4,4,2,2), xpd=FALSE, xaxs="i", yaxs="r" )
     ylim <- c(0.5,1.1)
     xlim <- c(-20,80)
-    plot( c(-before,after), ylim, type="n", xlab="Day after drought onset", ylab="fLUE and bias (obs./mod., fraction)", axes=FALSE, xlim=xlim )
+    plot( c(-before,after), ylim, type="n", xlab="Days after drought onset", ylab="fLUE and bias (obs./mod., fraction)", axes=FALSE, xlim=xlim )
     axis( 2, lwd = 1.5 )
     axis( 2, at = seq( ylim[1], ylim[2], by=0.02 ), labels = FALSE, tck=-0.01 )
     axis( 4, labels=FALSE, lwd = 1.5 )

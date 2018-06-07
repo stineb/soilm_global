@@ -34,9 +34,9 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
   lon.labels <- seq(-180, 180, 60)
   lon.short  <- seq(-180, 180, 10)
 
-  a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
-  b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )
-
+  a <- sapply( lat.labels, function(x) if (x>0) {bquote(.(x)*degree ~N)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~S)} )
+  b <- sapply( lon.labels, function(x) if (x>0) {bquote(.(x)*degree ~E)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~W)})
+  
   if (!is.na(file)) pdf( file, width=sum(widths), height=sum(heights) )
 
     panel <- layout(

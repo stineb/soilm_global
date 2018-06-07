@@ -4,6 +4,7 @@ require( maptools, quietly = TRUE )
 require( dplyr, quietly = TRUE )  
 
 source("../utilities/add_alpha.R")
+source("../utilities/mycolorbar.R")
 
 ## load global GPP time series, prepared by plot_effects_gpp_tseries.R
 load("data/gpp_glob_tseries.Rdata")
@@ -24,7 +25,7 @@ heights <- rep(magn,nrows)
 order <- matrix( c(1,2,3), nrows, ncols, byrow=TRUE )
 
 pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
-
+  
   par(las=1)
 
   panel <- layout(
@@ -48,8 +49,8 @@ pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
   lon.labels <- seq(-180, 180, 60)
   lon.short  <- seq(-180, 180, 10)
   
-  a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
-  b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )
+  a <- sapply( lat.labels, function(x) if (x>0) {bquote(.(x)*degree ~N)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~S)} )
+  b <- sapply( lon.labels, function(x) if (x>0) {bquote(.(x)*degree ~E)} else if (x==0) {bquote(.(x)*degree)} else {bquote(.(-x)*degree ~W)})
   
   color <- c( "wheat", "tomato2", "tomato4" )
   
@@ -89,7 +90,7 @@ pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
   ## time series
   ##------------------------------------------------------------------------
   par( mar=c(4,4.1,3,1))
-  with( df, plot( year, gpp_s1b, type="l", ylim=c(100,160), lty=2, xlab="Year", ylab=expression( paste("Global GPP (PgC yr"^-1, ")" ) ) ) )
+  with( df, plot( year, gpp_s1b, type="l", ylim=c(100,160), lty=2, xlab="Year", ylab=expression( paste("Global GPP (Pg C yr"^-1, ")" ) ) ) )
   with( df,  polygon( c( year, rev(year)), c(gpp_s1a, rev(gpp_s1c)), border = NA, col=rgb(0,0,0,0.3) ) )
 
   with( df, lines( year, gpp_s0 ) )

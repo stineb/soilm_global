@@ -56,9 +56,16 @@ success  <- suppressMessages(read_csv( "successcodes.csv" ))
 do.sites.nn <- filter( success, successcode==1 )$mysitename
 do.sites.all <- filter( success, successcode==1 | successcode==2 )$mysitename
 siteinfo <- siteinfo %>%  mutate( group = ifelse(  mysitename %in% do.sites.nn, 1, ifelse(  mysitename %in% do.sites.all, 2, 0 ) ) ) %>%
-                          select( -elv, -elv_watch, -elv_diff, -years_data, -whc ) %>%
-                          rename( site=mysitename )
-siteinfo %>% filter( group %in% c(1,2) ) %>% mutate( lon=format(lon, digits=2), lat=format(lat, digits=4) ) %>% knitr::kable( caption = "Table S1: Sites used for bias evaluation" )
+              select( -elv, -elv_watch, -elv_diff, -years_data, -whc ) %>%
+              dplyr::rename( site=mysitename ) %>% 
+              filter( group %in% c(1,2) ) %>% 
+              arrange( group ) %>%
+              mutate( citation = paste0("[@", site ,"]") ) %>%
+              mutate( Period=paste0(as.character(year_start), "-", as.character(year_end)) )
+siteinfo %>%  select( -year_start, -year_end ) %>%
+              dplyr::rename( Site=site, Lon.=lon, Lat.=lat, Veg.=classid, Group=group, Reference=citation ) %>%
+              select( Site, Lon., Lat., Veg., Period, Group, Reference ) %>%
+              knitr::kable( caption = "Sites used for bias evaluation. Lon. is longitude, negative values indicate west longitude; Lat. is latitude, positive values indicate north latitude; Veg. is vegetation type: deciduous broadleaf forest (DBF); evergreen broadleaf forest (EBF); evergreen needleleaf forest (ENF); grassland (GRA); mixed deciduous and evergreen needleleaf forest (MF); savanna ecosystem (SAV); shrub ecosystem (SHR); wetland (WET)." )
 ```
 
 ```{r siteoverview_fig, echo=FALSE, warning=FALSE}
@@ -139,9 +146,9 @@ $$
     1,              & \theta > \theta^{\ast}
 \end{cases}
 $$
-2. The sensitivity of $\beta(\theta)$ to extreme soil dryness ($\theta \rightarrow 0$) is related to the mean aridity at the site. The dryness-related decline in $\beta(\theta)$ is particularly strong at the driest sites (mostly deserts, grasslands, savannahs), whereas sites at intermediate aridity (mostly mediterranean) exhibit a smaller reduction in $\beta(\theta)$ when soil water gets depleted. In the equation above, the "sensitivity parameter" $q$ is defined by the maximum $\beta$ reduction at low soil moisture $\beta_0\equiv\beta(\theta=\theta_0)$, leading to $q=(\beta_0-1)/(\theta^{\ast}-\theta_0)^2$. Note that $q$ has a negative value. $\beta_0$ is modelled as a linear function of the mean aridity, quantified by the mean annual ratio of AET/PET, termed $\alpha$:
+2. The sensitivity of $\beta(\theta)$ to extreme soil dryness ($\theta \rightarrow 0$) is related to the mean aridity at the site. The dryness-related decline in $\beta(\theta)$ is particularly strong at the driest sites (mostly deserts, grasslands, savannahs), whereas sites at intermediate aridity (mostly mediterranean) exhibit a smaller reduction in $\beta(\theta)$ when soil water gets depleted. In the equation above, the "sensitivity parameter" $q$ is defined by the maximum $\beta$ reduction at low soil moisture $\beta_0\equiv\beta(\theta=\theta_0)$, leading to $q=(\beta_0-1)/(\theta^{\ast}-\theta_0)^2$. Note that $q$ has a negative value. $\beta_0$ is modelled as a linear function of the mean aridity, quantified by the mean annual ratio of AET/PET, termed $\alpha'$:
 $$
-\beta_0 = a + b \alpha
+\beta_0 = a + b \alpha'
 $$
 
 We have tested several approaches to fit parameters $a$ and $b$ for empirical soil moisture stress functions $\beta(\theta)$. Final fitted functions based on approaches I-III bracket fLUE values derived at our selection of sites (group 1 in Table S1). Their definition is described below. Note that $\theta_0$ and $\theta^{\ast}$ differ slightly between approaches.
