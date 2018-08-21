@@ -24,7 +24,7 @@ widths[3] <- 0.80*widths[1]
 heights <- rep(magn,nrows)
 order <- matrix( c(1,2,3), nrows, ncols, byrow=TRUE )
 
-pdf( "fig/gpp_loss.pdf", width=sum(widths), height = sum(heights) )
+pdf( "fig/fig_2.pdf", width=sum(widths), height = sum(heights) )
   
   par(las=1)
 
