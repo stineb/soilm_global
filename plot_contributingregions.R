@@ -91,7 +91,7 @@ plot_map( stocker_fb*1e4, lev=seq(-0.5,0.5,0.1), positive=FALSE, maxval=30, minv
 ##-----------------------------------------------------
 ## Plot with inset
 ##-----------------------------------------------------
-filn <- "fig/map_stocker_gpploss.pdf"
+filn <- "fig/fig_4.pdf"
 
   arr = stocker_fb*1e4
   toplefttext = expression(paste(""))

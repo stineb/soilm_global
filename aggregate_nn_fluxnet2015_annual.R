@@ -110,7 +110,7 @@ for (sitename in unique(adf$mysitename)){
 
 }
 adf <- adf_agg
-rm("adf_agg")
+# rm("adf_agg")
 
 
 ##------------------------------------------------

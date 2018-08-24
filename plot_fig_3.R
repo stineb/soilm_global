@@ -10,7 +10,7 @@ load("data/relvar.Rdata")
 load("data/ampl_agg_jung.Rdata")
 
 ## file name for figure
-filn <- "fig/map_gpp_relvar_diff.pdf"
+filn <- "fig/fig_3.pdf"
 
 ##-----------------------------------------------------
 ## Panel layout

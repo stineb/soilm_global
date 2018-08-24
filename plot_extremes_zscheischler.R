@@ -74,55 +74,55 @@ filter(df_event_time, rank_global==15 ) %>% summarise( impact_s0 = sum(impact_s0
 ## Russia 2010 event
 filter(df_event_time, rank_global==11 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
 
-## plot time series of impact, integrated over lon-lat
-nevents_plot <- 8
-cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
-pdf( "fig/events_overtime.pdf", width = 8, height = 4)
-par( mar=c(5,4,1,1), xaxs="i", yaxs="i", las=1)
-with( df_event_time, plot(  date, -impact_s1b, type="n", ylim=c(0,max(-impact_s1b)), lwd=2, ylab="Impact (PgC/month)", xlim=c( ymd("1982-01-21"), ymd("2019-12-12")) ) )
-for (irank in 1:nevents_plot){
-  with( filter( df_event_time, rank_global==irank ), polygon( c(date, rev(date)), c(-impact_s1b, rep(0,nrow(filter( df_event_time, rank_global==irank )))), col=add_alpha(cols[irank], 0.6), border = NA ) )
-}
-legend("topright", as.character(1:nevents_plot), fill=add_alpha(cols, 0.6), bty = "n", border = NA)
-dev.off()
+# ## plot time series of impact, integrated over lon-lat
+# nevents_plot <- 8
+# cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
+# pdf( "fig/events_overtime.pdf", width = 8, height = 4)
+# par( mar=c(5,4,1,1), xaxs="i", yaxs="i", las=1)
+# with( df_event_time, plot(  date, -impact_s1b, type="n", ylim=c(0,max(-impact_s1b)), lwd=2, ylab="Impact (PgC/month)", xlim=c( ymd("1982-01-21"), ymd("2019-12-12")) ) )
+# for (irank in 1:nevents_plot){
+#   with( filter( df_event_time, rank_global==irank ), polygon( c(date, rev(date)), c(-impact_s1b, rep(0,nrow(filter( df_event_time, rank_global==irank )))), col=add_alpha(cols[irank], 0.6), border = NA ) )
+# }
+# legend("topright", as.character(1:nevents_plot), fill=add_alpha(cols, 0.6), bty = "n", border = NA)
+# dev.off()
 
-##------------------------------------------------------------
-## Plot Global
-##------------------------------------------------------------
-  magn <- 1
-  ncols <- 2
-  nrows <- 1
-  widths <- rep(6*magn,ncols)
-  heights <- rep(5*magn,nrows)
-  order <- matrix( c(1,2), nrows, ncols, byrow=FALSE)
-
-  pdf( "fig/extremes_global.pdf", width=sum(widths), height = sum(heights) )
-
-    panel <- layout(
-            order,
-            widths=widths,
-            heights=heights,
-            TRUE
-            )
-    # layout.show( panel )
-
-    ## Plot PDF of x>X
-    par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
-    n <- nrow(df_impacts)
-    plot(   sort( -df_impacts$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (Pg C)", pch=16, col = rgb(1,0,0,1) )
-    polygon( c( sort( -df_impacts$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -df_impacts$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
-    points( sort( -df_impacts$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-    legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
-    mtext( "a", font=2, adj = 0, line = 0.5, cex = 1.2 )
-    
-    ## Plot difference s1 - s0, relative (no dependence of amplification factor on size found)
-    par(las=1)
-    myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
-    abline( h=1, lty=3 )
-    points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
-    mtext( "b", font=2, adj = 0, line = 0.5, cex = 1.2 )
-    
-  dev.off()
+# ##------------------------------------------------------------
+# ## Plot Global
+# ##------------------------------------------------------------
+#   magn <- 1
+#   ncols <- 2
+#   nrows <- 1
+#   widths <- rep(6*magn,ncols)
+#   heights <- rep(5*magn,nrows)
+#   order <- matrix( c(1,2), nrows, ncols, byrow=FALSE)
+# 
+#   pdf( "fig/extremes_global.pdf", width=sum(widths), height = sum(heights) )
+# 
+#     panel <- layout(
+#             order,
+#             widths=widths,
+#             heights=heights,
+#             TRUE
+#             )
+#     # layout.show( panel )
+# 
+#     ## Plot PDF of x>X
+#     par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
+#     n <- nrow(df_impacts)
+#     plot(   sort( -df_impacts$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (Pg C)", pch=16, col = rgb(1,0,0,1) )
+#     polygon( c( sort( -df_impacts$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -df_impacts$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
+#     points( sort( -df_impacts$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
+#     legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
+#     mtext( "a", font=2, adj = 0, line = 0.5, cex = 1.2 )
+#     
+#     ## Plot difference s1 - s0, relative (no dependence of amplification factor on size found)
+#     par(las=1)
+#     myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
+#     abline( h=1, lty=3 )
+#     points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
+#     mtext( "b", font=2, adj = 0, line = 0.5, cex = 1.2 )
+#     
+#   dev.off()
 
 
 ##------------------------------------------------------------
@@ -142,7 +142,7 @@ dev.off()
     xmin * x ^ alpha
   }
 
-  pdf( "fig/extremes_bycont.pdf", width=sum(widths), height = sum(heights) )
+  pdf( "fig/fig_5.pdf", width=sum(widths), height = sum(heights) )
 
     panel <- layout(
             order,
@@ -290,68 +290,75 @@ dev.off()
     
   dev.off()
 
+# 
+# ## Plot PDF of x>X
+# pdf( "fig/extremes.pdf", width=10, height = 7 )
+# par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+# for (k in 1:nconts) {
+# # par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
+# # for (k in c(1,3,5)) {
+# 
+#   # df <- tibble( prob=(1:n)/sum(1:n), 
+#   #   s1a=sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, 
+#   #   s1b=sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, 
+#   #   s1c=sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9
+#   #   )
+#   n0 <- length(IMPACT_s0[[k]])
+#   n1 <- length(IMPACT_s1c[[k]])
+#   n <- min(n0,n1)
+#   plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = rgb(1,0,0,1), axes=FALSE )
+# 
+#   points(   sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
+#   points(   sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
+# 
+#   # polygon( c( sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, rev(sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
+#   points( sort( -1 * IMPACT_s0[[k]][1:n],  decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
+#   mtext( bquote( alpha["s1b"] == .(format( fit_s1b[[k]]$alpha, digits = 3) ) ), side=1, line=-4, adj=0.1 )
+#   mtext( bquote( alpha["s0"]  == .(format( fit_s0[[k]]$alpha,  digits = 3) ) ), side=1, line=-2, adj=0.1 )
+#   mtext( continent[k], line=1, font=2, adj=0 )
+#   axis(1, mgp=c(3,1,0) )
+#   axis(2, mgp=c(3.5,1,0))
+#   box()
+# }
+# legend( "left", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.5 )
+# dev.off()
+# 
+# 
+# ## Plot difference s1 - s0, absolute
+# pdf("fig/extremes_s1-s0_abs_glob.pdf",width=10)
+#   # par(las=1)
+#   # with( df_impacts, plot( -1e-15*(s1b-s0), ylab="s1b-s0 (PgC)", xlab="event rank", pch=16, col = rgb(0,0,0,1)) )
+#   # abline( h=0, lty=3 )
+#   par(las=1)
+#   myboxplot( (s0-s1b) ~ icont, data=df_impacts, ylab="difference s1b - s0 (PgC)", col="grey70", names=cont )
+#   abline( h=0, lty=3 )
+#   points(1:5, mean_cont$s0-mean_cont$s1b, pch=16, col="red")
+# dev.off()
+# 
+# ## Plot difference s1 - s0, relative
+# pdf("fig/extremes_s1-s0_rel_glob.pdf",width=10)
+#   par(las=1)
+#   with( df_impacts, plot( (s1b/s0), ylab="ratio s1b/s0", xlab="event rank", pch=16, col = rgb(0,0,0,1)) )
+#   abline( h=1, lty=3 )
+# dev.off()
+# 
+# ## Plot difference s1 - s0, relative (no dependence of amplification factor on size found)
+# pdf( "fig/extremes_s1-s0_rel_glob.pdf", width=7 )
+#   par(las=1)
+#   myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
+#   abline( h=1, lty=3 )
+#   points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
+# dev.off()
+# 
 
-## Plot PDF of x>X
-pdf( "fig/extremes.pdf", width=10, height = 7 )
-par( mfrow=c(2,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-for (k in 1:nconts) {
-# par( mfrow=c(1,3), las=1, mar=c(4,4.5,3,1), mgp=c(3,1,0) )
-# for (k in c(1,3,5)) {
 
-  # df <- tibble( prob=(1:n)/sum(1:n), 
-  #   s1a=sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, 
-  #   s1b=sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, 
-  #   s1c=sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9
-  #   )
-  n0 <- length(IMPACT_s0[[k]])
-  n1 <- length(IMPACT_s1c[[k]])
-  n <- min(n0,n1)
-  plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = rgb(1,0,0,1), axes=FALSE )
-
-  points(   sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
-  points(   sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
-
-  # polygon( c( sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, rev(sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
-  points( sort( -1 * IMPACT_s0[[k]][1:n],  decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-  mtext( bquote( alpha["s1b"] == .(format( fit_s1b[[k]]$alpha, digits = 3) ) ), side=1, line=-4, adj=0.1 )
-  mtext( bquote( alpha["s0"]  == .(format( fit_s0[[k]]$alpha,  digits = 3) ) ), side=1, line=-2, adj=0.1 )
-  mtext( continent[k], line=1, font=2, adj=0 )
-  axis(1, mgp=c(3,1,0) )
-  axis(2, mgp=c(3.5,1,0))
-  box()
-}
-legend( "left", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.5 )
-dev.off()
-
-
-## Plot difference s1 - s0, absolute
-pdf("fig/extremes_s1-s0_abs_glob.pdf",width=10)
-  # par(las=1)
-  # with( df_impacts, plot( -1e-15*(s1b-s0), ylab="s1b-s0 (PgC)", xlab="event rank", pch=16, col = rgb(0,0,0,1)) )
-  # abline( h=0, lty=3 )
-  par(las=1)
-  myboxplot( (s0-s1b) ~ icont, data=df_impacts, ylab="difference s1b - s0 (PgC)", col="grey70", names=cont )
-  abline( h=0, lty=3 )
-  points(1:5, mean_cont$s0-mean_cont$s1b, pch=16, col="red")
-dev.off()
-
-## Plot difference s1 - s0, relative
-pdf("fig/extremes_s1-s0_rel_glob.pdf",width=10)
-  par(las=1)
-  with( df_impacts, plot( (s1b/s0), ylab="ratio s1b/s0", xlab="event rank", pch=16, col = rgb(0,0,0,1)) )
-  abline( h=1, lty=3 )
-dev.off()
-
-## Plot difference s1 - s0, relative (no dependence of amplification factor on size found)
-pdf( "fig/extremes_s1-s0_rel_glob.pdf", width=7 )
-  par(las=1)
-  myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
-  abline( h=1, lty=3 )
-  points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
-dev.off()
-
-
-
+  
+  
+  
+  
+  
+  
+  
 
 # print("amplification of the largest extremes")
 # for (k in c(1,3,5,2,4,6)) {
