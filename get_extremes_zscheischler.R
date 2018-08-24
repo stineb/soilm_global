@@ -11,10 +11,11 @@ myboxplot <- function( ... ){
 
 
 ##-----------------------
-overwrite <- FALSE
+overwrite <- TRUE
 ##-----------------------
 
 outfile <- "data/extremes.Rdata"
+nconts <- 5
 
 ##------------------------------------------------------------
 ## Identify events
@@ -73,7 +74,7 @@ if (!file.exists(outfile)||overwrite){
   latx <- 360
   for (j in 1:nconts) {
     
-    print(paste("continent",as.character(j),"/ 6"))
+    print(paste("continent",as.character(j),"/ ", as.character(nconts) ))
     
     # define mask for only 1 continent
     Na <- SREX %in% subsets[[j]]
@@ -148,7 +149,10 @@ df_impacts <- bind_rows( list_impacts ) %>%
               arrange( s1b )
               
 
-save( df_impacts, list_impacts, file = "data/impacts_extremes.Rdata")
+##------------------------------------------------------------
+## Save all data needed for plotting later (plot_fig_5.R)
+##------------------------------------------------------------
+save( df_impacts, list_impacts, ANOM_s0.a, ANOM_s1b.a, CC_list, file = "data/impacts_extremes.Rdata")
 
 
 ##------------------------------------------------------------
@@ -160,12 +164,11 @@ print("plot events...")
 nc <- nc_open( "~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc" )
 nc_close(nc)
 date <- ymd( "2001-01-01" ) + days( floor(nc$dim$time$vals) )
-nevents <- 141
-nevents_plot <- 8
-cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
+nevents <- 200
 
 overwrite_located <- TRUE
 filn_located <- "data/extremes_located.Rdata"
+
 if (file.exists(filn_located)&&!overwrite_located){
   
   load( filn_located )
@@ -183,24 +186,24 @@ if (file.exists(filn_located)&&!overwrite_located){
     
     print( paste( "    event ranked", as.character(irank) ) )
     tmp <- df_impacts %>% filter( rank_global==irank )
-    icont <- tmp$icont
-    event_no <- tmp$event_no
+    myicont <- tmp$icont
+    myevent_no <- tmp$event_no
     rank_global <- tmp$rank_global
     
     ## create array that contains anomaly for voxels in this event and NA otherwise
     ## ... based on s0
     LargestE_s0 <- NA * ANOM_s0.a
-    LargestE_s0[CC_list[[icont]]$list[[event_no]]] <- ANOM_s0.a[CC_list[[icont]]$list[[event_no]]]
+    LargestE_s0[CC_list[[myicont]]$list[[myevent_no]]] <- ANOM_s0.a[CC_list[[myicont]]$list[[myevent_no]]]
     
     ## ... based on s1b
     LargestE_s1b <- NA * ANOM_s1b.a
-    LargestE_s1b[CC_list[[icont]]$list[[event_no]]] <- ANOM_s1b.a[CC_list[[icont]]$list[[event_no]]]
+    LargestE_s1b[CC_list[[myicont]]$list[[myevent_no]]] <- ANOM_s1b.a[CC_list[[myicont]]$list[[myevent_no]]]
     
     ## integrate over lon-lat, projecting onto time
     event_time_s0    <- apply( LargestE_s0 , 3, sum, na.rm = TRUE ) * 1e-15
     event_time_s1b   <- apply( LargestE_s1b, 3, sum, na.rm = TRUE ) * 1e-15
 
-    addrows <- tibble( date=date, year=year(date), month=month(date), impact_s0=event_time_s0, impact_s1b=event_time_s1b, icont=icont, event_no=event_no, rank_global=rank_global ) %>%
+    addrows <- tibble( date=date, year=year(date), month=month(date), impact_s0=event_time_s0, impact_s1b=event_time_s1b, icont=myicont, event_no=myevent_no, rank_global=rank_global ) %>%
                filter( abs(impact_s0)>0 | abs(impact_s1b)>0 )
     df_event_time <- bind_rows( df_event_time, addrows )
 
@@ -209,10 +212,9 @@ if (file.exists(filn_located)&&!overwrite_located){
     arr_event_lonlat[ arr_event_lonlat==0 ] <- NA
 
     ## plot map of impact, integrated over time
-    yearchar <- date[which(abs(event_time_s0)>0)] %>% year() %>% table() %>% sort() %>% names()
+    yearchar <- df_event_time %>% dplyr::filter( event_no==myevent_no & icont==myicont ) %>% mutate( year=year(date)) %>% dplyr::select(year)  %>% table() %>% sort() %>% names()
     if (irank <= nevents_plot) plot_map( -arr_event_lonlat[,,irank], col = cols[irank], add=addmap, file=paste0( "fig/map_event_", sprintf( "%02d", irank ), ".pdf" ), text=yearchar[1] )
-
-    # addmap <- TRUE
+    
   }
   
   save( arr_event_lonlat, df_event_time, file=filn_located )

@@ -74,17 +74,65 @@ filter(df_event_time, rank_global==15 ) %>% summarise( impact_s0 = sum(impact_s0
 ## Russia 2010 event
 filter(df_event_time, rank_global==11 ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b=sum(impact_s1b) ) %>% print()
 
-# ## plot time series of impact, integrated over lon-lat
-# nevents_plot <- 8
-# cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
-# pdf( "fig/events_overtime.pdf", width = 8, height = 4)
-# par( mar=c(5,4,1,1), xaxs="i", yaxs="i", las=1)
-# with( df_event_time, plot(  date, -impact_s1b, type="n", ylim=c(0,max(-impact_s1b)), lwd=2, ylab="Impact (PgC/month)", xlim=c( ymd("1982-01-21"), ymd("2019-12-12")) ) )
-# for (irank in 1:nevents_plot){
-#   with( filter( df_event_time, rank_global==irank ), polygon( c(date, rev(date)), c(-impact_s1b, rep(0,nrow(filter( df_event_time, rank_global==irank )))), col=add_alpha(cols[irank], 0.6), border = NA ) )
-# }
-# legend("topright", as.character(1:nevents_plot), fill=add_alpha(cols, 0.6), bty = "n", border = NA)
-# dev.off()
+
+##------------------------------------------------------------
+## Locate events in time and space (only 141 biggest)
+##------------------------------------------------------------
+## integrate over ten largest events globally
+## get dates from NetCDF file
+print("plot events...")
+load( "data/extremes_located.Rdata" )
+
+nevents_plot <- 8
+cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
+
+## get dates from the original model output file
+nc <- nc_open( "~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc" )
+nc_close(nc)
+date <- ymd( "2001-01-01" ) + days( floor(nc$dim$time$vals) )
+
+addmap <- FALSE
+
+for (irank in 1:nevents_plot){
+  
+  print( paste( "    event ranked", as.character(irank) ) )
+  tmp <- df_impacts %>% filter( rank_global==irank )
+  myicont <- tmp$icont
+  myevent_no <- tmp$event_no
+
+  ## plot map of impact, integrated over time
+  yearchar <- df_event_time %>% dplyr::filter( event_no==myevent_no & icont==myicont ) %>% mutate( year=year(date)) %>% dplyr::select(year)  %>% table() %>% sort() %>% names()
+  if (irank <= nevents_plot) plot_map( -arr_event_lonlat[,,irank], col = cols[irank], add=addmap, file=paste0( "fig/map_event_", sprintf( "%02d", irank ), ".pdf" ), text=yearchar[1] )
+  
+}
+
+
+
+##------------------------------------------------------------
+## plot time series of impact, integrated over lon-lat, top 8 events
+##------------------------------------------------------------
+nevents_plot <- 8
+cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
+pdf( "fig/events_overtime.pdf", width = 8, height = 4)
+par( mar=c(5,4,1,1), xaxs="i", yaxs="i", las=1)
+with( df_event_time, plot(  date, -impact_s1b, type="n", ylim=c(0,max(-impact_s1b)), lwd=2, ylab="Impact (PgC/month)", xlim=c( ymd("1982-01-21"), ymd("2019-12-12")) ) )
+for (irank in 1:nevents_plot){
+  with( filter( df_event_time, rank_global==irank ), polygon( c(date, rev(date)), c(-impact_s1b, rep(0,nrow(filter( df_event_time, rank_global==irank )))), col=add_alpha(cols[irank], 0.6), border = NA ) )
+}
+legend("topright", as.character(1:nevents_plot), fill=add_alpha(cols, 0.6), bty = "n", border = NA)
+dev.off()
+
+
+##------------------------------------------------------------
+## plot time series of impact, integrated over lon-lat, summed over all events
+##------------------------------------------------------------
+df_impact_time <- df_event_time %>% dplyr::filter( impact_s0 <= 0.0 & impact_s1b <= 0.0 ) %>% group_by( date ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% mutate( diff = -impact_s1b+impact_s0 )
+df_impact_year <- df_impact_time %>% mutate( year = year( date ) ) %>% group_by( year ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% mutate( diff = -impact_s1b+impact_s0 )
+with( df_impact_time, plot( date, -impact_s0, type="l"))
+with( df_impact_time, lines( date, -impact_s1b, col="red"))
+with( df_impact_time, plot( date, diff, type="l"))
+with( df_impact_year, plot( year, diff, type="l"))
+lm( diff ~ year, data = df_impact_year  ) %>% abline()
 
 # ##------------------------------------------------------------
 # ## Plot Global
