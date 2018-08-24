@@ -16,6 +16,7 @@ output:
 header-includes:
    - \usepackage{amsmath}
 bibliography: bibliography.bib
+csl: nature.csl
 ---
 
 ```{r setup, include=FALSE}
