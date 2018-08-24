@@ -272,6 +272,8 @@ filter(df_event_time, rank_global==11 ) %>% summarise( impact_s0 = sum(impact_s0
       # ## test if data is drawn from a power law distribution
       # bs_cpl = bootstrap_p( d_cpl, no_of_sims=500, threads=1 )
       # print(bs_cpl$p)
+      
+      save( d_cpl_s1b, d_cpl_s0, file = paste0( "data/d_cpl_cont", icont, ".Rdata" ) )
 
     }
     
