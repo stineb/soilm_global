@@ -4,6 +4,8 @@ library(abind)
 source("../utilities/plot_map.R")
 source("../utilities/mycolorbar.R")
 
+myhome <- "/alphadata01/bstocker/"
+
 get_stocker_f <- function( eff, anom, isabs=FALSE ){
   ##---------------------------------------------------
   ## requires as input a 3D effay with lon x lat x time
@@ -83,10 +85,10 @@ stocker_fb <- get_stocker_f( detr$diffb, detr$Pmodel_S1b, isabs=FALSE )
 # ahlstroem_fb <- get_stocker_f( detr$Pmodel_S0, detr$Pmodel_S0, isabs=FALSE )
 # plot_map( ahlstroem_fb*1e4, lev=seq(-1,1,0.2), positive=FALSE, maxval=30, minval=-30, file=paste0("fig/map_ahlstroem_s0.pdf") ) #  
 
-##-----------------------------------------------------
-## Plot without inset
-##-----------------------------------------------------
-plot_map( stocker_fb*1e4, lev=seq(-0.5,0.5,0.1), positive=FALSE, maxval=30, minval=-30 )
+# ##-----------------------------------------------------
+# ## Plot without inset
+# ##-----------------------------------------------------
+# plot_map( stocker_fb*1e4, lev=seq(-0.5,0.5,0.1), positive=FALSE, maxval=30, minval=-30 )
 
 ##-----------------------------------------------------
 ## Plot with inset
