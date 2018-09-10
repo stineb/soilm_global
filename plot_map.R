@@ -1,4 +1,4 @@
-plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, toprighttext=NA, minval=NA, maxval=NA, color=NA ){
+plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, toprighttext=NA, minval=NA, maxval=NA, color=NA, stippling = NA ){
 
   require( ncdf4, quietly = TRUE )
   require( fields, quietly = TRUE )
@@ -89,9 +89,18 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
     if (!is.na(toplefttext)) mtext( toplefttext, line=1, adj=0 )
     if (!is.na(toprighttext)) mtext( toprighttext, line=1, adj=1 )
 
+    ## Add stippling (taken from https://stackoverflow.com/questions/11736996/adding-stippling-to-image-contour-plot)
+    if (!identical(stippling, NA)){
+      incl <- which( stippling == 1 )
+      grd <- expand.grid( x=lon, y=lat )
+      incl <- incl[ seq(4,length(incl), by=4) ]
+      points( grd$x[incl], grd$y[incl], pch=".", cex=1 )
+    }
+
+
     ## Color key
     par( mar=c(3,3,3,1),xaxs="i", yaxs="i",las=1)
-    out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=1 )
+    out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=maxval, minval=minval )
 
   if (!is.na(file)) dev.off()  
 

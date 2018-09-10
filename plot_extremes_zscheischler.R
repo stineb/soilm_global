@@ -134,6 +134,26 @@ with( df_impact_time, plot( date, diff, type="l"))
 with( df_impact_year, plot( year, diff, type="l"))
 lm( diff ~ year, data = df_impact_year  ) %>% abline()
 
+linmod <- lm( diff ~ year, data = df_impact_year )
+
+lm_slope <- function(linmod){
+  ci <- confint(linmod)
+  eq <- substitute( italic("slope") == a~ "["*b~ - ~c*"] yr" ^-1,
+                    list(a = format(coef(linmod)[2], digits = 2), b = format( ci[2,1], digits = 2 ), c = format( ci[2,2], digits = 2 ) ) )
+  as.character(as.expression(eq))
+}
+
+ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = diff ) ) + 
+  geom_point() + 
+  geom_smooth (method = "lm", level = 0.95 ) + 
+  theme_bw() +
+  labs( x = "Year", y = bquote( "Impact difference ("*Pg~ C~ yr^-1*")") ) +
+  annotate( geom = "text", x = 1999, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 )
+ggp 
+ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
+
+
+                  
 # ##------------------------------------------------------------
 # ## Plot Global
 # ##------------------------------------------------------------

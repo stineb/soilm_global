@@ -163,7 +163,7 @@ proc_10y () {
 }
 
 here=`pwd`
-myhome=/alphadata01/bstocker/
+myhome=~
 
 
 # ##----------------------------------------------------
@@ -235,9 +235,9 @@ cd $myhome/data/pmodel_fortran_output/v2/
 # get_anom gpp_pmodel_s1c
 
 # ## get trend in the soil moisture effect
-# get_trend_effect gpp_pmodel_s1a
+# get_trend_effect gpp_pmodel_s0 gpp_pmodel_s1a
 get_trend_effect gpp_pmodel_s0 gpp_pmodel_s1b
-# get_trend_effect gpp_pmodel_s1c
+# get_trend_effect gpp_pmodel_s0 gpp_pmodel_s1c
 
 cd $here
 
