@@ -140,7 +140,7 @@ df_impact_year <- df_impact_time %>%
                   mutate( diff = -impact_s1b+impact_s0 )
 
 with( df_impact_time, plot( date, -impact_s0, type="l"))
-with( df_impact_time, lines( date, -impact_s1b, col="red"))
+with( df_impact_time, lines( date, -impact_s1b, col="tomato"))
 with( df_impact_time, plot( date, diff, type="l"))
 with( df_impact_year, plot( year, diff, type="l"))
 lm( diff ~ year, data = df_impact_year  ) %>% abline()
@@ -208,17 +208,17 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 #     ## Plot PDF of x>X
 #     par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
 #     n <- nrow(df_impacts)
-#     plot(   sort( -df_impacts$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (Pg C)", pch=16, col = rgb(1,0,0,1) )
+#     plot(   sort( -df_impacts$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (Pg C)", pch=16, col = "tomato" )
 #     polygon( c( sort( -df_impacts$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -df_impacts$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
 #     points( sort( -df_impacts$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-#     legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
+#     legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
 #     mtext( "a", font=2, adj = 0, line = 0.5, cex = 1.2 )
 #     
 #     ## Plot difference s1 - s0, relative (no dependence of amplification factor on size found)
 #     par(las=1)
 #     myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
 #     abline( h=1, lty=3 )
-#     points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
+#     points(1:5, mean_cont$ampl_s1b, pch=16, col=tomatod")
 #     mtext( "b", font=2, adj = 0, line = 0.5, cex = 1.2 )
 #     
 #   dev.off()
@@ -257,17 +257,17 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
 
       # # n <- nrow(list_impacts[[icont]])
-      # # plot(       sort( -list_impacts[[icont]]$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = rgb(1,0,0,1), xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))) )
+      # # plot(       sort( -list_impacts[[icont]]$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = "tomato", xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))) )
       # # # polygon( c( sort( -list_impacts[[icont]]$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -list_impacts[[icont]]$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
       # # points(     sort( -list_impacts[[icont]]$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-      # # legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
+      # # legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
       # # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
       # 
       # ## no cutoff
       # n <- length(list_impacts[[icont]]$s1b)
-      # plot(       sort( -list_impacts[[icont]]$s1b*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = rgb(1,0,0,1), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))) )
+      # plot(       sort( -list_impacts[[icont]]$s1b*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = "tomato", xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))) )
       # points(     sort( -list_impacts[[icont]]$s0*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-      # legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
+      # legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
       # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
       # 
       # ## Power Law fitting using "igraph" package
@@ -280,7 +280,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       #             mutate( y = fct_powerlaw( x, fit1$xmin, -fit1$alpha ) )
       # 
       # lines( pred_s0, lwd=2 )
-      # lines( pred_s1b, lwd=2, col="red" )
+      # lines( pred_s1b, lwd=2, col="tomato" )
       # 
       # # alpha_s1 <- fit1$alpha
       # # alpha_s0 <- fit0$alpha
@@ -311,15 +311,15 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       d_cpl_s1b$setXmin(est_s1b)
       d_cpl_s0$setXmin(est_s0)
       
-      out <- plot( d_cpl_s1b, pch=16, col = rgb(1,0,0,0.5), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))), xlab="", ylab="" )
+      out <- plot( d_cpl_s1b, pch=16, col = "tomato", xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))), xlab="", ylab="" )
       mtext( "Impact (Pg C)", side = 1, line = 3, cex = 0.8 )
       mtext( "p( Impact > x )", side = 2, line = 3.2, las=0, cex = 0.8 )
-      out_lines_s1b <- lines(d_cpl_s1b, col = rgb(1,0,0,1), xlab="Impact (PgC)", ylab="p(Impact>x)")
+      out_lines_s1b <- lines(d_cpl_s1b, col = "tomato", xlab="Impact (PgC)", ylab="p(Impact>x)")
       par(new=TRUE)
       plot( d_cpl_s0, pch=16, col = rgb(0,0,0,0.5), xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))), axes=FALSE, xlab="", ylab="" )
       out_lines_s0 <- lines( d_cpl_s0, col = rgb(0,0,0,1))
       
-      if (icont==1) legend( "bottomleft", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.2 )
+      if (icont==1) legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1b","s0"), bty="n", cex = 1.2 )
       mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
 
       ## back-calculate xmin and alpha from lines outout
@@ -340,10 +340,10 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
                   mutate( y0 = fct_powerlaw( x, xmin_s0, -(d_cpl_s0$pars-1) ) )
 
       lines( out_lines_s0, lwd=2, col="black" )
-      lines( out_lines_s1b, lwd=2, col="red" )
+      lines( out_lines_s1b, lwd=2, col="tomato" )
 
       lines( pred_s0, lwd=2, lty=2 )
-      lines( pred_s1b, lwd=2, lty=2, col="red" )
+      lines( pred_s1b, lwd=2, lty=2, col="tomato" )
       # lines( pred_s1b$x, pred_s1b$y0, lwd=2, lty=2, col="green" )
       
       ## get mean amplification of probability
@@ -358,8 +358,8 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       # mtext( expression( paste( alpha[s0], "= -", d_cpl_s0$pars ) ), line-1, adj = 1 )
       mtext( bquote( italic(N) == .( format( length(list_impacts[[icont]]$s1b), digits = 3 ) ) ), line = -1.4, adj = 0.95, cex=0.9 )
       mtext( bquote( alpha[s0] == .( format( d_cpl_s0$pars, digits = 3 ) ) ), line = -2.7, adj = 0.95, cex=0.9 )
-      mtext( bquote( alpha[s1b] == .( format( d_cpl_s1b$pars, digits = 3 ) ) ), line = -3.9, adj = 0.95, cex=0.9, col="red" )
-      mtext( bquote( italic(A) == .( format( ampl, digits = 3 ) ) ), line = -5.1, adj = 0.95, cex=0.9, col="red" )
+      mtext( bquote( alpha[s1b] == .( format( d_cpl_s1b$pars, digits = 3 ) ) ), line = -3.9, adj = 0.95, cex=0.9, col="tomato" )
+      mtext( bquote( italic(A) == .( format( ampl, digits = 3 ) ) ), line = -5.1, adj = 0.95, cex=0.9, col="tomato" )
       
       # (alpha_s1-1) * fit1$xmin^(alpha_s1-1)
       # x1 <- seq(fit1$xmin, 2, length.out = 100)
@@ -380,12 +380,12 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
     par(las=1)
     
     # myboxplot( (s0-s1b)*1e-15 ~ icont, data=df_impacts, ylab="difference s1b - s0 (PgC)", col="grey70", names=cont, ylim=c(-0.01,0.1) )
-    # points(1:5, (mean_cont$s0-mean_cont$s1b)*1e-15, pch=16, col="red")
+    # points(1:5, (mean_cont$s0-mean_cont$s1b)*1e-15, pch=16, col=tomatod")
     # abline( h=0, lty=3 )
       
     myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="s1b/s0", col="grey70", names=cont, ylim=c(0.2,3) )
     abline( h=1, lty=3 )
-    # points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
+    # points(1:5, mean_cont$ampl_s1b, pch=16, col=tomatod")
 
     mtext( paste0( letters[icont+1], ")"), font=2, adj = 0, line = 0.5, cex = 1 )
     
@@ -407,7 +407,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 #   n0 <- length(IMPACT_s0[[k]])
 #   n1 <- length(IMPACT_s1c[[k]])
 #   n <- min(n0,n1)
-#   plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = rgb(1,0,0,1), axes=FALSE )
+#   plot(   sort( -1 * IMPACT_s1b[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy",ylab="p(x)",xlab="PgC", pch=16, col = "tomato", axes=FALSE )
 # 
 #   points(   sort( -1 * IMPACT_s1a[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
 #   points(   sort( -1 * IMPACT_s1c[[k]][1:n], decreasing=TRUE ) * 1e-9, (1:n)/sum(1:n), log="xy", pch=16, col = rgb(1,0,0,0.4), axes=FALSE )
@@ -421,7 +421,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 #   axis(2, mgp=c(3.5,1,0))
 #   box()
 # }
-# legend( "left", pch=16, col=c(rgb(1,0,0,1), rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.5 )
+# legend( "left", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1.5 )
 # dev.off()
 # 
 # 
@@ -433,7 +433,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 #   par(las=1)
 #   myboxplot( (s0-s1b) ~ icont, data=df_impacts, ylab="difference s1b - s0 (PgC)", col="grey70", names=cont )
 #   abline( h=0, lty=3 )
-#   points(1:5, mean_cont$s0-mean_cont$s1b, pch=16, col="red")
+#   points(1:5, mean_cont$s0-mean_cont$s1b, pch=16, col=tomatod")
 # dev.off()
 # 
 # ## Plot difference s1 - s0, relative
@@ -448,7 +448,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 #   par(las=1)
 #   myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="ratio s1b/s0", col="grey70", names=cont, ylim=c(0.5,2.5) )
 #   abline( h=1, lty=3 )
-#   points(1:5, mean_cont$ampl_s1b, pch=16, col="red")
+#   points(1:5, mean_cont$ampl_s1b, pch=16, col=tomatod")
 # dev.off()
 # 
 

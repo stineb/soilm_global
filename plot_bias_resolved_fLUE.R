@@ -229,11 +229,11 @@ plot_bias_resolved <- function( tmp, tmp0, tmp1, tmp4, tmp3, filn=NA, cex=1.0 ){
     box( lwd=1.5 )
     abline( h=0, lty=3 )
     legend("bottomright", 
-      c("Pooled models, normalised", 
-        "Pooled models, normalised, corrected by fLUE", 
-        "Pooled models, normalised, corrected by I", 
-        "Pooled models, normalised, corrected by IV", 
-        "Pooled models, normalised, corrected by III"), 
+      c(expression("Pooled models, normalised"), 
+        expression("Corrected by fLUE"), 
+        expression("Corrected by" ~ italic(a) ), 
+        expression("Corrected by" ~ italic(b) ), 
+        expression("Corrected by" ~ italic(c) ) ), 
       fill=c("tomato", "royalblue3", "springgreen1", "springgreen3", "springgreen4"), bty="n", cex=cex )
   if (!is.na(filn)) dev.off()  
 }

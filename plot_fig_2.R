@@ -92,16 +92,17 @@ pdf( "fig/fig_2.pdf", width=sum(widths), height = sum(heights) )
   ## time series
   ##------------------------------------------------------------------------
   par( mar=c(4,4.2,2,1), mgp =c(2.8,1,0))
-  with( df, plot( year, gpp_s1b, type="l", ylim=c(100,160), lty=2, lwd=1.5, xlab="Year", ylab=expression( paste("Global GPP (Pg C yr"^-1, ")" ) ), cex.lab=1.2 ) )
+  with( df, plot( year, gpp_s1b, type="n", ylim=c(100,160), xlab="Year", ylab=expression( paste("Global GPP (Pg C yr"^-1, ")" ) ), cex.lab=1.2 ) )
   with( df,  polygon( c( year, rev(year)), c(gpp_s1a, rev(gpp_s1c)), border = NA, col=rgb(0,0,0,0.3) ) )
 
-  with( df, lines( year, gpp_s0, lwd=1.5 ) )
-  with( df, lines( year, gpp_modis, col="red", lwd=1.5 ) )
-  with( df, lines( year, gpp_vpm, col="magenta", lwd=1.5 ) )
-  with( df, lines( year, gpp_bess, col="blue", lwd=1.5 ) )
-  with( df, lines( year, gpp_mte, col="springgreen3", lwd=1.5 ) )
+  with( df, lines( year, gpp_s1b, lty=2, lwd=1.5, col="tomato" ) )
+  with( df, lines( year, gpp_s0, col="tomato", lwd=1.5 ) )
+  with( df, lines( year, gpp_modis, col="orchid", lwd=1.5 ) )
+  with( df, lines( year, gpp_vpm, col="springgreen3", lwd=1.5 ) )
+  with( df, lines( year, gpp_bess, col="royalblue3", lwd=1.5 ) )
+  with( df, lines( year, gpp_mte, col="darkgoldenrod3", lwd=1.5 ) )
 
-  legend("topleft", c( "P-model", "P-model, corrected (IV)", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), lwd=1.5, col=c("black", "black", "red", "magenta", "blue", "springgreen3") )
+  legend("topleft", c( "P-model, s0", "P-model, s1b (grey range: s1a - s1c)", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), lwd=1.5, col=c("tomato", "tomato", "orchid", "springgreen3", "royalblue3", "darkgoldenrod3") )
   mtext( "b)", font=2, adj = 0, line = 0.5, cex = 1.2 )
 
   ##------------------------------------------------------------------------

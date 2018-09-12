@@ -138,7 +138,7 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                          complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen1", 0.3), border=NA )
-    lines( median, col='springgreen1', lwd=2 )
+    lines( median, col='orchid', lwd=2 )
 
     ##--------------------------------------------------------
     ## Bias VPM
@@ -155,9 +155,9 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
                          complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen4", 0.3), border=NA )
-    lines( median, col='springgreen4', lwd=2 )
+    lines( median, col='springgreen3', lwd=2 )
 
-    legend( "topleft", c( expression(paste("fLUE"^-1)), "P-model", "BESS", "MODIS", "VPM"), bty="n", lty=1, lwd=2, col=c( "black" ,"tomato", "royalblue3","springgreen1", "springgreen4"), cex=1.0 )
+    legend( "topleft", c( expression(paste("fLUE"^-1)), "P-model", "BESS", "MODIS", "VPM"), bty="n", lty=1, lwd=2, col=c( "black" ,"tomato", "royalblue3","orchid", "springgreen3"), cex=1.0 )
 
   if (!is.na(filn)) dev.off()
 
