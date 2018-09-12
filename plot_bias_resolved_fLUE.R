@@ -216,17 +216,19 @@ plot_bias_resolved <- function( tmp, tmp0, tmp1, tmp4, tmp3, filn=NA, cex=1.0 ){
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1, mar=c(4,4,2,1) )
     plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("Bias (mod.-obs., g C m"^-2, "d"^-1, ")" ) ), axes=FALSE )
-    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
-    myboxplot( bias_diff ~ infbin, data = tmp, at=1:5-0.2, col="tomato", boxwex=0.2, add=TRUE )
-    myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=1:5+0.0, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.2 )
-    myboxplot( bias_diff_corr_I ~ infbin, data = tmp1, at=1:5+0.15, add=TRUE, col="springgreen1", axes=FALSE, boxwex=0.1 )
-    myboxplot( bias_diff_corr_IV ~ infbin, data = tmp4, at=1:5+0.25, add=TRUE, col="springgreen3", axes=FALSE, boxwex=0.1 )
-    myboxplot( bias_diff_corr_III ~ infbin, data = tmp3, at=1:5+0.35, add=TRUE, col="springgreen4", axes=FALSE, boxwex=0.1 )
+    rect( 5:1-0.5, rep(ylim[1], 6), 5:1+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    
+    myboxplot( bias_diff ~ infbin, data = tmp, at=5:1-0.2, col="tomato", boxwex=0.2, add=TRUE )
+    myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=5:1+0.0, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.2 )
+    myboxplot( bias_diff_corr_I ~ infbin, data = tmp1, at=5:1+0.15, add=TRUE, col="springgreen1", axes=FALSE, boxwex=0.1 )
+    myboxplot( bias_diff_corr_IV ~ infbin, data = tmp4, at=5:1+0.25, add=TRUE, col="springgreen3", axes=FALSE, boxwex=0.1 )
+    myboxplot( bias_diff_corr_III ~ infbin, data = tmp3, at=5:1+0.35, add=TRUE, col="springgreen4", axes=FALSE, boxwex=0.1 )
+    
     axis( 2, lwd=1.5 )
     axis( 4, lwd=1.5, labels=FALSE )
     box( lwd=1.5 )
     abline( h=0, lty=3 )
-    legend("bottomleft", 
+    legend("bottomright", 
       c("Pooled models, normalised", 
         "Pooled models, normalised, corrected by fLUE", 
         "Pooled models, normalised, corrected by I", 

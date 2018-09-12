@@ -5,23 +5,22 @@ require(lubridate)
 require(fields)
 require(sp)
 require(maptools)
-library(poweRlaw) # https://cran.r-project.org/web/packages/poweRlaw/vignettes/b_powerlaw_examples.pdf
 library(RColorBrewer)
 library(igraph) # for fit_power_law()
-
 
 myboxplot <- function( ... ){
   boxplot( ..., staplewex=0, whisklty=1, outpch=16, outcex=0.5 )
 }
 
-
-load("data/extremes.Rdata")
-load("data/impacts_extremes.Rdata")
-load("data/extremes_located.Rdata")
+# print("loading data...")
+# load("data/extremes.Rdata")
+# load("data/impacts_extremes.Rdata")
+# load("data/extremes_located.Rdata")
 
 ##------------------------------------------------------------
 ## Plot by continent
 ##------------------------------------------------------------
+  print("plotting...")
   cont <- c("NA", "SA", "EA", "AF", "AU")
   continent <- c("North America", "South America", "Eurasia", "Africa", "Australia")
   
@@ -58,6 +57,8 @@ load("data/extremes_located.Rdata")
       
       } else {
 
+        library(poweRlaw) # https://cran.r-project.org/web/packages/poweRlaw/vignettes/b_powerlaw_examples.pdf
+        
         ## Power Law fitting using "poweRlaw" package
         ## continuous power-law
         d_cpl_s1b = conpl$new(-list_impacts[[icont]]$s1b*1e-15)

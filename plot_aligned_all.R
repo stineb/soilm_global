@@ -52,14 +52,17 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## fLUE
     ##--------------------------------------------------------
-    par( las=1, mar=c(4,4,2,2), xpd=FALSE, xaxs="i", yaxs="r" )
-    ylim <- c(0.5,1.1)
+    par( las=1, mar=c(4,4,2,2), mgp=c(2.7,1,0), xpd=FALSE, xaxs="i", yaxs="r" )
+    # ylim <- c(0.5,1.1)
+    ylim <- c(0.8,2.5)
     xlim <- c(-20,80)
-    plot( c(-before,after), ylim, type="n", xlab="Days after drought onset", ylab="fLUE and bias (obs./mod., fraction)", axes=FALSE, xlim=xlim )
+    
+    plot( c(-before,after), ylim, type="n", xlab="Days after drought onset", ylab=expression( paste( "fLUE"^-1, "and bias (mod./obs., fraction)")), axes=FALSE, xlim=xlim )
+    
     axis( 2, lwd = 1.5 )
-    axis( 2, at = seq( ylim[1], ylim[2], by=0.02 ), labels = FALSE, tck=-0.01 )
+    axis( 2, at = seq( ylim[1], ylim[2], by=0.05 ), labels = FALSE, tck=-0.01 )
     axis( 4, labels=FALSE, lwd = 1.5 )
-    axis( 4, at = seq( ylim[1], ylim[2], by=0.02 ), labels = FALSE, tck=-0.01 )
+    axis( 4, at = seq( ylim[1], ylim[2], by=0.05 ), labels = FALSE, tck=-0.01 )
     axis( 1, xlab="days after drought onset", lwd=1.5 )
     axis( 1, at = seq( xlim[1], xlim[2], by=5 ), labels = FALSE, tck=-0.01 )
     axis( 3, labels=FALSE, lwd=1.5 )
@@ -67,19 +70,19 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     abline( h=1.0, col='grey40', lwd=0.5 )
     
     axis(1,lwd=1.5);  axis(1,at=seq(xlim[1],xlim[2],by=20),labels=F,tck=-0.01)
-    box( lwd=1.5 )
+    rect( 0, -99, after, 99, col=colorRampPalette( c("wheat3", "white") )( 5 )[2], border=NA )  # rgb(0,0,0,0.2)
 
-    rect( 0, -99, after, 99, col=rgb(0,0,0,0.2), border=NA )
+    box( lwd=1.5 )
 
     ## Get median level of the three variables within each bin, pooling data for all days and instances (drought events)
     median <- ddf %>% group_by( dday ) %>% 
-                      summarise( fvar = median( fvar , na.rm=TRUE ) ) %>% 
+                      summarise( fvar = median( 1/fvar , na.rm=TRUE ) ) %>% 
                       complete( dday )
     upper  <- ddf %>% group_by( dday ) %>% 
-                      summarise( fvar = quantile( fvar, 0.75, na.rm=TRUE ) ) %>% 
+                      summarise( fvar = quantile( 1/fvar, 0.75, na.rm=TRUE ) ) %>% 
                       complete( dday )
     lower  <- ddf %>% group_by( dday ) %>% 
-                      summarise( fvar = quantile( fvar, 0.25, na.rm=TRUE ) ) %>% 
+                      summarise( fvar = quantile( 1/fvar, 0.25, na.rm=TRUE ) ) %>% 
                       complete( dday )
 
     polygon( c( median$dday, rev(median$dday) ), c( lower$fvar,  rev(upper$fvar) ),  col=add_alpha("black", 0.3), border=NA )
@@ -91,13 +94,13 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## Get median level of the three variables within each bin, pooling data for all days and instances (drought events)
     median <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = median( 1/bias_pmodel_norm , na.rm=TRUE ) ) %>% 
+                      summarise( bias = median( bias_pmodel_norm , na.rm=TRUE ) ) %>% 
                       complete( dday )
     upper  <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = quantile( 1/bias_pmodel_norm, 0.75, na.rm=TRUE ) ) %>% 
+                      summarise( bias = quantile( bias_pmodel_norm, 0.75, na.rm=TRUE ) ) %>% 
                       complete( dday )
     lower  <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = quantile( 1/bias_pmodel_norm, 0.25, na.rm=TRUE ) ) %>% 
+                      summarise( bias = quantile( bias_pmodel_norm, 0.25, na.rm=TRUE ) ) %>% 
                       complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("tomato", 0.3), border=NA )
@@ -108,13 +111,13 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## Get median level of the three variables within each bin, pooling data for all days and instances (drought events)
     median <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = median( 1/bias_bess_v1_norm , na.rm=TRUE ) ) %>% 
+                      summarise( bias = median( bias_bess_v1_norm , na.rm=TRUE ) ) %>% 
                       complete( dday )
     upper  <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = quantile( 1/bias_bess_v1_norm, 0.75, na.rm=TRUE ) ) %>% 
+                      summarise( bias = quantile( bias_bess_v1_norm, 0.75, na.rm=TRUE ) ) %>% 
                       complete( dday )
     lower  <- ddf %>% group_by( dday ) %>% 
-                      summarise( bias = quantile( 1/bias_bess_v1_norm, 0.25, na.rm=TRUE ) ) %>% 
+                      summarise( bias = quantile( bias_bess_v1_norm, 0.25, na.rm=TRUE ) ) %>% 
                       complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("royalblue3", 0.3), border=NA )
@@ -125,13 +128,13 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## Get median level of the three variables within each bin, pooling data for all days and instances (drought events)
     median <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = median( 1/bias_modis_norm , na.rm=TRUE ) ) %>% 
+                         summarise( bias = median( bias_modis_norm , na.rm=TRUE ) ) %>% 
                          complete( dday )
     upper  <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = quantile( 1/bias_modis_norm, 0.75, na.rm=TRUE ) ) %>% 
+                         summarise( bias = quantile( bias_modis_norm, 0.75, na.rm=TRUE ) ) %>% 
                          complete( dday )
     lower  <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = quantile( 1/bias_modis_norm, 0.25, na.rm=TRUE ) ) %>% 
+                         summarise( bias = quantile( bias_modis_norm, 0.25, na.rm=TRUE ) ) %>% 
                          complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen1", 0.3), border=NA )
@@ -142,19 +145,19 @@ plot_aligned_all <- function( ddf, ddf_8d, filn=NA ){
     ##--------------------------------------------------------
     ## Get median level of the three variables within each bin, pooling data for all days and instances (drought events)
     median <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = median( 1/bias_vpm_norm , na.rm=TRUE ) ) %>% 
+                         summarise( bias = median( bias_vpm_norm , na.rm=TRUE ) ) %>% 
                          complete( dday )
     upper  <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = quantile( 1/bias_vpm_norm, 0.75, na.rm=TRUE ) ) %>% 
+                         summarise( bias = quantile( bias_vpm_norm, 0.75, na.rm=TRUE ) ) %>% 
                          complete( dday )
     lower  <- ddf_8d %>% group_by( dday ) %>% 
-                         summarise( bias = quantile( 1/bias_vpm_norm, 0.25, na.rm=TRUE ) ) %>% 
+                         summarise( bias = quantile( bias_vpm_norm, 0.25, na.rm=TRUE ) ) %>% 
                          complete( dday )
 
     # polygon( c( median$dday, rev(median$dday) ), c( lower$bias,  rev(upper$bias) ),  col=add_alpha("springgreen4", 0.3), border=NA )
     lines( median, col='springgreen4', lwd=2 )
 
-    legend( "bottomleft", c("fLUE", "P-model", "BESS", "MODIS", "VPM"), bty="n", lty=1, lwd=2, col=c( "black" ,"tomato", "royalblue3","springgreen1", "springgreen4"), cex=1.0 )
+    legend( "topleft", c( expression(paste("fLUE"^-1)), "P-model", "BESS", "MODIS", "VPM"), bty="n", lty=1, lwd=2, col=c( "black" ,"tomato", "royalblue3","springgreen1", "springgreen4"), cex=1.0 )
 
   if (!is.na(filn)) dev.off()
 

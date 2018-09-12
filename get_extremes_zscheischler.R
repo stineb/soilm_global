@@ -11,7 +11,7 @@ myboxplot <- function( ... ){
 
 
 ##-----------------------
-overwrite <- TRUE
+overwrite <- FALSE
 ##-----------------------
 
 outfile <- "data/extremes.Rdata"
@@ -148,12 +148,10 @@ df_impacts <- bind_rows( list_impacts ) %>%
               mutate( rank_global = rank( s1b ) ) %>%
               arrange( s1b )
               
-
 ##------------------------------------------------------------
 ## Save all data needed for plotting later (plot_fig_5.R)
 ##------------------------------------------------------------
 save( df_impacts, list_impacts, ANOM_s0.a, ANOM_s1b.a, CC_list, file = "data/impacts_extremes.Rdata")
-
 
 ##------------------------------------------------------------
 ## Locate events in time and space (only 141 biggest)
@@ -161,7 +159,7 @@ save( df_impacts, list_impacts, ANOM_s0.a, ANOM_s1b.a, CC_list, file = "data/imp
 ## integrate over ten largest events globally
 ## get dates from NetCDF file
 print("plot events...")
-nc <- nc_open( "~/data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc" )
+nc <- nc_open( "/alphadata01/bstocker//data/pmodel_fortran_output/v2/gpp_pmodel_s0_MON_ANOM.nc" )
 nc_close(nc)
 date <- ymd( "2001-01-01" ) + days( floor(nc$dim$time$vals) )
 nevents <- 200
@@ -212,8 +210,8 @@ if (file.exists(filn_located)&&!overwrite_located){
     arr_event_lonlat[ arr_event_lonlat==0 ] <- NA
 
     ## plot map of impact, integrated over time
-    yearchar <- df_event_time %>% dplyr::filter( event_no==myevent_no & icont==myicont ) %>% mutate( year=year(date)) %>% dplyr::select(year)  %>% table() %>% sort() %>% names()
-    if (irank <= nevents_plot) plot_map( -arr_event_lonlat[,,irank], col = cols[irank], add=addmap, file=paste0( "fig/map_event_", sprintf( "%02d", irank ), ".pdf" ), text=yearchar[1] )
+    # yearchar <- df_event_time %>% dplyr::filter( event_no==myevent_no & icont==myicont ) %>% mutate( year=year(date)) %>% dplyr::select(year)  %>% table() %>% sort() %>% names()
+    # if (irank <= nevents_plot) plot_map( -arr_event_lonlat[,,irank], col = cols[irank], add=addmap, file=paste0( "fig/map_event_", sprintf( "%02d", irank ), ".pdf" ), text=yearchar[1] )
     
   }
   

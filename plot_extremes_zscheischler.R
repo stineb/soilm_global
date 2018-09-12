@@ -8,6 +8,7 @@ require(maptools)
 library(poweRlaw) # https://cran.r-project.org/web/packages/poweRlaw/vignettes/b_powerlaw_examples.pdf
 library(RColorBrewer)
 library(igraph) # for fit_power_law()
+library(ggplot2)
 
 
 myboxplot <- function( ... ){
@@ -126,15 +127,24 @@ dev.off()
 ##------------------------------------------------------------
 ## plot time series of impact, integrated over lon-lat, summed over all events
 ##------------------------------------------------------------
-df_impact_time <- df_event_time %>% dplyr::filter( impact_s0 <= 0.0 & impact_s1b <= 0.0 ) %>% group_by( date ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% mutate( diff = -impact_s1b+impact_s0 )
-df_impact_year <- df_impact_time %>% mutate( year = year( date ) ) %>% group_by( year ) %>% summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% mutate( diff = -impact_s1b+impact_s0 )
+df_impact_time <- df_event_time %>% 
+                  dplyr::filter( impact_s0 <= 0.0 & impact_s1b <= 0.0 ) %>% 
+                  group_by( date ) %>% 
+                  summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% 
+                  mutate( diff = -impact_s1b+impact_s0 )
+
+df_impact_year <- df_impact_time %>% 
+                  mutate( year = year( date ) ) %>% 
+                  group_by( year ) %>% 
+                  summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% 
+                  mutate( diff = -impact_s1b+impact_s0 )
+
 with( df_impact_time, plot( date, -impact_s0, type="l"))
 with( df_impact_time, lines( date, -impact_s1b, col="red"))
 with( df_impact_time, plot( date, diff, type="l"))
 with( df_impact_year, plot( year, diff, type="l"))
 lm( diff ~ year, data = df_impact_year  ) %>% abline()
 
-linmod <- lm( diff ~ year, data = df_impact_year )
 
 lm_slope <- function(linmod){
   ci <- confint(linmod)
@@ -143,13 +153,34 @@ lm_slope <- function(linmod){
   as.character(as.expression(eq))
 }
 
+## annual impact of GPP extremes over time, s1b
+linmod <- lm( impact_s1b ~ year, data = df_impact_year )
+ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = impact_s1b ) ) + 
+  geom_point() + 
+  geom_smooth (method = "lm", level = 0.95 ) + 
+  theme_bw() +
+  labs( x = "Year", y = bquote( "Impact ("*Pg~ C~ yr^-1*")") ) +
+  annotate( geom = "text", x = -Inf, y = Inf, vjust = 1, label = lm_slope(linmod), parse = TRUE, adj = 0 ) 
+ggsave( "fig/impact_s1b_time.pdf", ggp, width = 6, height = 4 )
+
+## annual impact of GPP extremes over time, s0
+linmod <- lm( impact_s0 ~ year, data = df_impact_year )
+ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = impact_s0 ) ) + 
+  geom_point() + 
+  geom_smooth (method = "lm", level = 0.95 ) + 
+  theme_bw() +
+  labs( x = "Year", y = bquote( "Impact ("*Pg~ C~ yr^-1*")") ) +
+  annotate( geom = "text", x = -Inf, y = Inf, vjust = 1, label = lm_slope(linmod), parse = TRUE, adj = 0 ) 
+ggsave( "fig/impact_s0_time.pdf", ggp, width = 6, height = 4 )
+
+## annual impact of GPP extremes over time, difference between s1b and s0
+linmod <- lm( diff ~ year, data = df_impact_year )
 ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = diff ) ) + 
   geom_point() + 
   geom_smooth (method = "lm", level = 0.95 ) + 
   theme_bw() +
   labs( x = "Year", y = bquote( "Impact difference ("*Pg~ C~ yr^-1*")") ) +
-  annotate( geom = "text", x = 1999, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 )
-ggp 
+  annotate( geom = "text", x = 1999, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 ) 
 ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 
 

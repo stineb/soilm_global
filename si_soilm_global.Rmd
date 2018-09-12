@@ -699,7 +699,7 @@ if (file.exists(filn)){
   whc <- flipdim( whc, 2 )
   nc_close( nc )
   plot_map( whc, lev=c(0,400,10), color=rev(c( "royalblue4", "royalblue1", "tomato1", "tomato4" )))
-  fig_whc <- fig_nums("fig_whc", caption=" Water holding capacity map used for P-model simulations")
+  fig_whc <- fig_nums("fig_whc", caption=" Water holding capacity (mm) used for P-model simulations.")
 } else {
   print("WHC file not available. Contact the author.")
 }
@@ -745,7 +745,7 @@ get_numbers_effects_gpp_tseries( df )
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 source("map_effects_gpp_var.R")
-cap_ampl_var <- fig_nums( "ampl_var", caption=" Amplification of the interannual GPP variability (variance in annual values) across the globe." )
+cap_ampl_var <- fig_nums( "ampl_var", caption=" Amplification (unitless) of GPP IAV due to the effects of soil moisture. IAV is calculated as the variance in annual values; ???amplification??? is calculated as the ratio in IAV of simulation s1b to s0." )
 ```
 
 `r fig_nums( "ampl_var") `
