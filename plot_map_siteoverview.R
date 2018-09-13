@@ -42,6 +42,7 @@ plot_map_siteoverview <- function( df, background, plotfiln=NA ){
     ## Color key
     par( mar=c(3,3,1,1),xaxs="i", yaxs="i",las=1)
     color <- rev( c( "royalblue3", "wheat", "tomato" ))
+    # color <- rev( c( "royalblue4","royalblue2", "wheat", "tomato2", "tomato4" ))
     lev <- c(0,0.2,0.3,0.4,0.6,0.7,1,1.3,1.6,2,2.5,3)
     out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=FALSE, maxval=150 )
 

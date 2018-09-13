@@ -80,7 +80,7 @@ if (!file.exists(ncfiln)) {
 }
 source("plot_map_siteoverview.R")
 suppressMessages( plot_map_siteoverview( siteinfo, 1/epop ) ) # , plotfiln="fig/map_sites.pdf"
-cap_siteoverview_fig <- fig_nums( "siteoverview_fig", caption=" Geographical distribution of sites selected for the bias evaluation. Sites listed in Table S1 as group 1 are in green, sites of group 2 are in black. The color of land area represents aridity, quantified as the ratio of potential evapotranspiration over precipitation from [@greve14]" )
+cap_siteoverview_fig <- fig_nums( "siteoverview_fig", caption=" Geographical distribution of sites selected for the bias evaluation. Sites listed in Table S1 as group 1 are in green, sites of group 2 are in black. The color of land area represents aridity, quantified as the ratio of precipitation over potential evapotranspiration  from [@greve14]" )
 ```
 
 `r fig_nums("siteoverview_fig")`
@@ -745,10 +745,28 @@ get_numbers_effects_gpp_tseries( df )
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 source("map_effects_gpp_var.R")
-cap_ampl_var <- fig_nums( "ampl_var", caption=" Amplification (unitless) of GPP IAV due to the effects of soil moisture. IAV is calculated as the variance in annual values; ???amplification??? is calculated as the ratio in IAV of simulation s1b to s0." )
+
+# plot_map( gpp_s1/gpp_s0, lev=lev, maxval=maxval, color = out.mycolorbar$colors )
+# cap_ampl_var <- fig_nums( "ampl_var", caption=" Amplification (unitless) of GPP IAV due to the effects of soil moisture. IAV is calculated as the variance in annual values; ???amplification??? is calculated as the ratio in IAV of simulation s1b to s0." )
+
+plot_map( gpp_s1 - gpp_s0, lev=seq(-5000,13000,2000), minval=-169000, maxval=83000, toplefttext=expression(paste("")), toprighttext=expression(paste("g C m"^-2, " yr"^-1 ) ), color=c( "royalblue4", "wheat", "tomato2", "tomato4" )  )
+cap_ampl_var <- fig_nums( "ampl_var", caption=" Difference in GPP IAV due to the effects of soil moisture (gC m-2 yr-1). IAV is calculated as the variance in annual values. The difference is taken from simulations s0 and s1b." )
 ```
 
 `r fig_nums( "ampl_var") `
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("map_effects_gpp_relvar.R")
+par(las=1)
+myboxplot( ampl ~ inbin, data = df, ylim=c(0,5.5), outline=FALSE, 
+           col=colorRampPalette( rev( c( "royalblue4", "wheat", "tomato2", "tomato4" ) ) )( 6 ),
+           ylab="Amplification", xlab="Aridity index")
+abline(h=1, lty=3)
+cap_ampl_var <- fig_nums( "ampl_boxpl", caption=" Amplification of relative variance in GPP due to soil moisture effects versus aridity index, calculated as the ratio of precpipitation over potential evapotranspiration from [@greve14]." )
+```
+
+`r fig_nums( "ampl_boxpl") `
 
 
 # References

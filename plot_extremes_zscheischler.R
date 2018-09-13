@@ -256,45 +256,6 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       
       par( xaxs="r", yaxs="r", las=1, mgp=c(3.5,1,0), mar=c(4.5, 4.5, 2, 1))
 
-      # # n <- nrow(list_impacts[[icont]])
-      # # plot(       sort( -list_impacts[[icont]]$s1b[1:n]*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = "tomato", xlim=c(range(c(-list_impacts[[icont]]$s1b[1:n]*1e-15, -list_impacts[[icont]]$s0[1:n]*1e-15))) )
-      # # # polygon( c( sort( -list_impacts[[icont]]$s1a[1:n]*1e-15, decreasing=TRUE ), rev(sort( -list_impacts[[icont]]$s1c[1:n]*1e-15, decreasing=TRUE )) ), c( (1:n)/sum(1:n), rev((1:n)/sum(1:n)) ), border = NA, col = rgb(1,0,0,0.3) )
-      # # points(     sort( -list_impacts[[icont]]$s0[1:n]*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-      # # legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
-      # # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
-      # 
-      # ## no cutoff
-      # n <- length(list_impacts[[icont]]$s1b)
-      # plot(       sort( -list_impacts[[icont]]$s1b*1e-15, decreasing=TRUE ), (1:n)/sum(1:n), log="xy", ylab="p(x)", xlab="Impact (PgC)", pch=16, col = "tomato", xlim=c(range(c(-list_impacts[[icont]]$s1b*1e-15, -list_impacts[[icont]]$s0*1e-15))) )
-      # points(     sort( -list_impacts[[icont]]$s0*1e-15,  decreasing=TRUE ), (1:n)/sum(1:n), pch=16, col = rgb(0,0,0,1) )
-      # legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1","s0"), bty="n", cex = 1 )
-      # mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
-      # 
-      # ## Power Law fitting using "igraph" package
-      # fit0 <- fit_power_law(-list_impacts[[icont]]$s0*1e-15)
-      # fit1 <- fit_power_law(-list_impacts[[icont]]$s1b*1e-15)
-      # 
-      # pred_s0 <-  tibble( x = seq( fit0$xmin, max(-list_impacts[[icont]]$s0*1e-15), length.out = 100 ) ) %>%
-      #             mutate( y = fct_powerlaw( x, fit0$xmin, -fit0$alpha ))
-      # pred_s1b <- tibble( x = seq( fit1$xmin, max(-list_impacts[[icont]]$s1b*1e-15), length.out = 100 ) ) %>%
-      #             mutate( y = fct_powerlaw( x, fit1$xmin, -fit1$alpha ) )
-      # 
-      # lines( pred_s0, lwd=2 )
-      # lines( pred_s1b, lwd=2, col="tomato" )
-      # 
-      # # alpha_s1 <- fit1$alpha
-      # # alpha_s0 <- fit0$alpha
-      # 
-      # # mtext(paste("alpha_s1 =", round(alpha_s1[[k]],2)), side=3, line=-2, adj=0.9)
-      # # mtext(paste("alpha_s0 =", round(alpha_s0[[k]],2)), side=3, line=-4, adj=0.9)
-      # 
-      # (alpha_s1-1) * fit1$xmin^(alpha_s1-1)
-      # x1 <- seq(fit1$xmin, 2, length.out = 100)
-      # y1 <- x1^(-alpha_s1) * (alpha_s1-1) / sum(x1^(-alpha_s1) * (alpha_s1-1))
-      # x0 <- seq(fit0$xmin, 1, length.out = 100)
-      # y0 <- x0^(-alpha_s0) * (alpha_s0-1) / sum(x0^(-alpha_s0) * (alpha_s0-1))
-      # lines(x1,y1,log="xy")
-
       ## Power Law fitting using "poweRlaw" package
       ## continuous power-law
       d_cpl_s1b = conpl$new(-list_impacts[[icont]]$s1b*1e-15)
@@ -322,7 +283,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       if (icont==1) legend( "bottomleft", pch=16, col=c("tomato", rgb(0,0,0,1)), legend=c("s1b","s0"), bty="n", cex = 1.2 )
       mtext( paste0( letters[icont], ") ", continent[icont]), font=2, adj = 0, line = 0.5, cex = 1 )
 
-      ## back-calculate xmin and alpha from lines outout
+      ## back-calculate xmin and alpha from lines output
       alpha_s0 <- (log(out_lines_s0$y[2]) - log(out_lines_s0$y[1])) / (log(out_lines_s0$x[2]) - log(out_lines_s0$x[1]))
       xmin_s0  <- out_lines_s0$y[1] / out_lines_s0$x[1] ^ alpha_s0
 
@@ -361,17 +322,6 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
       mtext( bquote( alpha[s1b] == .( format( d_cpl_s1b$pars, digits = 3 ) ) ), line = -3.9, adj = 0.95, cex=0.9, col="tomato" )
       mtext( bquote( italic(A) == .( format( ampl, digits = 3 ) ) ), line = -5.1, adj = 0.95, cex=0.9, col="tomato" )
       
-      # (alpha_s1-1) * fit1$xmin^(alpha_s1-1)
-      # x1 <- seq(fit1$xmin, 2, length.out = 100)
-      # y1 <- x1^(-alpha_s1) * (alpha_s1-1) / sum(x1^(-alpha_s1) * (alpha_s1-1))
-      # x0 <- seq(fit0$xmin, 1, length.out = 100)
-      # y0 <- x0^(-alpha_s0) * (alpha_s0-1) / sum(x0^(-alpha_s0) * (alpha_s0-1))
-      # lines(x1,y1, col="blue")
-      # 
-      # ## test if data is drawn from a power law distribution
-      # bs_cpl = bootstrap_p( d_cpl, no_of_sims=500, threads=1 )
-      # print(bs_cpl$p)
-      
       save( d_cpl_s1b, d_cpl_s0, file = paste0( "data/d_cpl_cont", icont, ".Rdata" ) )
 
     }
@@ -383,7 +333,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
     # points(1:5, (mean_cont$s0-mean_cont$s1b)*1e-15, pch=16, col=tomatod")
     # abline( h=0, lty=3 )
       
-    myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="s1b/s0", col="grey70", names=cont, ylim=c(0.2,3) )
+    myboxplot( ampl_s1b ~ icont, data=df_impacts, ylab="Amplification of impact (s1b/s0)", col="grey70", names=cont, ylim=c(0.2,3) )
     abline( h=1, lty=3 )
     # points(1:5, mean_cont$ampl_s1b, pch=16, col=tomatod")
 

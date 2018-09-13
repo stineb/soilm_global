@@ -219,24 +219,26 @@ plot_bias_bymodels <- function( df, filn=NA){
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
     plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )
-    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    rect( 5:1-0.5, rep(ylim[1], 6), 5:1+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
 
-    myboxplot( bias_pmodel_diff ~ infbin, data = df, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
-
+    bp <- myboxplot( bias_pmodel_diff ~ infbin, data = df, at=5:1-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
+    
+    # text( x = 5:1, y = 5.5, labels = paste( "N =", bp$n ), cex=0.8 )
+    
     ## modis
-    myboxplot( bias_modis_diff ~ infbin, data = df, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
+    myboxplot( bias_modis_diff ~ infbin, data = df, add=TRUE, at=5:1-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
 
     ## VPM
-    myboxplot( bias_vpm_diff ~ infbin, data = df, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
+    myboxplot( bias_vpm_diff ~ infbin, data = df, add=TRUE, at=5:1+0.1, col="springgreen3", axes=FALSE, boxwex=0.2, outline=FALSE )
 
     ## BESS
-    myboxplot( bias_bess_v1_diff ~ infbin, data = df, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE )
+    myboxplot( bias_bess_v1_diff ~ infbin, data = df, add=TRUE, at=5:1+0.3, col="royalblue3", axes=FALSE, boxwex=0.2, outline=FALSE )
 
     # ## MTE
-    # myboxplot( bias_mte_diff ~ infbin, data = df, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_mte_diff ~ infbin, data = df, add=TRUE, at=5:1-0.4, col="tomato", axes=FALSE, boxwex=0.2, outline=FALSE )
 
     abline( h=0, lty=3 )
-    legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
+    legend("bottomright", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "springgreen3", "royalblue3"), bty="n")
   if (!is.na(filn)) dev.off()
 
 }

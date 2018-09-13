@@ -45,36 +45,38 @@ nice_agg <- nice_agg %>%  mutate( bias_pmodel_diff  = gpp_pmodel  - gpp_obs,
 plot_bias_all <- function( nice_agg, nice_8d_agg, filn=NA ){
 
   xlim <- c(0.5,5.5)
-  ylim <- c(-3,3)
+  ylim <- c(-4,4)
 
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
 
     plot( xlim, ylim, type="n", ylim=ylim, xlab = "AET/PET bin", ylab = expression( paste("modelled / observed GPP (ratio)" ) ), xlim=xlim, axes=FALSE )
 
-    rect( 1:5-0.5, rep(ylim[1], 6), 1:5+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
+    rect( 5:1-0.5, rep(ylim[1], 6), 5:1+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
 
     ## bias in P-model versus alpha
-    myboxplot( log( bias_bess_v1 ) ~ inalphabin, data=nice_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE)
-    # myboxplot( bias_bess_v1_diff ~ inalphabin, data=nice_agg, add=TRUE, at=1:5+0.3, col="springgreen", axes=FALSE, boxwex=0.2, outline=FALSE)
+    bp <- myboxplot( log( bias_bess_v1 ) ~ inalphabin, data=nice_agg, add=TRUE, at=5:1+0.3, col="royalblue3", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_bess_v1_diff ~ inalphabin, data=nice_agg, add=TRUE, at=5:1+0.3, col="royalblue3", axes=FALSE, boxwex=0.2, outline=FALSE)
     
+    text( x = 5:1, y = 3.5, labels = paste( "N =", bp$n ), cex=0.8 )
+
     ## bias in MODIS versus alpha
-    myboxplot( log(bias_vpm) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
-    # myboxplot( bias_vpm_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5+0.1, col="darkgoldenrod1", axes=FALSE, boxwex=0.2, outline=FALSE )
+    myboxplot( log(bias_vpm) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=5:1+0.1, col="springgreen3", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_vpm_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=5:1+0.1, col="springgreen3", axes=FALSE, boxwex=0.2, outline=FALSE )
     
     ## bias in VPM versus alpha
-    myboxplot( log(bias_modis) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
-    # myboxplot( bias_modis_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=1:5-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
+    myboxplot( log(bias_modis) ~ inalphabin, data=nice_8d_agg, add=TRUE, at=5:1-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_modis_diff ~ inalphabin, data=nice_8d_agg, add=TRUE, at=5:1-0.1, col="orchid", axes=FALSE, boxwex=0.2, outline=FALSE )
     
     ## bias in BESS v1 versus alpha
-    myboxplot( log( bias_pmodel ) ~ inalphabin, data=nice_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
-    # myboxplot( bias_pmodel_diff ~ inalphabin, data=nice_agg, at=1:5-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
+    myboxplot( log( bias_pmodel ) ~ inalphabin, data=nice_agg, at=5:1-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
+    # myboxplot( bias_pmodel_diff ~ inalphabin, data=nice_agg, at=5:1-0.3, add=TRUE, col="tomato", boxwex=0.2, outline=FALSE )
     
     # ## MTE
-    # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=1:5-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
+    # myboxplot( bias_mte_diff ~ infbin, data = df_dday_8d_agg, add=TRUE, at=5:1-0.4, col="tomato", axes=FALSE, boxwex=0.2 )
 
     abline( h=0, lty=3 )
-    legend("bottomleft", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "darkgoldenrod1", "springgreen"), bty="n")
+    legend("bottomright", c("P-model", "MODIS", "VPM", "BESS"), fill=c("tomato", "orchid", "springgreen3", "royalblue3"), bty="n")
 
   if (!is.na(filn)) dev.off()
 }

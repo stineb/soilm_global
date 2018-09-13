@@ -6,6 +6,7 @@ library( sp, quietly = TRUE )
 library( maptools, quietly = TRUE )
 library( dplyr, quietly = TRUE )  
 
+source("../utilities/myboxplot.R")
 source("plot_map.R")
 
 ## file name for figure
@@ -30,172 +31,70 @@ lat <- nc$dim$lat$vals
 time <- nc$dim$time$vals
 nc_close(nc)
 
-## S1
-nc <- nc_open( paste0( dir, fil_s1 ) )
-gpp_s1 <- ncvar_get( nc, varid="gpp" )
-nc_close(nc)
-
-## S1a
-nc <- nc_open( paste0( dir, fil_s1a ) )
-gpp_s1a <- ncvar_get( nc, varid="gpp" )
-nc_close(nc)
+# ## S1
+# nc <- nc_open( paste0( dir, fil_s1 ) )
+# gpp_s1 <- ncvar_get( nc, varid="gpp" )
+# nc_close(nc)
+# 
+# ## S1a
+# nc <- nc_open( paste0( dir, fil_s1a ) )
+# gpp_s1a <- ncvar_get( nc, varid="gpp" )
+# nc_close(nc)
 
 ## S1b
 nc <- nc_open( paste0( dir, fil_s1b ) )
 gpp_s1b <- ncvar_get( nc, varid="gpp" )
 nc_close(nc)
 
-## S1c
-nc <- nc_open( paste0( dir, fil_s1c ) )
-gpp_s1c <- ncvar_get( nc, varid="gpp" )
-nc_close(nc)
+# ## S1c
+# nc <- nc_open( paste0( dir, fil_s1c ) )
+# gpp_s1c <- ncvar_get( nc, varid="gpp" )
+# nc_close(nc)
 
 
 # ##-----------------------------------------------------
 # ## Plot relative variance in S1
 # ##-----------------------------------------------------
-# plot_map( gpp_s1b / gpp_s0, lev=c( 0, 4, 10 ),
-#       toplefttext=expression(paste("Amplification of GPP relative variance")),
-#       toprighttext=expression(paste("fraction")),
-#       maxval = 35, color=cols
-#       )
+# # plot_map( gpp_s1b / gpp_s0, lev=c( 0, 4, 10 ),
+# #       toplefttext=expression(paste("Amplification of GPP relative variance")),
+# #       toprighttext=expression(paste("fraction")),
+# #       maxval = 35, positive = FALSE, color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
+# #       )
 
-save( gpp_s0, gpp_s1a, gpp_s1b, gpp_s1c, file="data/relvar.Rdata" )
+# plot_map( gpp_s1b - gpp_s0, lev=c( -5, 15, 10 ),
+#           toplefttext=expression(paste("Difference in GPP relative variance")),
+#           toprighttext=expression(paste("unitless")),
+#           maxval = 35, positive = FALSE, color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
+#         )
 
-# ##-----------------------------------------------------
-# ## Change in relative variance
-# ##-----------------------------------------------------
-#   arr = gpp_s1b / gpp_s0
-#   # toplefttext = expression(paste("GPP amplification of relative variance"))
-#   # toprighttext = expression(paste("fraction"))
-#   minval = NA
-#   maxval = 35
-#   color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
-#   lev=c( 0, 4, 10 )
+# plot_map( gpp_s1b - gpp_s0, lev=c( -7, 13, 10 ),
+#           toplefttext=expression(paste("Difference in GPP relative variance")),
+#           toprighttext=expression(paste("unitless")),
+#           maxval = 35, positive = FALSE, color = c( "royalblue4", "wheat", "tomato2", "tomato4" )
+#         )
 
-#   ## half degree resolution
-#   lon <- seq(-179.75, 179.75, 0.5)
-#   lat <- seq(-89.75, 89.75, 0.5)
+# ## Density distribution of relative variance in s0 and s1b
+# hist( gpp_s0, xlim=c(0,40), breaks=300, col=rgb(0,0,0,0.3) )
+# hist( gpp_s1b, breaks=300, col=rgb(1,0,0,0.3), add=TRUE )
 
-#   magn <- 4
-#   ncols <- 3
-#   nrows <- 1
-#   widths <- rep(1.4*magn,ncols)
-#   widths[2] <- 0.12*widths[1]
-#   widths[1] <- 0.6*widths[3]
-#   heights <- rep(magn,nrows)
-#   order <- matrix( c(1,2,3), nrows, ncols, byrow=FALSE)
+# ampl <- gpp_s1b / gpp_s0
+# hist(ampl, xlim=c(0,10), breaks=300)
+# abline(v=1, col="red")
 
-#   ylim <- c(-60,85)
-#   lat.labels <- seq(-90, 90, 30)
-#   lat.short  <- seq(-90, 90, 10)
-#   lon.labels <- seq(-180, 180, 60)
-#   lon.short  <- seq(-180, 180, 10)
+## Analyse distribution factor vs. aridity (mean annual AET/PET)
+ncfiln <- "../data/greve/ep_over_p_cru_ncep.nc"
+if (!file.exists(ncfiln)) {
+  epop <- array( 1, dim=c(720,360) )
+} else {
+  nc <- nc_open( ncfiln )
+  epop <- ncvar_get( nc, varid="EP_OVER_P_CRU_NCEP" )
+}
+alpha <- 1/epop
 
-#   a <- sapply( lat.labels, function(x) bquote(.(x)*degree ~ N) )
-#   b <- sapply( lon.labels, function(x) bquote(.(x)*degree ~ E) )
+# hist( 1/epop, xlim=c(1,5), breaks = 3000 )
 
-#   parinit <- par( no.readonly=TRUE )
-#   if (!is.na(filn)) pdf( filn, width=sum(widths), height=sum(heights) )
+df <- tibble( ampl = c(ampl), alpha = c(alpha) ) %>% 
+      filter( !is.na(ampl) & !is.na(alpha) ) %>% 
+      mutate( inbin = cut( alpha, breaks = c(0, 0.05, 0.2, 0.5, 0.7, 1.3, 3) ) )
 
-#     panel <- layout(
-#               order,
-#               widths=widths,
-#               heights=heights,
-#               TRUE
-#               )
-#     # layout.show( panel )
-
-#     par( parinit, mar=c(4,4,3,1), xaxs="i", yaxs="i",las=1, mgp=c(3,1,0) )
-#     # par(las=1, mar=c(4,4,1,1), new=FALSE, fig=c(0, 1, 0, 1) )
-#     with( ampl_agg, plot( resnr, relvar_median, type="l", col="black", lwd=2, ylim=c(0,10), xaxt = "n", xlab="spatial resolution (degrees)", ylab="amplification" ) )
-#     axis( 1, at=seq(length(vec_res)), labels=as.character( vec_res ) )
-#     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q01, relvar_q99), col=add_alpha("tomato2", 0.25), border = NA ) )
-#     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q05, relvar_q95), col=add_alpha("tomato2", 0.25), border = NA ) )
-#     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q10, relvar_q90), col=add_alpha("tomato2", 0.25), border = NA ) )
-#     with( ampl_agg, polygon( c(rev(resnr), resnr), c(relvar_q25, relvar_q75), col=add_alpha("tomato2", 0.25), border = NA ) )
-#     abline( h = 1.0, lty=3 )
-#     mtext( "a)", font=2, adj = 0, line = 0.5, cex = 1 )
-
-    
-#     ## Color key
-#     color <- c( "royalblue4", "wheat", "tomato2", "tomato4" )
-#     lev <- c( 0, 4, 10 )
-#     maxval = 35
-#     minval = NA
-#     par( mar=c(4,3,3,1),xaxs="i", yaxs="i",las=1, mgp=c(3,1,0))
-#     out.mycolorbar <- mycolorbar( color, lev, orient="v", plot=TRUE, maxval=maxval, minval=minval )
-
-#     par( mar=c(4,2.5,3,1), xaxs="i", yaxs="i",las=1, mgp=c(3,1,0))
-#     image(
-#             lon, lat,
-#             arr,
-#             ylim=c(-60,85),
-#             # zlim=range(lev),
-#             yaxt="n", xaxt="n",
-#             col=out.mycolorbar$colors, breaks=out.mycolorbar$margins,
-#             xlab="", ylab=""
-#             )
-#     map( add=TRUE, interior=FALSE, resolution=0, lwd=0.5 )
-
-#     axis( 2, at=lat.labels, lab=do.call(expression,a), cex.axis=0.7, lwd=1.5 )
-#     axis( 2, at=lat.short, lab=F, lwd=1, tck=-0.01 )
-
-#     axis( 4, at=lat.labels, lab=F, lwd=1.5 )
-#     axis( 4, at=lat.short, lab=F, lwd=1, tck=-0.01 )
-
-#     axis( 1, at=lon.labels, lab=do.call(expression,b), cex.axis=0.7, lwd=1.5 )
-#     axis( 1, at=lon.short, lab=F, lwd=1, tck=-0.01 )
-
-#     axis( 3, at=lon.labels, lab=F, lwd=1.5 )
-#     axis( 3, at=lon.short, lab=F, lwd=1, tck=-0.01 )
-
-#     # mtext( expression(paste("GPP amplification of relative variance")), line=1, adj=0 )
-#     # mtext( expression(paste("fraction")), line=1, adj=1 )
-
-#     rect( -179, -50, -100, 7.5, border = NA, col="white" )
-
-#     mtext( "b)", font=2, adj = 0, line = 0.5, cex = 1 )
-
-#     ##-----------------------------------------------------
-#     ## Inset: Empirical cumulative distribution function of the amplification factor
-#     ##-----------------------------------------------------
-#     vec <- c( gpp_s1 / gpp_s0 )
-#     vec <- vec[!is.na(vec)]
-#     ecdf_ampl <- ecdf( vec )
-
-#     vec <- c( gpp_s1a / gpp_s0 )
-#     vec <- vec[!is.na(vec)]
-#     ecdf_ampl_a <- ecdf( vec )
-
-#     vec <- c( gpp_s1b / gpp_s0 )
-#     vec <- vec[!is.na(vec)]
-#     ecdf_ampl_b <- ecdf( vec )
-
-#     vec <- c( gpp_s1c / gpp_s0 )
-#     vec <- vec[!is.na(vec)]
-#     ecdf_ampl_c <- ecdf( vec )
-
-#     ## Inset 1
-#     u <- par("usr")
-#     v <- c(
-#       grconvertX(u[1:2], "user", "ndc"),
-#       grconvertY(u[3:4], "user", "ndc")
-#     )
-#     v_orig <- v
-#     v <- c( v[1]+0.045, v[1]+0.143*v[2], v[3]+0.10*v[4], v[3]+0.36*v[4] )
-#     par( fig=v, new=TRUE, mar=c(0,0,0,0), mgp=c(3,0.2,0) )
-#     xlim <- c(0.75,25)
-#     ylim <- c(0.001, 1)
-#     plot( xlim, ylim, type="n", xlim=xlim, log="xy", ylim=ylim, xlab = "", ylab = "", bg="white", cex.axis=0.7, tck=-0.03 )
-#     mtext( "amplification", side=1, line=1, adj=0.5, cex = 0.7 )
-#     mtext( "ECDF", side=2, line=1.7, adj=0.5, cex = 0.7, las=0 )
-#     rect( xlim[1], ylim[1], xlim[2], ylim[2], border = NA, col="white" )
-#     curve( 1.0 - ecdf_ampl_b(x), from=xlim[1], to=xlim[2], col="red", add=TRUE  )
-#     polygon( c( seq(xlim[1], xlim[2], by=0.1 ), rev( seq(xlim[1], xlim[2], by=0.1 ) ) ),  c( 1 - ecdf_ampl_a( seq(xlim[1], xlim[2], by=0.1 ) ), rev( 1- ecdf_ampl_c( seq(xlim[1], xlim[2], by=0.1 ) ) ) ), border = NA, col = rgb(1,0,0,0.4) )
-#     abline( v=1, lty=3 )
-#     box()
-
-
-#   if (!is.na(filn)) dev.off()
 

@@ -48,7 +48,7 @@ plot_map <- function( arr, lev, file=NA, positive=TRUE, toplefttext=NA, topright
     # layout.show( panel )
 
     ## Color key
-    if (is.na(color)){
+    if (identical(color,NA)){
       if (positive){
         color <- c( "wheat", "tomato2", "tomato4" )
       } else {
