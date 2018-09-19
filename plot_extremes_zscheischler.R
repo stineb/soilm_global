@@ -112,6 +112,7 @@ for (irank in 1:nevents_plot){
 ##------------------------------------------------------------
 ## plot time series of impact, integrated over lon-lat, top 8 events
 ##------------------------------------------------------------
+print("plot time series of impact...")
 nevents_plot <- 8
 cols <- colorRampPalette( brewer.pal(8,"Dark2"))(nevents_plot)
 pdf( "fig/events_overtime.pdf", width = 8, height = 4)
@@ -138,6 +139,8 @@ df_impact_year <- df_impact_time %>%
                   group_by( year ) %>% 
                   summarise( impact_s0 = sum(impact_s0), impact_s1b = sum( impact_s1b ) ) %>% 
                   mutate( diff = -impact_s1b+impact_s0 )
+
+save( df_impact_year, file = "data/df_impact_year.Rdata" )                  
 
 with( df_impact_time, plot( date, -impact_s0, type="l"))
 with( df_impact_time, lines( date, -impact_s1b, col="tomato"))
@@ -180,7 +183,7 @@ ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = diff ) ) +
   geom_smooth (method = "lm", level = 0.95 ) + 
   theme_bw() +
   labs( x = "Year", y = bquote( "Impact difference ("*Pg~ C~ yr^-1*")") ) +
-  annotate( geom = "text", x = 1999, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 ) 
+  annotate( geom = "text", x = 1997, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 ) 
 ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 
 
@@ -227,6 +230,7 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 ##------------------------------------------------------------
 ## Plot by continent
 ##------------------------------------------------------------
+print("plot Fig. 5...")
   cont <- c("NA", "SA", "EA", "AF", "AU")
   continent <- c("North America", "South America", "Eurasia", "Africa", "Australia")
   
@@ -403,13 +407,6 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 # 
 
 
-  
-  
-  
-  
-  
-  
-  
 
 # print("amplification of the largest extremes")
 # for (k in c(1,3,5,2,4,6)) {
@@ -476,3 +473,6 @@ ggsave( "fig/impact_diff_time.pdf", ggp, width = 6, height = 4 )
 # # 
 # # hist(sorted_s1$x*1e-9 + impact_s0[sorted_s1$ix]*1e-9)
 # # abline(h=0)
+
+print("done.")
+

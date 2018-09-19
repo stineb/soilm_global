@@ -213,16 +213,23 @@ plot_bias_resolved_flue <- function( tmp, tmp0, filn=NA ){
 # plot_bias_resolved_flue( tmp, tmp0, filn="fig/bias_resolved_fLUE.pdf")
 
 plot_bias_resolved <- function( tmp, tmp0, tmp1, tmp4, tmp3, filn=NA, cex=1.0 ){
+
+  require(viridis)
+  require(colormap)
+
+  ## get colors
+  col <- colormap( colormap = colormaps$viridis, nshades = 5, format = "hex", alpha = 1, reverse = FALSE) 
+
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1, mar=c(4,4,2,1) )
     plot( xlim, ylim, type="n", ylim=ylim, xlim=xlim, xlab = "fLUE bin", ylab = expression( paste("Bias (mod.-obs., g C m"^-2, "d"^-1, ")" ) ), axes=FALSE )
     rect( 5:1-0.5, rep(ylim[1], 6), 5:1+0.5, rep(ylim[2], 6), border = NA, col=colorRampPalette( c("wheat3", "white") )( 5 ) )
     
-    myboxplot( bias_diff ~ infbin, data = tmp, at=5:1-0.2, col="tomato", boxwex=0.2, add=TRUE )
+    myboxplot( bias_diff ~ infbin, data = tmp, at=5:1-0.2, col=col[1], boxwex=0.2, add=TRUE )
     myboxplot( bias_diff_corr ~ infbin, data = tmp0, at=5:1+0.0, add=TRUE, col="royalblue3", axes=FALSE, boxwex=0.2 )
-    myboxplot( bias_diff_corr_I ~ infbin, data = tmp1, at=5:1+0.15, add=TRUE, col="springgreen1", axes=FALSE, boxwex=0.1 )
-    myboxplot( bias_diff_corr_IV ~ infbin, data = tmp4, at=5:1+0.25, add=TRUE, col="springgreen3", axes=FALSE, boxwex=0.1 )
-    myboxplot( bias_diff_corr_III ~ infbin, data = tmp3, at=5:1+0.35, add=TRUE, col="springgreen4", axes=FALSE, boxwex=0.1 )
+    myboxplot( bias_diff_corr_I ~ infbin, data = tmp1, at=5:1+0.15, add=TRUE, col=col[3], axes=FALSE, boxwex=0.1 )
+    myboxplot( bias_diff_corr_IV ~ infbin, data = tmp4, at=5:1+0.25, add=TRUE, col=col[4], axes=FALSE, boxwex=0.1 )
+    myboxplot( bias_diff_corr_III ~ infbin, data = tmp3, at=5:1+0.35, add=TRUE, col=col[5], axes=FALSE, boxwex=0.1 )
     
     axis( 2, lwd=1.5 )
     axis( 4, lwd=1.5, labels=FALSE )
@@ -231,10 +238,10 @@ plot_bias_resolved <- function( tmp, tmp0, tmp1, tmp4, tmp3, filn=NA, cex=1.0 ){
     legend("bottomright", 
       c(expression("Pooled models, normalised"), 
         expression("Corrected by fLUE"), 
-        expression("Corrected by" ~ italic(a) ), 
-        expression("Corrected by" ~ italic(b) ), 
-        expression("Corrected by" ~ italic(c) ) ), 
-      fill=c("tomato", "royalblue3", "springgreen1", "springgreen3", "springgreen4"), bty="n", cex=cex )
+        expression("Corrected by" ~ beta[a] ), 
+        expression("Corrected by" ~ beta[b] ), 
+        expression("Corrected by" ~ beta[c] ) ), 
+      fill=c(col[1], "royalblue3", col[3], col[4], col[5]), bty="n", cex=cex )
   if (!is.na(filn)) dev.off()  
 }
 # plot_bias_resolved( tmp, tmp0, tmp1, tmp4, tmp3, filn="fig/bias_resolved.pdf" )

@@ -26,7 +26,7 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
       classid <- unique(df_tmp$classid)
 
       par(las=1)
-      plot( df_tmp$soilm_mean, df_tmp[[ "fvar" ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab="fLUE", col=add_alpha("black", 0.2) )
+      plot( df_tmp$soilm_mean, df_tmp[[ "fvar" ]], xlim=c(0,1), ylim=c(0,1.2), pch=16, xlab="soil water content (fraction)", ylab=expression( paste("fLUE and ", beta) ), col=add_alpha("black", 0.2) )
       abline( h=1.0, lwd=0.5 )
       mtext( sitename, line = 0.25, font = 2, adj = 0 )
 
@@ -73,7 +73,7 @@ plot_fit_vs_soilmoist <- function( linearfit_low, linearfit_mid, linearfit_stron
         #           from=0.0, to=1.0, col='royalblue3', add=TRUE, lwd=2 )
 
 
-        legend( "bottomright", c("Approach I", "Approach IV", "Approach III"), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
+        legend( "bottomright", c( expression(beta[a]), expression(beta[b]), expression(beta[c]) ), lty=1, bty="n", lwd=2, col=c("springgreen3", "royalblue3", "tomato") )
   
       }
     }

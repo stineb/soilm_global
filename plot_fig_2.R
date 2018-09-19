@@ -9,7 +9,7 @@ source("../utilities/mycolorbar.R")
 ## load global GPP time series, prepared by plot_effects_gpp_tseries.R
 load("data/gpp_glob_tseries.Rdata")
 
-## load fields, derived by map_effects_gpp_mean.R
+## load fields ('gpp_s1b', 'gpp_s0', 'trend_rel'), derived by map_effects_gpp_mean.R
 load("data/gpp_loss.Rdata" )
 
 ##------------------------------------------------------------------------
@@ -100,9 +100,9 @@ pdf( "fig/fig_2.pdf", width=sum(widths), height = sum(heights) )
   with( df, lines( year, gpp_modis, col="orchid", lwd=1.5 ) )
   with( df, lines( year, gpp_vpm, col="springgreen3", lwd=1.5 ) )
   with( df, lines( year, gpp_bess, col="royalblue3", lwd=1.5 ) )
-  with( df, lines( year, gpp_mte, col="darkgoldenrod3", lwd=1.5 ) )
+  # with( df, lines( year, gpp_mte, col="darkgoldenrod3", lwd=1.5 ) )
 
-  legend("topleft", c( "P-model, s0", "P-model, s1b (grey range: s1a - s1c)", "MODIS", "VPM", "BESS", "MTE" ), bty = "n", lty = c(1,2,1,1,1,1), lwd=1.5, col=c("tomato", "tomato", "orchid", "springgreen3", "royalblue3", "darkgoldenrod3") )
+  legend("topleft", c( "P-model, s0", "P-model, s1b (grey range: s1a - s1c)", "MODIS", "VPM", "BESS" ), bty = "n", lty = c(1,2,1,1,1), lwd=1.5, col=c("tomato", "tomato", "orchid", "springgreen3", "royalblue3") )
   mtext( "b)", font=2, adj = 0, line = 0.5, cex = 1.2 )
 
   ##------------------------------------------------------------------------

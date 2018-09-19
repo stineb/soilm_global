@@ -211,6 +211,8 @@ plot_gpp_global_tseries_reltrend_pmodel( df, filn="fig/gpp_global_tseries_reltre
 ## Trends of soil moisture effect P-model output
 ##-----------------------------------------------------
 plot_gpp_global_tseries_relefftrend_pmodel <- function( df, filn=NA ){
+
+  require(ggplot2)
   
   df <- df %>% mutate( releff_s1a = -100*(1-gpp_s1a/gpp_s0),
                        releff_s1b = -100*(1-gpp_s1b/gpp_s0),
@@ -238,7 +240,12 @@ plot_gpp_global_tseries_relefftrend_pmodel <- function( df, filn=NA ){
     annotate( geom = "text", x = 1982, y = -11, label = lm_slope( linmod_s1a_releff, prefix = "s1a: "), parse = TRUE, adj = 0 ) +
     annotate( geom = "text", x = 1982, y = -15.9, label = lm_slope( linmod_s1b_releff, prefix = "s1b: "), parse = TRUE, adj = 0 ) +
     annotate( geom = "text", x = 1982, y = -20, label = lm_slope( linmod_s1c_releff, prefix = "s1c: "), parse = TRUE, adj = 0 ) 
-  if (!is.na(filn)) ggsave( filn, ggp, width = 6, height = 4 )
+  
+  if (!is.na(filn)){
+    ggsave( filn, ggp, width = 6, height = 4 )
+  } else {
+    last_plot()
+  }
 
   # ## Solution in base R
   # ci <- confint(linmod_s1b_releff)

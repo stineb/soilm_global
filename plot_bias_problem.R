@@ -213,9 +213,8 @@ plot_bias_pooled_smbin <- function( df, filn=NA ){
 
 
 plot_bias_bymodels <- function( df, filn=NA){
-  ## NOT NORMALISED, by individual models
   xlim <- c(0.5,5.5)
-  ylim <- c(-5,6.5)
+  ylim <- c(-5,8)
   if (!is.na(filn)) pdf(filn, width = 7, height = 6)
     par(xaxs="i", yaxs="i", mgp=c(2.5,1,0), las=1)
     plot( xlim, ylim, type="n", ylim=ylim, xlab = "fLUE bin", ylab = expression( paste("bias (gC m"^-2, "d"^-1, ")" ) ), xlim=xlim, axes=FALSE )

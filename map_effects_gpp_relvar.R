@@ -51,6 +51,8 @@ nc_close(nc)
 # gpp_s1c <- ncvar_get( nc, varid="gpp" )
 # nc_close(nc)
 
+## calculate amplification factor (field)
+ampl <- gpp_s1b / gpp_s0
 
 # ##-----------------------------------------------------
 # ## Plot relative variance in S1
@@ -77,7 +79,7 @@ nc_close(nc)
 # hist( gpp_s0, xlim=c(0,40), breaks=300, col=rgb(0,0,0,0.3) )
 # hist( gpp_s1b, breaks=300, col=rgb(1,0,0,0.3), add=TRUE )
 
-# ampl <- gpp_s1b / gpp_s0
+
 # hist(ampl, xlim=c(0,10), breaks=300)
 # abline(v=1, col="red")
 
@@ -93,8 +95,8 @@ alpha <- 1/epop
 
 # hist( 1/epop, xlim=c(1,5), breaks = 3000 )
 
-df <- tibble( ampl = c(ampl), alpha = c(alpha) ) %>% 
-      filter( !is.na(ampl) & !is.na(alpha) ) %>% 
-      mutate( inbin = cut( alpha, breaks = c(0, 0.05, 0.2, 0.5, 0.7, 1.3, 3) ) )
+df_pixels <-  tibble( ampl = c(ampl), alpha = c(alpha) ) %>% 
+		      filter( !is.na(ampl) & !is.na(alpha) ) %>% 
+		      mutate( inbin = cut( alpha, breaks = c(0, 0.05, 0.2, 0.5, 0.7, 1.3, 3) ) )
 
 
