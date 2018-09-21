@@ -9,7 +9,7 @@ siteinfo <- read.csv( "siteinfo_fluxnet2015_sofun.csv" )
 load( "data/nice_all_agg_lue_obs_evi.Rdata" )      # loads 'nice_agg', for open-access reproducability, use reduced dataset 'gpp_daily_fluxnet_stocker18natgeo.csv' available from Zenodo XXX instead
 load( "data/nice_all_8d_agg_lue_obs_evi.Rdata" )   # loads 'nice_8d', for open-access reproducability, use reduced dataset 'gpp_8daily_fluxnet_stocker18natgeo.csv' available from Zenodo XXX instead
 
-successcodes <- read.csv( "successcodes.csv" ), as.is = TRUE )
+successcodes <- read.csv( "successcodes.csv" )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)

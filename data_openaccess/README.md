@@ -22,26 +22,32 @@ Data is provided as CSV files:
 - `gpp_alg_daily_fluxnet_stocker18natgeo.csv`: Data filtered to periods with substantial soil moisture effects ("fLUE droughts" following Stocker et al. (2018a))
 - `gpp_alg_8daily_fluxnet_stocker18natgeo.csv`: Data aggregated to 8-day periods and filtered to periods with substantial soil moisture effects.
 
-Each column is a variable with the following name and units:
+Each column is a variable with the following name and units (not all variables are available in all files):
 
 - `site_id`: FLUXNET site ID 
 - `date`: Date of measurement, units: YYYY-MM-DD
 - `gpp_obs`: Observed GPP from FLUXNET 2015 (see Stocker et al. (2018b), Methods, Observational Data), units: g C m-2 d-1
-- `gpp_pmodel`: Simulated GPP from the P-model (see Stocker et al. (2018b), Methods, RS models), units: g C m-2 d-1
+- `gpp_pmodel` and `gpp_modis`: Simulated GPP from the P-model and MODIS (see Stocker et al. (2018b), Methods, RS models), units: g C m-2 d-1 (mean across 8 day periods in respective files)
 - `aet_splash`: Simulated actual evapotranspiration from the SPLASH model (Davis et al., 2017), units: mm d-1
 - `pet_splash`: Simulated potential evapotranspiration from the SPLASH model (Davis et al., 2017), units: mm d-1
 - `ppfd`: Photosynthetic photon flux density, based on shortwave incoming radiation data from FLUXNET 2015 (SW_IN_F), converted to PPFD as ppfd = SW_IN_F * kfFEC * 1.0e-6, with kfFEC = 2.04 micro-mol/J. Units: mol/m2/d
 - `vpd`: Vapour pressure deficit, units: Pa
 - `fpar_modis`: Fraction of absorbed photosynthetically active radiation by MODIS FPAR  (MCD15A3H Version 6, 500 m, 4-day) extracted using Google Earth Engine and the ‘gee_subset’ library (Hufkens, 2017), unitless.
 - `soilm_mean`: Mean soil moisture used for analyses. This is based on observed soil moisture from FLUXNET 2015, mean across multiple depths if available, and normalised to between its minimum and maximum daily value for each site respectively, unitless.
+- `soilm_splash`: Soil moisture simulated by the SPLASH model (Davis et al., 2017), normalised to vary between zero and one at the maximum water holding capacity, unitless.
+- `flue`: fLUE estimate from Stocker et al. (2018). Estimates soil moisture stress on light use efficiency from flux data, unitless.
+- `beta_a`, `beta_b`, and `beta_c`: Empirical soil moisture stress, used as multiplier to simulated GPP as described in Stocker et al. (2018b), unitless.
+- `bias_pmodel_diff` and `bias_modis_diff`: Calculated as `gpp_pmodel - gpp_obs`, units: g C m-2 d-1
+- `bias_pmodel_ratio` and `bias_modis_ratio`: Calculated as `gpp_pmodel / gpp_obs`, unitless
 
 ### Global P-model simulation outputs
 
-GPP and soil moisture output is provided as NetCDF files for simulations s0, s1a, s1b, and s1c (see Stocker et al. (2018b)). All meta information is provided therein. Files for simulation s1a are names as follows (for outputs from other simulations replace s1a with other simulation name).  
+GPP and soil moisture output is provided as NetCDF files for simulations s0, and s1b (see Stocker et al. (2018b)). All meta information is provided therein. Files for simulation s1b are names as follows (for outputs from other simulations replace s1b with other simulation name). The fraction of each gridcell covered by land (not open water or ice) is given by separate file `s1b_fapar3g_v2_global.fland.nc`.
 
-- `s1a_fapar3g_v2_global.d.gpp.nc`: Daily GPP from simulation s1a.
-- `s1a_fapar3g_v2_global.d.wcont.nc`: Daily soil moisture from simulation s1a (is identical in other simulations, therefore not provided.)
+- `s1b_fapar3g_v2_global.d.gpp.nc`: Daily GPP from simulation s1b.
+- `s1b_fapar3g_v2_global.d.wcont.nc`: Daily soil moisture from simulation s1b (is identical in other simulations, therefore not provided.)
 
+Due to limited total file size allowed for uploads to Zenodo, only outputs from s1b are provided here. Other outputs may be obtained upon request addressed to benjamin.stocker@gmail.com. 
 
 ## References
 

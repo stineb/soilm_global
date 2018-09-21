@@ -2,17 +2,17 @@
 title: "Supplementary information to *Satellite observations underestimate the impact of drought on terrestrial primary productivity*"
 author: "Benjamin D. Stocker, Jakob Zscheischler, Trevor F. Keenan, I. Colin Prentice, Josep Penuelas, and Sonia I. Seneviratne"
 date: "`r Sys.Date()`"
-# output:
-#   html_document:
-#     toc: true
-#     toc_float: true
-#     toc_depth: 2
-#     number_sections: true
 output:
-  pdf_document:
+  html_document:
     toc: true
+    toc_float: true
     toc_depth: 2
     number_sections: true
+# output:
+#   pdf_document:
+#     toc: true
+#     toc_depth: 2
+#     number_sections: true
     includes:
       in_header: header.tex
 header-includes:
@@ -212,29 +212,29 @@ cap_ampl_var <- fig_nums( "ampl_boxpl", caption=" Amplification of relative vari
 
 `r fig_nums( "ampl_boxpl") `
 
-## Trend in GPP extreme event impacts
+<!-- ## Trend in GPP extreme event impacts -->
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(ggplot2)
-load("data/df_impact_year.Rdata")
-lm_slope <- function(linmod){
-  ci <- confint(linmod)
-  eq <- substitute( italic("slope") == a~ "["*b~ - ~c*"] yr" ^-1,
-                    list(a = format(coef(linmod)[2], digits = 2), b = format( ci[2,1], digits = 2 ), c = format( ci[2,2], digits = 2 ) ) )
-  as.character(as.expression(eq))
-}
-linmod <- lm( diff ~ year, data = df_impact_year )
-ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = diff ) ) +
-  geom_point() +
-  geom_smooth (method = "lm", level = 0.95 ) +
-  theme_bw() +
-  labs( x = "Year", y = bquote( "Impact difference ("*Pg~ C~ yr^-1*")") ) +
-  annotate( geom = "text", x = 1997, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 )
-last_plot()
-cap_ampl_var <- fig_nums( "ampl_extr", caption=" Difference in the impact of the 200 largest GPP extreme events in years 1982-2016. The difference is calculated from the impact of all events per year based on simulations s0 and s1b." )
-```
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE} -->
+<!-- library(ggplot2) -->
+<!-- load("data/df_impact_year.Rdata") -->
+<!-- lm_slope <- function(linmod){ -->
+<!--   ci <- confint(linmod) -->
+<!--   eq <- substitute( italic("slope") == a~ "["*b~ - ~c*"] yr" ^-1, -->
+<!--                     list(a = format(coef(linmod)[2], digits = 2), b = format( ci[2,1], digits = 2 ), c = format( ci[2,2], digits = 2 ) ) ) -->
+<!--   as.character(as.expression(eq)) -->
+<!-- } -->
+<!-- linmod <- lm( diff ~ year, data = df_impact_year ) -->
+<!-- ggp <- ggp <- ggplot( df_impact_year, aes( x = year, y = diff ) ) + -->
+<!--   geom_point() + -->
+<!--   geom_smooth (method = "lm", level = 0.95 ) + -->
+<!--   theme_bw() + -->
+<!--   labs( x = "Year", y = bquote( "Impact difference ("*Pg~ C~ yr^-1*")") ) + -->
+<!--   annotate( geom = "text", x = 1997, y = 0.7, label = lm_slope(linmod), parse = TRUE, adj = 0 ) -->
+<!-- last_plot() -->
+<!-- cap_ampl_var <- fig_nums( "ampl_extr", caption=" Difference in the impact of the 200 largest GPP extreme events in years 1982-2016. The difference is calculated from the impact of all events per year based on simulations s0 and s1b." ) -->
+<!-- ``` -->
 
-`r fig_nums( "ampl_extr") `
+<!-- `r fig_nums( "ampl_extr") ` -->
 
 
 # Global P-model simulations
