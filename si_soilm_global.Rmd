@@ -140,7 +140,6 @@ load("data/linearfit_I.Rdata")
 load("data/linearfit_IV.Rdata")
 load("data/linearfit_III.Rdata")
 load("data/ddf.Rdata")
-load("data/nice_agg.Rdata")
 plot_fit_vs_soilmoist( linearfit_I, linearfit_IV, linearfit_III, ddf, nice_agg, makepdf = FALSE )
 fig_fr <- fig_nums("fig_fr", caption=" Illustration of the different empirical soil moisture stress functions (lines) and apparent soil moisture-related reductions in light use efficiency (fLUE, dots).")
 ```
@@ -155,7 +154,7 @@ In all simulations, global GPP exhibits an increasing trend over the years 1982-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 source("plot_effects_gpp_tseries.R")
 plot_gpp_global_tseries_relefftrend_pmodel( df )
-cap_tseries_red <- fig_nums( "tseries_red", caption=" Reduction in global annual GPP due to soil moisture effects (in %) and linear trend in different P-model simulations. The slope is given in %/yr. The red range is given by simulations s1a and s1c, with s1b given by the red line in its center." )
+cap_tseries_red <- fig_nums( "tseries_red", caption=" Reduction in global annual GPP due to soil moisture effects (in $%$) and linear trend in different P-model simulations. The slope is given in $%^{yr}$. The red range is given by simulations s1a and s1c, with s1b given by the red line in its center." )
 ```
 
 `r fig_nums( "tseries_red") `
@@ -180,7 +179,7 @@ fig_sa_s0 <- fig_nums("fig_sa_s0", caption=" Modelled and observed annual GPP in
 ```{r echo=FALSE, warning=FALSE, error=FALSE, fig.width=5, fig.height=4}
 ## Get annual values and evaluate power of getting spatial and annual variations
 plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel_s1b,  stats_adf, stats_meandf, slope_wgt_pmodel_s1b )
-fig_sa_s1 <- fig_nums("fig_sa_s1", caption=" Modelled and observed annual GPP in the simulation ignoring accounting for soil moisture effects (method IV). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; a histogram of regression slope for all sites is given by the inset in the top-left corner." )
+fig_sa_s1 <- fig_nums("fig_sa_s1", caption=" Modelled and observed annual GPP in the simulation including for soil moisture effects (simulation s1b). Red line and text is based on means across years by site and represents spatial (across-site) variations. Black lines and text is based on annual values, one line for each site. Lines represent linear regressions. R$^2$ and RMSE statistics for annual values (black text) are based on pooled data from all sites; a histogram of regression slope for all sites is given by the inset in the top-left corner." )
 ```
 
 `r fig_nums("fig_sa_s1")`
@@ -194,7 +193,7 @@ source("map_effects_gpp_var.R")
 # cap_ampl_var <- fig_nums( "ampl_var", caption=" Amplification (unitless) of GPP IAV due to the effects of soil moisture. IAV is calculated as the variance in annual values; ???amplification??? is calculated as the ratio in IAV of simulation s1b to s0." )
 
 plot_map( gpp_s1b - gpp_s0, lev=seq(-5000,13000,2000), minval=-169000, maxval=83000, toplefttext=expression(paste("")), color=c( "royalblue4", "wheat", "tomato2", "tomato4" )  ) #, toprighttext=expression(paste("g C m"^-2, " yr"^-1 ) )
-cap_ampl_var <- fig_nums( "ampl_var", caption=" Difference in GPP IAV due to the effects of soil moisture (gC m-2 yr-1). IAV is calculated as the variance in annual values. The difference is taken from simulations s0 and s1b." )
+cap_ampl_var <- fig_nums( "ampl_var", caption=" Difference in GPP IAV due to the effects of soil moisture (gC m$^{-2}$ yr$^{-1}$). IAV is calculated as the variance in annual values. The difference is taken from simulations s0 and s1b." )
 ```
 
 `r fig_nums( "ampl_var") `
@@ -216,6 +215,7 @@ cap_ampl_var <- fig_nums( "ampl_boxpl", caption=" Amplification of relative vari
 ## Trend in GPP extreme event impacts
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
 load("data/df_impact_year.Rdata")
 lm_slope <- function(linmod){
   ci <- confint(linmod)
@@ -316,7 +316,7 @@ The set of empirical soil moisture stress functions $\beta$ are distinguished by
 $$
 \beta_0 = p_0 + p_1 \alpha'
 $$
-Different approaches to determining $p_0$ and $p_1$ are implemented and lead to $\beta_a$, $\beta_b$, and $\beta_c$. These are described as follows. In all approaches, the mean aridity $\alpha'$ is calculated as the annual mean ratio of AET/PET, calculated from daily AET and PET values from simulations with the SPLASH model [@Davis2017-jo] (the same set of simulations as described in the Methods in the main text, section 'Global P-model simulations'). 
+Different approaches to determining $p_0$ and $p_1$ are implemented and lead to $\beta_a$, $\beta_b$, and $\beta_c$. These are described as follows. In all approaches, the mean aridity $\alpha'$ is calculated as the annual mean ratio of AET/PET, calculated from daily AET and PET values from simulations with the SPLASH model [@Davis2017-jo] (the same set of simulations as described in the Methods in the main text, section 'Global P-model simulations').
 
 ## Empirical soil moisture stress function $\beta_a$
 
@@ -384,7 +384,7 @@ bp2 <- boxplot( bias_pmodel_diff_corr_I ~ inbin, data=ddf, col="springgreen3", l
 bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", expression("P-model, corrected by " ~ beta[a] ), "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
-boxpl_aI <- fig_nums("boxpl_aI", caption=" Bias of GPP simulated by the P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function a in light green.")
+boxpl_aI <- fig_nums("boxpl_aI", caption=" Bias of GPP simulated by the P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function $\beta_a$ a in light green.")
 ```
 
 `r fig_nums("boxpl_aI")`
@@ -453,7 +453,7 @@ bp2 <- boxplot( bias_pmodel_diff_corr_II ~ inbin, data=ddf, col="springgreen3", 
 bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", expression("P-model, corrected by " ~ beta[b] ~ "*" ), "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
-boxpl_aII <- fig_nums("boxpl_aII", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function b* in light green.")
+boxpl_aII <- fig_nums("boxpl_aII", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function  $\beta_b^{\ast}$ in light green.")
 ```
 
 `r fig_nums("boxpl_aII")`
@@ -474,7 +474,7 @@ bybin_corII<- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_d
 
 # print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3)))
 # print(paste("With fLUE, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3)))
-# 
+#
 # print(paste("With II, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corII$bias[1:5]), digits=3)))
 # print(paste("With II, RMSE is reduced from", format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corII$rmse[1:5]), digits=3)))
 
@@ -512,7 +512,7 @@ bp2 <- boxplot( bias_pmodel_diff_corr_III ~ inbin, data=ddf, col="springgreen3",
 bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", expression("P-model, corrected by " ~ beta[c] ), "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
-boxpl_aIII <- fig_nums("boxpl_aIII", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function c in light green.")
+boxpl_aIII <- fig_nums("boxpl_aIII", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function $\beta_c$ in light green.")
 ```
 
 `r fig_nums("boxpl_aIII")`
@@ -527,7 +527,7 @@ bybin_corIII<- ddf %>% group_by( inbin ) %>% summarise( bias = mean(bias_pmodel_
 
 # print(paste("With fLUE, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corr$bias[1:5]), digits=3)))
 # print(paste("With fLUE, RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corr$rmse[1:5]), digits=3)))
-# 
+#
 # print(paste("With III, mean bias is reduced from", format(mean(bybin_orig$bias[1:5]), digits=3), "to", format(mean(bybin_corIII$bias[1:5]), digits=3)))
 # print(paste("With III, RMSE is reduced from",      format(mean(bybin_orig$rmse[1:5]), digits=3), "to", format(mean(bybin_corIII$rmse[1:5]), digits=3)))
 
@@ -595,7 +595,7 @@ bp2 <- boxplot( bias_pmodel_diff_corr_IV ~ inbin, data=ddf, col="springgreen3", 
 bp3 <- boxplot( bias_pmodel_diff_corr ~ inbin, data=ddf, col="springgreen4", las=1, outline = FALSE, na.rm=TRUE, add=TRUE, staplewex=0, whisklty=1, at=(bins[1:nbins]+1/nbins*0.5), boxwex=0.03, xlim=c(0,1), axes=FALSE, staplewex=0, whisklty=1, ylim=c(-6,6) )
 abline( h=0.0, lty=3 )
 legend("bottomleft", c("P-model", expression("P-model, corrected by " ~ beta[b] ), "P-model, corrected by fLUE"), bty="n", fill=c("tomato", "springgreen3", "springgreen4") )
-boxpl_aIV <- fig_nums("boxpl_aIV", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function b in light green.")
+boxpl_aIV <- fig_nums("boxpl_aIV", caption=" Bias of GPP simulated by P-model for different fLUE bins. Original P-model outputs are in red, outputs corrected by fLUE (stress multiplier taken as fLUE) in dark green, and outputs corrected by soil moisture stress function $\beta_b$ in light green.")
 ```
 
 `r fig_nums("boxpl_aIV")`
@@ -636,7 +636,7 @@ df_coef %>% mutate( apar=format(apar, digits=1), bpar=format(bpar, digits=3),
                     apar_grass=format(apar_grass, digits=3), bpar_grass=format(bpar_grass, digits=2)) %>%
             rename( a=apar, b=bpar, a_grass=apar_grass, b_grass=bpar_grass) %>%
             select( Approach=approach, Simulation, p_0=a, p_1=b, p_0_grass=a_grass, p_1_grass=b_grass, Bias=bias, RMSE=rmse ) %>%
-            knitr::kable( caption = " Overview of parameters for the empirical soil moisture stress functions and performance metrics of corrected GPP with respective soil moisture stress functions following approaches a, b, and c.")
+            knitr::kable( caption = " Overview of parameters for the empirical soil moisture stress functions and performance metrics of corrected GPP with respective soil moisture stress functions $\beta$")
 ## save stuff
 save( ddf, file = "data/ddf.Rdata" )
 save( df_coef, file = "data/df_coef.Rdata")
