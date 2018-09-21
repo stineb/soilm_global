@@ -37,7 +37,7 @@ Each column is a variable with the following name and units:
 
 ### Global P-model simulation outputs
 
-GPP and soil moisture output is provided as NetCDF files for simulations s0, s1a, s1b, and s1c (see Stocker et al. (2018b)). All meta information is provided therein. Files for simulation s1a are names as follows (for outputs from other simulations replace s1a with other simulation name).
+GPP and soil moisture output is provided as NetCDF files for simulations s0, s1a, s1b, and s1c (see Stocker et al. (2018b)). All meta information is provided therein. Files for simulation s1a are names as follows (for outputs from other simulations replace s1a with other simulation name).  
 
 - `s1a_fapar3g_v2_global.d.gpp.nc`: Daily GPP from simulation s1a.
 - `s1a_fapar3g_v2_global.d.wcont.nc`: Daily soil moisture from simulation s1a.
