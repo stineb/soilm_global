@@ -5,7 +5,7 @@ library(tibble, quietly = TRUE, warn.conflicts = FALSE)
 source("../utilities/myboxplot.R")
 
 ## Load aligned aggregated data
-load( "data/data_aligned_agg.Rdata" )
+load( "data/data_aligned_agg.Rdata" ) # for open-access reproducability, use reduced dataset 'gpp_alg_daily_fluxnet_stocker18natgeo.csv' and 'gpp_alg_8daily_fluxnet_stocker18natgeo.csv' available from Zenodo XXX instead
 
 ## IMPORTANT: REMOVE DUPLICATE ROWS (were introduced because one date can below to multiple drought instances (within their before-after window) )
 df_dday_agg    <- df_dday_agg    %>% select( -dday, -inst ) %>% unique()

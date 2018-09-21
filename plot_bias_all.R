@@ -1,15 +1,15 @@
 source("../utilities/myboxplot.R")
 
-siteinfo <- read.csv( paste( myhome, "sofun/input_fluxnet2015_sofun/siteinfo_fluxnet2015_sofun.csv", sep="") )
+siteinfo <- read.csv( "siteinfo_fluxnet2015_sofun.csv" )
 
 ##------------------------------------------------
 ## Select only sites that were in NN FLUXNET 2015 analysis
 ##------------------------------------------------
 # Load aggregated data from all sites, created by plot_nn_fVAR_fluxnet2015.R: 
-load( "data/nice_all_agg_lue_obs_evi.Rdata" )      # loads 'nice_agg'
-load( "data/nice_all_8d_agg_lue_obs_evi.Rdata" )   # loads 'nice_8d'
+load( "data/nice_all_agg_lue_obs_evi.Rdata" )      # loads 'nice_agg', for open-access reproducability, use reduced dataset 'gpp_daily_fluxnet_stocker18natgeo.csv' available from Zenodo XXX instead
+load( "data/nice_all_8d_agg_lue_obs_evi.Rdata" )   # loads 'nice_8d', for open-access reproducability, use reduced dataset 'gpp_8daily_fluxnet_stocker18natgeo.csv' available from Zenodo XXX instead
 
-successcodes <- read.csv( paste( myhome, "sofun/utils_sofun/analysis_sofun/fluxnet2015/successcodes.csv", sep="" ), as.is = TRUE )
+successcodes <- read.csv( "successcodes.csv" ), as.is = TRUE )
 do.sites <- dplyr::filter( successcodes, successcode==1 | successcode==2 )$mysitename
 
 ## Use only sites where NN method worked (i.e. that had clear and identifiable soil moisture limitation)

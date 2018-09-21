@@ -347,7 +347,7 @@ plot_spatial_annual_s0 <- function( adf, meandf, linmod_list_pmodel, linmod_mean
     # abline( linmod_mean_pmodel, col="red")
     # lines( c(0,5000), c(0,5000), lty=3 )
 
-    with( meandf, plot( gpp_pmodel, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+    with( meandf, plot( gpp_pmodel, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
     abline( linmod_mean_pmodel, col="red")
     for (sitename in ls(linmod_list_pmodel) ){
       tmp <- filter( adf, mysitename==sitename )
@@ -408,7 +408,7 @@ plot_spatial_annual_s1 <- function( adf, meandf, linmod_list_pmodel, linmod_mean
     # abline( linmod_mean_pmodel_s1b, col="red")
     # lines( c(0,5000), c(0,5000), lty=3 )
 
-    with( meandf, plot( gpp_pmodel_s1b, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+    with( meandf, plot( gpp_pmodel_s1b, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
     abline( linmod_mean_pmodel_s1b, col="red")
     for (sitename in ls(linmod_list_pmodel_s1b) ){
       tmp <- filter( adf, mysitename==sitename )
@@ -456,7 +456,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 # par(las=1, mar=c(4,4,4,1))
 
 # for (sitename in ls(linmod_list_pmodel_s1b) ){
-#   with( meandf, plot( gpp_pmodel_s1b, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_pmodel_s1b, gpp_obs, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", ylab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), xlab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_pmodel_s1b, col="red")
 #   tmp <- filter( adf, mysitename==sitename )
 #   if (length(linmod_list_pmodel_s1b[[ sitename ]]$fitted.values)>3){
@@ -484,7 +484,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_bess_v1_s0, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_bess_v1, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_bess_v1, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_bess_v1_s0, col="red")
 #   for (sitename in ls(linmod_list_bess_v1_s0) ){
 #     tmp <- filter( adf, mysitename==sitename )
@@ -514,7 +514,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_bess_v1_s1b, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_bess_v1_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_bess_v1_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_bess_v1_s1b, col="red")
 #   for (sitename in ls(linmod_list_bess_v1_s1b) ){
 #     tmp <- filter( adf, mysitename==sitename )
@@ -544,7 +544,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_modis_s0, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_modis, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_modis, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_modis_s0, col="red")
 #   for (sitename in ls(linmod_list_modis_s0) ){
 #     tmp <- filter( adf, mysitename==sitename )
@@ -574,7 +574,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_modis_s1b, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_modis_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_modis_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_modis_s1b, col="red")
 #   for (sitename in ls(linmod_list_modis_s1b) ){
 #     tmp <- filter( adf, mysitename==sitename )
@@ -604,7 +604,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_vpm_s0, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_vpm, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_vpm, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_vpm_s0, col="red")
 #   for (sitename in ls(linmod_list_vpm_s0) ){
 #     tmp <- filter( adf, mysitename==sitename )
@@ -634,7 +634,7 @@ plot_spatial_annual_s1( adf, meandf, linmod_list_pmodel_s1b,  linmod_mean_pmodel
 #   # abline( linmod_mean_vpm_s1b, col="red")
 #   # lines( c(0,5000), c(0,5000), lty=3 )
 
-#   with( meandf, plot( gpp_obs, gpp_vpm_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (gC m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (gC m"^-2, "yr"^-1, ")" ) ) ) )
+#   with( meandf, plot( gpp_obs, gpp_vpm_s1b, xlim = c(0,3000), ylim = c(0,3000), pch=16, col=rgb(0,0,0,0.5), type = "n", xlab = expression( paste("observed GPP (g C m"^-2, "yr"^-1, ")" ) ), ylab = expression( paste("simulated GPP (g C m"^-2, "yr"^-1, ")" ) ) ) )
 #   abline( linmod_mean_vpm_s1b, col="red")
 #   for (sitename in ls(linmod_list_vpm_s1b) ){
 #     tmp <- filter( adf, mysitename==sitename )
