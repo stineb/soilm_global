@@ -12,12 +12,11 @@ df_dday_agg    <- df_dday_agg    %>% select( -dday, -inst ) %>% unique()
 df_dday_8d_agg <- df_dday_8d_agg %>% select( -dday, -inst ) %>% unique()
 
 ## Select variables for which data can be made publicly accessible
-df_dday_agg    <- df_dday_agg    %>% select(  site_id = mysitename, date, soilm_mean, soilm_splash, fpar_modis = fpar, flue = fvar, gpp_obs, beta_a = flue_est_I, 
-																							beta_b = flue_est_IV, beta_c = flue_est_III, alpha, gpp_pmodel, bias_pmodel_ratio = bias_pmodel, bias_pmodel_diff 
+df_dday_agg    <- df_dday_agg    %>% select(  site_id = mysitename, date, soilm_splash, flue = fvar, beta_a = flue_est_I, 
+																							beta_b = flue_est_IV, beta_c = flue_est_III, alpha, gpp_pmodel
 																							)
-df_dday_8d_agg <- df_dday_8d_agg %>% select(  site_id = mysitename, date, soilm_mean, soilm_splash, fpar_modis = fpar, flue = fvar, gpp_obs, beta_a = flue_est_I, 
-																							beta_b = flue_est_IV, beta_c = flue_est_III, alpha, gpp_pmodel, bias_pmodel_ratio = bias_pmodel, bias_pmodel_diff, 
-																							gpp_modis, bias_modis_ratio = bias_modis, bias_modis_diff 
+df_dday_8d_agg <- df_dday_8d_agg %>% select(  site_id = mysitename, date, soilm_splash, flue = fvar, beta_a = flue_est_I, 
+																							beta_b = flue_est_IV, beta_c = flue_est_III, alpha, gpp_pmodel
 																							)
 
 if (!dir.exists("./data_openaccess")) system("mkdir data_openaccess")
@@ -40,8 +39,8 @@ nice_agg     <- nice_agg     %>% filter( mysitename %in% do.sites )
 nice_8d_agg  <- nice_8d_agg  %>% filter( mysitename %in% do.sites )
 
 ## Select variables for which data can be made publicly accessible
-nice_agg    <- nice_agg    %>% select( site_id = mysitename, date,       gpp_obs, gpp_pmodel, aet_splash = aet_pmodel, pet_splash = pet_pmodel, ppfd, vpd, fpar_modis = fpar, soilm_mean )
-nice_8d_agg <- nice_8d_agg %>% select( site_id = mysitename, date_start, gpp_obs, gpp_pmodel, aet_splash = aet_pmodel, pet_splash = pet_pmodel, ppfd, vpd, fpar_modis = fpar, soilm_mean, gpp_modis, bias_modis_ratio = bias_modis )
+nice_agg    <- nice_agg    %>% select( site_id = mysitename, date      , gpp_pmodel, aet_splash = aet_pmodel, pet_splash = pet_pmodel )
+nice_8d_agg <- nice_8d_agg %>% select( site_id = mysitename, date_start, gpp_pmodel, aet_splash = aet_pmodel, pet_splash = pet_pmodel )
 
 write_csv( nice_agg, path = "data_openaccess/gpp_daily_fluxnet_stocker18natgeo.csv" )
 write_csv( nice_8d_agg, path = "data_openaccess/gpp_8daily_fluxnet_stocker18natgeo.csv" )

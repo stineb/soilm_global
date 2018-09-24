@@ -2,14 +2,14 @@
 
 The datasets provided here include:
 
-- Site-level FLUXNET GPP estimates and GPP model results from the P-model (Wang et al., 2017) and MODIS MOD17A2H (Running et al., 2004)
+- Site-level GPP model results from the P-model (Wang et al., 2017)
 - Model outputs from global simulations with the P-model (Wang et al., 2017) as implemented for the study by Stocker et al. (2018b)
 
-This data may be used to partly reproduce results presented in Stocker et al. (2018b) *Nature Geosci.*. "Partly" because we used data for our analysis that was not open access but was confidentially shared with us. This includes remote sensing-based GPP estimates from the BESS and VPM models. MODIS GPP was downloaded from an open access repository and shared here. Please cite its original reference Running et al. (2004).
+This data may be used to partly reproduce results presented in Stocker et al. (2018b) *Nature Geosci.*. "Partly" because we used data for our analysis that was not open access but was confidentially shared with us. This includes remote sensing-based GPP estimates from the BESS and VPM models. Other open access data that was used for the analysis may not be distributed under this DOI. This includes FLUXNET 2015 data and MODIS data.
 
 For reproducing results of Stocker et al. (2018b) regarding site-scale evaluations, run for example the scripts `plot_bias_all.R` and `plot_bias_problem.R`, available from (Github)[https://github.com/stineb/soilm_global] or (Zenodo)[https://zenodo.org/record/1286966#.W6TFipMzbUI], using CSV files provided here (see comments in scripts). For more insight, including analysis of global simulation outputs, see RMarkdown file `si_soilm_global.Rmd`. This renders the supplementary information PDF document provided along with Stocker et al. (2018b), which is available also on (RPubs)[http://rpubs.com/stineb/si_soilm_global2].
 
-The datasets are prepared for open access distribution by script `prepare_data_openaccess.R ` on (Github)[https://github.com/stineb/soilm_global] or (Zenodo)[https://zenodo.org/record/1286966#.W6TFipMzbUI].
+The present datasets are prepared by script `prepare_data_openaccess.R ` on (Github)[https://github.com/stineb/soilm_global] or (Zenodo)[https://zenodo.org/record/1286966#.W6TFipMzbUI].
 
 ## Data description
 
@@ -26,19 +26,12 @@ Each column is a variable with the following name and units (not all variables a
 
 - `site_id`: FLUXNET site ID 
 - `date`: Date of measurement, units: YYYY-MM-DD
-- `gpp_obs`: Observed GPP from FLUXNET 2015 (see Stocker et al. (2018b), Methods, Observational Data), units: g C m-2 d-1
 - `gpp_pmodel` and `gpp_modis`: Simulated GPP from the P-model and MODIS (see Stocker et al. (2018b), Methods, RS models), units: g C m-2 d-1 (mean across 8 day periods in respective files)
 - `aet_splash`: Simulated actual evapotranspiration from the SPLASH model (Davis et al., 2017), units: mm d-1
 - `pet_splash`: Simulated potential evapotranspiration from the SPLASH model (Davis et al., 2017), units: mm d-1
-- `ppfd`: Photosynthetic photon flux density, based on shortwave incoming radiation data from FLUXNET 2015 (SW_IN_F), converted to PPFD as ppfd = SW_IN_F * kfFEC * 1.0e-6, with kfFEC = 2.04 micro-mol/J. Units: mol/m2/d
-- `vpd`: Vapour pressure deficit, units: Pa
-- `fpar_modis`: Fraction of absorbed photosynthetically active radiation by MODIS FPAR  (MCD15A3H Version 6, 500 m, 4-day) extracted using Google Earth Engine and the ‘gee_subset’ library (Hufkens, 2017), unitless.
-- `soilm_mean`: Mean soil moisture used for analyses. This is based on observed soil moisture from FLUXNET 2015, mean across multiple depths if available, and normalised to between its minimum and maximum daily value for each site respectively, unitless.
 - `soilm_splash`: Soil moisture simulated by the SPLASH model (Davis et al., 2017), normalised to vary between zero and one at the maximum water holding capacity, unitless.
 - `flue`: fLUE estimate from Stocker et al. (2018). Estimates soil moisture stress on light use efficiency from flux data, unitless.
 - `beta_a`, `beta_b`, and `beta_c`: Empirical soil moisture stress, used as multiplier to simulated GPP as described in Stocker et al. (2018b), unitless.
-- `bias_pmodel_diff` and `bias_modis_diff`: Calculated as `gpp_pmodel - gpp_obs`, units: g C m-2 d-1
-- `bias_pmodel_ratio` and `bias_modis_ratio`: Calculated as `gpp_pmodel / gpp_obs`, unitless
 
 ### Global P-model simulation outputs
 
