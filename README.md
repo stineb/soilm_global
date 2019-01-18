@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1286966.svg)](https://doi.org/10.5281/zenodo.1286966)
 
-This repository contains all R code to reproduce the analysis used for the paper *Satellite monitoring underestimates the impact of drought on terrestrial primary production*.
+This repository contains all R code to reproduce the analysis used for the paper *Satellite monitoring underestimates the impact of drought on terrestrial primary production*. 
 
 A detailed description of the scope, method, and algorithms is given by the RMarkdown file `si_soilm_global.Rmd`. 
 
@@ -18,7 +18,6 @@ install.packages("rmarkdown", type = "source")
 rmarkdown::render_site()
 ```
 
-Please also note the data use policy, described in `./si_soilm_global.Rmd` and `./LICENSE`. When using this code, please cite the paper Stocker et al. (subm.).
-This code is also available on [Zenodo](http://doi.org/10.5281/zenodo.1286966), where the latest version corresponds to tag `v0.1`.
+Please also note the data use policy, described in `./si_soilm_global.Rmd` and `./LICENSE`. When using this code, please cite the paper Stocker et al. (2019) *Nature Geoscience*. This code is released with a DOI on [Zenodo](http://doi.org/10.5281/zenodo.1286966), where the latest version corresponds to tag `v1.0`.
 
-beni stocker, 11.6.2018
+beni stocker, 18.1.2019
