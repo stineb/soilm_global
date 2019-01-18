@@ -38,7 +38,7 @@ Each column is a variable with the following name and units (not all variables a
 GPP and soil moisture output is provided as NetCDF files for simulations s0, and s1b (see Stocker et al. (2018b)). All meta information is provided therein. Files for simulation s1b are names as follows (for outputs from other simulations replace s1b with other simulation name). The fraction of each gridcell covered by land (not open water or ice) is given by separate file `s1b_fapar3g_v2_global.fland.nc`.
 
 - `s1b_fapar3g_v2_global.d.gpp.nc`: Daily GPP from simulation s1b.
-- `s1b_fapar3g_v2_global.d.wcont.nc`: Daily soil moisture from simulation s1b (is identical in other simulations, therefore not provided.)
+- `s1b_fapar3g_v2_global.d.wcont.nc`: Daily soil moisture from simulation s1b.
 
 Due to limited total file size allowed for uploads to Zenodo, only outputs from s1b are provided here. Other outputs may be obtained upon request addressed to benjamin.stocker@gmail.com. 
 
