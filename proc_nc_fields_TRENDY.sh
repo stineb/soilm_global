@@ -69,227 +69,227 @@ proc_trendy_single (){
 here=`pwd`
 myhome=/alphadata01/bstocker/
 
-# ##----------------------------------------------------
-# ## CABLE
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/CABLE/S2
+##----------------------------------------------------
+## CABLE
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/CABLE/S2
 
-# if [[ ! -e CABLE-POP_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e CABLE-POP_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years
-# 	cdo selyear,1901/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_SUB.nc
+	## select years
+	cdo selyear,1901/2015 CABLE-POP_S2_gpp.nc CABLE-POP_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm CABLE-POP_S2_gpp_SUB.nc CABLE-POP_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm CABLE-POP_S2_gpp_SUB.nc CABLE-POP_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 CABLE-POP_S2_gpp_DPM.nc CABLE-POP_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 CABLE-POP_S2_gpp_DPM.nc CABLE-POP_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum CABLE-POP_S2_gpp_SPM.nc CABLE-POP_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum CABLE-POP_S2_gpp_SPM.nc CABLE-POP_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single CABLE-POP_S2
+proc_trendy_single CABLE-POP_S2
 
-# cd $here
+cd $here
 
-# # ----------------------------------------------------
-# # CLASS-CTEM: messed up dimensions - therefore not used
-# # ----------------------------------------------------
+# ----------------------------------------------------
+# CLASS-CTEM: messed up dimensions - therefore not used
+# ----------------------------------------------------
 
-# ##----------------------------------------------------
-# ## CLM
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/CLM/S2
+##----------------------------------------------------
+## CLM
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/CLM/S2
 
-# if [[ ! -e CLM4.5_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e CLM4.5_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years
-# 	cdo selyear,1901/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_SUB.nc
+	## select years
+	cdo selyear,1901/2015 CLM4.5_S2_gpp.nc CLM4.5_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm CLM4.5_S2_gpp_SUB.nc CLM4.5_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm CLM4.5_S2_gpp_SUB.nc CLM4.5_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 CLM4.5_S2_gpp_DPM.nc CLM4.5_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 CLM4.5_S2_gpp_DPM.nc CLM4.5_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum CLM4.5_S2_gpp_SPM.nc CLM4.5_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum CLM4.5_S2_gpp_SPM.nc CLM4.5_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single CLM4.5_S2
+proc_trendy_single CLM4.5_S2
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## DLEM - can't convert to normal NetCDF
-# ##----------------------------------------------------
+##----------------------------------------------------
+## DLEM - can't convert to normal NetCDF
+##----------------------------------------------------
 
 
-# ##----------------------------------------------------
-# ## ISAM
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/ISAM/S2
+##----------------------------------------------------
+## ISAM
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/ISAM/S2
 
-# if [[ ! -e ISAM_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e ISAM_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years. time steps 42:156 are for 1901-2015
-# 	cdo seltimestep,42/156 ISAM_S2_gpp.nc ISAM_S2_gpp_SUB.nc
+	## select years. time steps 42:156 are for 1901-2015
+	cdo seltimestep,42/156 ISAM_S2_gpp.nc ISAM_S2_gpp_SUB.nc
 
-# 	## sum over vertical dimension (given in kgC m-2 month-1)
-# 	cdo mulc,1000 -vertsum ISAM_S2_gpp_SUB.nc ISAM_S2_gpp_ANN.nc
+	## sum over vertical dimension (given in kgC m-2 month-1)
+	cdo mulc,1000 -vertsum ISAM_S2_gpp_SUB.nc ISAM_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single ISAM_S2 "timestep"
+proc_trendy_single ISAM_S2 "timestep"
 
-# cd $here
+cd $here
 
-# ##----------------------------------------------------
-# ## JSBACH
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/JSBACH/S2
+##----------------------------------------------------
+## JSBACH
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/JSBACH/S2
 
-# if [[ ! -e JSBACH_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e JSBACH_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years
-# 	cdo selyear,1901/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_SUB.nc
+	## select years
+	cdo selyear,1901/2015 JSBACH_S2_gpp.nc JSBACH_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm JSBACH_S2_gpp_SUB.nc JSBACH_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm JSBACH_S2_gpp_SUB.nc JSBACH_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 JSBACH_S2_gpp_DPM.nc JSBACH_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 JSBACH_S2_gpp_DPM.nc JSBACH_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum JSBACH_S2_gpp_SPM.nc JSBACH_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum JSBACH_S2_gpp_SPM.nc JSBACH_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single JSBACH_S2
+proc_trendy_single JSBACH_S2
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## LPJ-GUESS
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/LPJ-GUESS/S2
+##----------------------------------------------------
+## LPJ-GUESS
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/LPJ-GUESS/S2
 
-# if [[ ! -e LPJ-GUESS_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e LPJ-GUESS_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years
-# 	cdo chname,gpp.monthly,gpp -selyear,1901/2015 LPJ-GUESS_S2_gpp_fEst.nc LPJ-GUESS_S2_gpp_SUB.nc
+	## select years
+	cdo chname,gpp.monthly,gpp -selyear,1901/2015 LPJ-GUESS_S2_gpp_fEst.nc LPJ-GUESS_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm LPJ-GUESS_S2_gpp_SUB.nc LPJ-GUESS_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm LPJ-GUESS_S2_gpp_SUB.nc LPJ-GUESS_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 LPJ-GUESS_S2_gpp_DPM.nc LPJ-GUESS_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 LPJ-GUESS_S2_gpp_DPM.nc LPJ-GUESS_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum LPJ-GUESS_S2_gpp_SPM.nc LPJ-GUESS_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum LPJ-GUESS_S2_gpp_SPM.nc LPJ-GUESS_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single LPJ-GUESS_S2
+proc_trendy_single LPJ-GUESS_S2
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## LPX-Bern
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/LPX-Bern/S2
+##----------------------------------------------------
+## LPX-Bern
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/LPX-Bern/S2
 
-# if [[ ! -e LPX_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e LPX_S2_gpp_ANN.nc ]]
+then
 
-# 	# Pre-process data
-# 	Rscript $myhome/soilm_global/preproc_lpx.R
+	# Pre-process data
+	Rscript $myhome/soilm_global/preproc_lpx.R
 
-# 	## select years WARNING: THERE IS SOMETHING WRONG WITH THE LAST YEAR, THEREFORE REMOVING 2015
-# 	cdo selyear,1901/2014 LPX_S2_gpp_NICE.nc LPX_S2_gpp_SUB.nc
+	## select years WARNING: THERE IS SOMETHING WRONG WITH THE LAST YEAR, THEREFORE REMOVING 2015
+	cdo selyear,1901/2014 LPX_S2_gpp_NICE.nc LPX_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm LPX_S2_gpp_SUB.nc LPX_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm LPX_S2_gpp_SUB.nc LPX_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 LPX_S2_gpp_DPM.nc LPX_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 LPX_S2_gpp_DPM.nc LPX_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum LPX_S2_gpp_SPM.nc LPX_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum LPX_S2_gpp_SPM.nc LPX_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single LPX_S2
+proc_trendy_single LPX_S2
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## ORCHIDEE
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/ORCHIDEE/S2
+##----------------------------------------------------
+## ORCHIDEE
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/ORCHIDEE/S2
 
-# if [[ ! -e orchidee_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e orchidee_S2_gpp_ANN.nc ]]
+then
 
-# 	## correcting messed up time axis and selecting years 1901-2015
-# 	Rscript preproc_orchidee.R
+	## correcting messed up time axis and selecting years 1901-2015
+	Rscript preproc_orchidee.R
 
-# 	## multiply with days per month
-# 	cdo muldpm orchidee_S2_gpp_NICE.nc orchidee_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm orchidee_S2_gpp_NICE.nc orchidee_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 orchidee_S2_gpp_DPM.nc orchidee_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 orchidee_S2_gpp_DPM.nc orchidee_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum orchidee_S2_gpp_SPM.nc orchidee_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum orchidee_S2_gpp_SPM.nc orchidee_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single orchidee_S2
+proc_trendy_single orchidee_S2
 
-# cd $here
+cd $here
 
 
-# ##----------------------------------------------------
-# ## SDGVM
-# ##----------------------------------------------------
-# cd $myhome/data/trendy/v5/SDGVM/S2
+##----------------------------------------------------
+## SDGVM
+##----------------------------------------------------
+cd $myhome/data/trendy/v5/SDGVM/S2
 
-# if [[ ! -e SDGVM_S2_gpp_ANN.nc ]]
-# then
+if [[ ! -e SDGVM_S2_gpp_ANN.nc ]]
+then
 
-# 	## select years (original from Jan 1860 - Oct 2013, total 1872 time steps = 156 years. Therefore should be to Dec 2015. Correct the damn file.)
-# 	Rscript $myhome/soilm_global/preproc_sdgvm.R
+	## select years (original from Jan 1860 - Oct 2013, total 1872 time steps = 156 years. Therefore should be to Dec 2015. Correct the damn file.)
+	Rscript $myhome/soilm_global/preproc_sdgvm.R
 
-# 	## subset years
-# 	cdo selyear,1901/2015 SDGVM_S2_gpp_NICE.nc SDGVM_S2_gpp_SUB.nc
+	## subset years
+	cdo selyear,1901/2015 SDGVM_S2_gpp_NICE.nc SDGVM_S2_gpp_SUB.nc
 
-# 	## multiply with days per month
-# 	cdo muldpm SDGVM_S2_gpp_SUB.nc SDGVM_S2_gpp_DPM.nc
+	## multiply with days per month
+	cdo muldpm SDGVM_S2_gpp_SUB.nc SDGVM_S2_gpp_DPM.nc
 
-# 	## multiply with seconds per day and convert from kg C to g C
-# 	cdo mulc,86400000 SDGVM_S2_gpp_DPM.nc SDGVM_S2_gpp_SPM.nc
+	## multiply with seconds per day and convert from kg C to g C
+	cdo mulc,86400000 SDGVM_S2_gpp_DPM.nc SDGVM_S2_gpp_SPM.nc
 
-# 	## get annual sums
-# 	cdo yearsum SDGVM_S2_gpp_SPM.nc SDGVM_S2_gpp_ANN.nc
+	## get annual sums
+	cdo yearsum SDGVM_S2_gpp_SPM.nc SDGVM_S2_gpp_ANN.nc
 
-# fi
+fi
 
-# proc_trendy_single SDGVM_S2
+proc_trendy_single SDGVM_S2
 
-# cd $here
+cd $here
 
 
 ##----------------------------------------------------
